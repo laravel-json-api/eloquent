@@ -20,16 +20,20 @@ declare(strict_types=1);
 namespace LaravelJsonApi\Eloquent\Fields\Relations;
 
 use LaravelJsonApi\Contracts\Schema\Relation as RelationContract;
+use LaravelJsonApi\Contracts\Schema\SchemaAware as SchemaAwareContract;
+use LaravelJsonApi\Core\Schema\SchemaAware;
 use LaravelJsonApi\Core\Support\Str;
+use LaravelJsonApi\Eloquent\Contracts\Fillable;
 use LaravelJsonApi\Eloquent\Fields\Concerns\EagerLoadable;
 use LaravelJsonApi\Eloquent\Fields\Concerns\ReadOnly;
 use LaravelJsonApi\Eloquent\Fields\Concerns\SparseField;
 
-abstract class Relation implements RelationContract
+abstract class Relation implements RelationContract, Fillable, SchemaAwareContract
 {
 
     use EagerLoadable;
     use ReadOnly;
+    use SchemaAware;
     use SparseField;
 
     /**
@@ -52,6 +56,13 @@ abstract class Relation implements RelationContract
      * @var string|null
      */
     private ?string $inverse = null;
+
+    /**
+     * Does the model need to exist in the database before the relation is filled?
+     *
+     * @return bool
+     */
+    abstract public function mustExist(): bool;
 
     /**
      * Guess the inverse resource type.

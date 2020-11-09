@@ -1,5 +1,5 @@
 <?php
-/**
+/*
  * Copyright 2020 Cloud Creativity Limited
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,27 +20,41 @@ declare(strict_types=1);
 namespace LaravelJsonApi\Eloquent;
 
 use Illuminate\Database\Eloquent\Model;
+use LaravelJsonApi\Contracts\Schema\Container as SchemaContainer;
 use LaravelJsonApi\Contracts\Store\CreatesResources;
 use LaravelJsonApi\Contracts\Store\DeletesResources;
+use LaravelJsonApi\Contracts\Store\ModifiesToOne;
 use LaravelJsonApi\Contracts\Store\QueriesAll;
 use LaravelJsonApi\Contracts\Store\QueriesOne;
+use LaravelJsonApi\Contracts\Store\QueriesToOne;
 use LaravelJsonApi\Contracts\Store\QueryAllBuilder;
 use LaravelJsonApi\Contracts\Store\QueryOneBuilder;
 use LaravelJsonApi\Contracts\Store\Repository as RepositoryContract;
 use LaravelJsonApi\Contracts\Store\ResourceBuilder;
+use LaravelJsonApi\Contracts\Store\ToOneBuilder;
 use LaravelJsonApi\Contracts\Store\UpdatesResources;
+use LaravelJsonApi\Eloquent\Hydrators\ModelHydrator;
+use LaravelJsonApi\Eloquent\Hydrators\ToOneHydrator;
 use LogicException;
 use RuntimeException;
 use function is_string;
+use function sprintf;
 
 class Repository implements
     RepositoryContract,
     QueriesAll,
     QueriesOne,
+    QueriesToOne,
     CreatesResources,
     UpdatesResources,
-    DeletesResources
+    DeletesResources,
+    ModifiesToOne
 {
+
+    /**
+     * @var SchemaContainer
+     */
+    private SchemaContainer $schemas;
 
     /**
      * @var Schema
@@ -55,21 +69,20 @@ class Repository implements
     /**
      * Repository constructor.
      *
+     * @param SchemaContainer $schemas
      * @param Schema $schema
      */
-    public function __construct(Schema $schema)
+    public function __construct(SchemaContainer $schemas, Schema $schema)
     {
+        $this->schemas = $schemas;
         $this->schema = $schema;
         $this->model = $schema->newInstance();
     }
 
     /**
-     * Get the model for the supplied resource id.
-     *
-     * @param string $resourceId
-     * @return Model|null
+     * @inheritDoc
      */
-    public function find(string $resourceId)
+    public function find(string $resourceId): ?object
     {
         return $this
             ->query()
@@ -78,10 +91,23 @@ class Repository implements
     }
 
     /**
-     * Does a resource with the supplied id exist?
-     *
-     * @param string $resourceId
-     * @return bool
+     * @inheritDoc
+     */
+    public function findOrFail(string $resourceId): object
+    {
+        if ($model = $this->find($resourceId)) {
+            return $model;
+        }
+
+        throw new RuntimeException(sprintf(
+            'Resource %s with id %s does not exist.',
+            $this->schema->type(),
+            $resourceId
+        ));
+    }
+
+    /**
+     * @inheritDoc
      */
     public function exists(string $resourceId): bool
     {
@@ -138,9 +164,21 @@ class Repository implements
     /**
      * @inheritDoc
      */
+    public function queryToOne($modelOrResourceId, string $fieldName): QueryOneBuilder
+    {
+        return new QueryToOne(
+            $this->schemas,
+            $this->retrieve($modelOrResourceId),
+            $this->schema->belongsTo($fieldName)
+        );
+    }
+
+    /**
+     * @inheritDoc
+     */
     public function create(): ResourceBuilder
     {
-        return new Hydrator(
+        return new ModelHydrator(
             $this->schema,
             $this->schema->newInstance()
         );
@@ -151,9 +189,9 @@ class Repository implements
      */
     public function update($modelOrResourceId): ResourceBuilder
     {
-        return new Hydrator(
+        return new ModelHydrator(
             $this->schema,
-            $this->findOrFail($modelOrResourceId)
+            $this->retrieve($modelOrResourceId)
         );
     }
 
@@ -162,7 +200,7 @@ class Repository implements
      */
     public function delete($modelOrResourceId): void
     {
-        $model = $this->findOrFail($modelOrResourceId);
+        $model = $this->retrieve($modelOrResourceId);
 
         if (true !== $model->getConnection()->transaction(fn() => $model->forceDelete())) {
             throw new RuntimeException('Failed to delete resource.');
@@ -170,10 +208,22 @@ class Repository implements
     }
 
     /**
+     * @inheritDoc
+     */
+    public function modifyToOne($modelOrResourceId, string $fieldName): ToOneBuilder
+    {
+        return new ToOneHydrator(
+            $this->schemas,
+            $this->retrieve($modelOrResourceId),
+            $this->schema->belongsTo($fieldName)
+        );
+    }
+
+    /**
      * @param Model|string $modelOrResourceId
      * @return Model
      */
-    private function findOrFail($modelOrResourceId): Model
+    private function retrieve($modelOrResourceId): Model
     {
         if ($modelOrResourceId instanceof $this->model) {
             return $modelOrResourceId;

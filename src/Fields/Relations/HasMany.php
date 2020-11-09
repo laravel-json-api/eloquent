@@ -19,6 +19,7 @@ declare(strict_types=1);
 
 namespace LaravelJsonApi\Eloquent\Fields\Relations;
 
+use Illuminate\Database\Eloquent\Model;
 use LaravelJsonApi\Core\Support\Str;
 
 class HasMany extends Relation
@@ -42,6 +43,22 @@ class HasMany extends Relation
     public function toOne(): bool
     {
         return false;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function mustExist(): bool
+    {
+        return true;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function fill(Model $model, $value): void
+    {
+        // TODO: Implement fill() method.
     }
 
     /**

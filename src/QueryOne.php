@@ -109,7 +109,7 @@ class QueryOne implements QueryOneBuilderContract
     /**
      * @inheritDoc
      */
-    public function first()
+    public function first(): ?object
     {
         if ($this->model && empty($this->filters)) {
             return $this->schema->loader()

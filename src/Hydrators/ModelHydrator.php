@@ -1,5 +1,5 @@
 <?php
-/**
+/*
  * Copyright 2020 Cloud Creativity Limited
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,7 +17,7 @@
 
 declare(strict_types=1);
 
-namespace LaravelJsonApi\Eloquent;
+namespace LaravelJsonApi\Eloquent\Hydrators;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
@@ -26,9 +26,11 @@ use LaravelJsonApi\Contracts\Schema\Attribute;
 use LaravelJsonApi\Contracts\Store\ResourceBuilder;
 use LaravelJsonApi\Core\Query\IncludePaths;
 use LaravelJsonApi\Eloquent\Contracts\Fillable;
+use LaravelJsonApi\Eloquent\Fields\Relations\Relation;
+use LaravelJsonApi\Eloquent\Schema;
 use RuntimeException;
 
-class Hydrator implements ResourceBuilder
+class ModelHydrator implements ResourceBuilder
 {
 
     /**
@@ -88,7 +90,7 @@ class Hydrator implements ResourceBuilder
     /**
      * @inheritDoc
      */
-    public function store(array $validatedData)
+    public function store(array $validatedData): object
     {
         if (!$this->request) {
             $this->request = \request();
@@ -113,7 +115,9 @@ class Hydrator implements ResourceBuilder
     {
         $this->model->getConnection()->transaction(function () use ($validatedData) {
             $this->fillAttributes($validatedData);
+            $deferred = $this->fillRelationships($validatedData);
             $this->persist();
+            $this->fillDeferredRelationships($deferred, $validatedData);
         });
 
         return $this->model;
@@ -146,6 +150,61 @@ class Hydrator implements ResourceBuilder
     {
         if (true !== $attribute->isReadOnly($this->request)) {
             $attribute->fill($this->model, $value);
+        }
+    }
+
+    /**
+     * Hydrate JSON API relationships into the model.
+     *
+     * @param array $validatedData
+     * @return array
+     *      relationships that have to be filled after the model is saved.
+     */
+    private function fillRelationships(array $validatedData): array
+    {
+        $defer = [];
+
+        /** @var Relation $field */
+        foreach ($this->schema->relationships() as $field) {
+            if ($field->mustExist()) {
+                $defer[] = $field;
+                continue;
+            }
+
+            if (array_key_exists($field->name(), $validatedData)) {
+                $this->fillRelationship($field, $validatedData[$field->name()]);
+            }
+        }
+
+        return $defer;
+    }
+
+    /**
+     * Fill relationships that were deferred until after the model was persisted.
+     *
+     * @param iterable $deferred
+     * @param array $validatedData
+     */
+    private function fillDeferredRelationships(iterable $deferred, array $validatedData): void
+    {
+        /** @var Relation $field */
+        foreach ($deferred as $field) {
+            if (array_key_exists($field->name(), $validatedData)) {
+                $this->fillRelationship($field, $validatedData[$field->name()]);
+            }
+        }
+    }
+
+    /**
+     * Fill a relationship value.
+     *
+     * @param Fillable $relation
+     * @param $value
+     */
+    private function fillRelationship(Fillable $relation, $value): void
+    {
+        if (true !== $relation->isReadOnly($this->request)) {
+            $relation->fill($this->model, $value);
         }
     }
 

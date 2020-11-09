@@ -20,11 +20,11 @@ declare(strict_types=1);
 namespace LaravelJsonApi\Eloquent;
 
 use Illuminate\Database\Eloquent\Model;
-use LaravelJsonApi\Contracts\Schema\Container;
 use LaravelJsonApi\Contracts\Store\Repository as RepositoryContract;
 use LaravelJsonApi\Core\Resolver\ResourceClass;
 use LaravelJsonApi\Core\Resolver\ResourceType;
 use LaravelJsonApi\Core\Schema\Schema as BaseSchema;
+use LaravelJsonApi\Eloquent\Fields\Relations\BelongsTo;
 use LogicException;
 
 abstract class Schema extends BaseSchema
@@ -53,16 +53,6 @@ abstract class Schema extends BaseSchema
      * @var array
      */
     protected array $with = [];
-
-    /**
-     * @var Container|null
-     */
-    private ?Container $container;
-
-    /**
-     * @var array|null
-     */
-    private ?array $fields = null;
 
     /**
      * Specify the callback to use to guess the resource type from the schema class.
@@ -119,11 +109,19 @@ abstract class Schema extends BaseSchema
     }
 
     /**
+     * @return Builder
+     */
+    public static function query(): Builder
+    {
+        return app(static::class)->newQuery();
+    }
+
+    /**
      * @inheritDoc
      */
     public function repository(): RepositoryContract
     {
-        return new Repository($this);
+        return new Repository($this->schemas(), $this);
     }
 
     /**
@@ -137,6 +135,14 @@ abstract class Schema extends BaseSchema
     }
 
     /**
+     * @return Builder
+     */
+    public function newQuery(): Builder
+    {
+        return new Builder($this, $this->newInstance()->newQuery());
+    }
+
+    /**
      * @return string
      */
     public function idName(): string
@@ -146,6 +152,26 @@ abstract class Schema extends BaseSchema
         }
 
         return $this->primaryKey = $this->newInstance()->getRouteKeyName();
+    }
+
+    /**
+     * Get an Eloquent belongs-to field.
+     *
+     * @param string $fieldName
+     * @return BelongsTo
+     */
+    public function belongsTo(string $fieldName): BelongsTo
+    {
+        $relation = $this->relationship($fieldName);
+
+        if ($relation instanceof BelongsTo) {
+            return $relation;
+        }
+
+        throw new LogicException(sprintf(
+            'Expecting relationships %s to be an Eloquent to-one relationship.',
+            $fieldName
+        ));
     }
 
     /**

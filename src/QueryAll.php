@@ -19,7 +19,6 @@ declare(strict_types=1);
 
 namespace LaravelJsonApi\Eloquent;
 
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\LazyCollection;
 use LaravelJsonApi\Contracts\Pagination\Page;
 use LaravelJsonApi\Contracts\Query\QueryParameters as QueryParametersContract;
@@ -87,7 +86,7 @@ class QueryAll implements QueryBuilderContract
     /**
      * @inheritDoc
      */
-    public function first(): ?Model
+    public function first(): ?object
     {
         return $this->query->first();
     }

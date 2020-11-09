@@ -45,6 +45,11 @@ abstract class Attribute implements AttributeContract, Fillable, Selectable, Sor
     private string $column;
 
     /**
+     * @var bool
+     */
+    private bool $force = false;
+
+    /**
      * @var Closure|null
      */
     private ?Closure $deserializer = null;
@@ -97,11 +102,28 @@ abstract class Attribute implements AttributeContract, Fillable, Selectable, Sor
     }
 
     /**
+     * @return $this
+     */
+    public function forceFill(): self
+    {
+        $this->force = true;
+
+        return $this;
+    }
+
+    /**
      * @inheritDoc
      */
     public function fill(Model $model, $value): void
     {
-        $model->{$this->column()} = $this->deserialize($model, $value);
+        $value = $this->deserialize($model, $value);
+
+        if ($this->force) {
+            $model->forceFill([$this->column() => $value]);
+            return;
+        }
+
+        $model->fill([$this->column() => $value]);
     }
 
     /**

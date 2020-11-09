@@ -27,6 +27,10 @@
         {
             "type": "path",
             "url": "../laravel"
+        },
+        {
+            "type": "path",
+            "url": "../spec"
         }
     ],
     "require": {

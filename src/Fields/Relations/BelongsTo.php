@@ -19,7 +19,11 @@ declare(strict_types=1);
 
 namespace LaravelJsonApi\Eloquent\Fields\Relations;
 
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo as EloquentBelongsTo;
+use LaravelJsonApi\Core\Document\ResourceIdentifier;
 use LaravelJsonApi\Core\Support\Str;
+use LogicException;
 
 class BelongsTo extends Relation
 {
@@ -33,7 +37,7 @@ class BelongsTo extends Relation
      */
     public static function make(string $fieldName, string $relation = null): BelongsTo
     {
-        return new self($fieldName, $relation);
+        return new static($fieldName, $relation);
     }
 
     /**
@@ -42,6 +46,66 @@ class BelongsTo extends Relation
     public function toOne(): bool
     {
         return true;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function mustExist(): bool
+    {
+        return false;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function fill(Model $model, $value): void
+    {
+        $relation = $model->{$this->relation()}();
+
+        if (!$relation instanceof EloquentBelongsTo) {
+            throw new LogicException('Expecting an Eloquent belongs-to relation.');
+        }
+
+        if ($related = $this->find($value)) {
+            $relation->associate($related);
+        } else {
+            $relation->disassociate();
+        }
+    }
+
+    /**
+     * Replace the relationship.
+     *
+     * @param Model $model
+     * @param $value
+     * @return Model|null
+     */
+    public function replace(Model $model, $value): ?Model
+    {
+        $this->fill($model, $value);
+        $model->save();
+
+        return $model->getRelation($this->relation());
+    }
+
+    /**
+     * @param array|null $value
+     * @return Model|null
+     */
+    protected function find(?array $value): ?Model
+    {
+        if (is_null($value)) {
+            return null;
+        }
+
+        $identifier = ResourceIdentifier::fromArray($value);
+
+        return $this
+            ->schemas()
+            ->schemaFor($identifier->type())
+            ->repository()
+            ->findOrFail($identifier->id());
     }
 
     /**
