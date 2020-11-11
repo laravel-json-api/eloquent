@@ -22,9 +22,13 @@ namespace App\Schemas;
 use App\Models\User;
 use LaravelJsonApi\Eloquent\Contracts\Paginator;
 use LaravelJsonApi\Eloquent\Fields\DateTime;
+use LaravelJsonApi\Eloquent\Fields\ID;
+use LaravelJsonApi\Eloquent\Fields\Relations\BelongsTo;
+use LaravelJsonApi\Eloquent\Fields\Relations\BelongsToMany;
 use LaravelJsonApi\Eloquent\Fields\Relations\HasOne;
 use LaravelJsonApi\Eloquent\Fields\Str;
 use LaravelJsonApi\Eloquent\Filters\Where;
+use LaravelJsonApi\Eloquent\Filters\WhereIn;
 use LaravelJsonApi\Eloquent\Schema;
 
 class UserSchema extends Schema
@@ -43,10 +47,13 @@ class UserSchema extends Schema
     public function fields(): array
     {
         return [
+            ID::make(),
+            BelongsTo::make('country'),
             DateTime::make('createdAt')->readOnly(),
             Str::make('email'),
             Str::make('name'),
             HasOne::make('phone'),
+            BelongsToMany::make('roles')->fields(new RoleUserPivot()),
             DateTime::make('updatedAt')->readOnly(),
         ];
     }
@@ -57,6 +64,7 @@ class UserSchema extends Schema
     public function filters(): array
     {
         return [
+            WhereIn::make('id', $this->idColumn()),
             Where::make('email'),
         ];
     }

@@ -20,6 +20,8 @@ declare(strict_types=1);
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -34,8 +36,9 @@ class User extends Authenticatable
      * @var array
      */
     protected $fillable = [
-        'name',
+        'admin',
         'email',
+        'name',
         'password',
     ];
 
@@ -59,10 +62,29 @@ class User extends Authenticatable
     ];
 
     /**
+     * @return BelongsTo
+     */
+    public function country(): BelongsTo
+    {
+        return $this->belongsTo(Country::class);
+    }
+
+    /**
      * @return HasOne
      */
     public function phone(): HasOne
     {
         return $this->hasOne(Phone::class);
+    }
+
+    /**
+     * @return BelongsToMany
+     */
+    public function roles(): BelongsToMany
+    {
+        return $this
+            ->belongsToMany(Role::class)
+            ->withPivot('approved')
+            ->withTimestamps();
     }
 }

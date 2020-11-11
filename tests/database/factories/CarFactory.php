@@ -17,31 +17,31 @@
 
 declare(strict_types=1);
 
-namespace LaravelJsonApi\Eloquent\Fields\Concerns;
+namespace Database\Factories;
 
-trait EagerLoadable
+use App\Models\Car;
+use App\Models\Mechanic;
+use Illuminate\Database\Eloquent\Factories\Factory;
+
+class CarFactory extends Factory
 {
+    /**
+     * The name of the factory's corresponding model.
+     *
+     * @var string
+     */
+    protected $model = Car::class;
 
     /**
-     * @var bool
+     * Define the model's default state.
+     *
+     * @return array
      */
-    private bool $includePath = true;
-
-    /**
-     * @return $this
-     */
-    public function cannotEagerLoad(): self
+    public function definition()
     {
-        $this->includePath = false;
-
-        return $this;
-    }
-
-    /**
-     * @return bool
-     */
-    public function isIncludePath(): bool
-    {
-        return $this->includePath;
+        return [
+            'mechanic_id' => Mechanic::factory(),
+            'model' => $this->faker->colorName,
+        ];
     }
 }

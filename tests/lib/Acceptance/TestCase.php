@@ -37,7 +37,14 @@ class TestCase extends BaseTestCase
         $this->loadMigrationsFrom(__DIR__ . '/../../database/migrations');
 
         $this->app->singleton(SchemaContainerContract::class, fn($container) => new SchemaContainer($container, [
+            Schemas\CarOwnerSchema::class,
+            Schemas\CarSchema::class,
+            Schemas\CommentSchema::class,
+            Schemas\CountrySchema::class,
+            Schemas\MechanicSchema::class,
             Schemas\PhoneSchema::class,
+            Schemas\PostSchema::class,
+            Schemas\RoleSchema::class,
             Schemas\UserSchema::class,
         ]));
     }

@@ -22,17 +22,19 @@ namespace LaravelJsonApi\Eloquent\Fields;
 use Closure;
 use Illuminate\Database\Eloquent\Model;
 use LaravelJsonApi\Contracts\Schema\Attribute as AttributeContract;
+use LaravelJsonApi\Core\Schema\Concerns\Sortable;
+use LaravelJsonApi\Core\Schema\Concerns\SparseField;
 use LaravelJsonApi\Core\Support\Str;
 use LaravelJsonApi\Eloquent\Contracts\Fillable;
 use LaravelJsonApi\Eloquent\Contracts\Selectable;
-use LaravelJsonApi\Eloquent\Contracts\Sortable;
+use LaravelJsonApi\Eloquent\Contracts\Sortable as SortableContract;
 
-abstract class Attribute implements AttributeContract, Fillable, Selectable, Sortable
+abstract class Attribute implements AttributeContract, Fillable, Selectable, SortableContract
 {
 
-    use Concerns\Sortable;
+    use Sortable;
     use Concerns\ReadOnly;
-    use Concerns\SparseField;
+    use SparseField;
 
     /**
      * @var string

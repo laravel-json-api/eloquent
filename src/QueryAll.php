@@ -19,12 +19,13 @@ declare(strict_types=1);
 
 namespace LaravelJsonApi\Eloquent;
 
+use Illuminate\Support\Collection;
 use Illuminate\Support\LazyCollection;
 use LaravelJsonApi\Contracts\Pagination\Page;
 use LaravelJsonApi\Contracts\Query\QueryParameters as QueryParametersContract;
-use LaravelJsonApi\Contracts\Store\QueryAllBuilder as QueryBuilderContract;
+use LaravelJsonApi\Contracts\Store\QueryAllBuilder;
 
-class QueryAll implements QueryBuilderContract
+class QueryAll implements QueryAllBuilder
 {
 
     /**
@@ -106,6 +107,14 @@ class QueryAll implements QueryBuilderContract
     /**
      * @inheritDoc
      */
+    public function get(): Collection
+    {
+        return $this->query->get();
+    }
+
+    /**
+     * @inheritDoc
+     */
     public function cursor(): LazyCollection
     {
         return $this->query->cursor();
@@ -125,7 +134,7 @@ class QueryAll implements QueryBuilderContract
     public function getOrPaginate(?array $page): iterable
     {
         if (empty($page)) {
-            return $this->cursor();
+            return $this->get();
         }
 
         return $this->paginate($page);

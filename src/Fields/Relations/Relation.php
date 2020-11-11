@@ -21,18 +21,20 @@ namespace LaravelJsonApi\Eloquent\Fields\Relations;
 
 use LaravelJsonApi\Contracts\Schema\Relation as RelationContract;
 use LaravelJsonApi\Contracts\Schema\SchemaAware as SchemaAwareContract;
+use LaravelJsonApi\Core\Schema\Concerns\EagerLoadable;
+use LaravelJsonApi\Core\Schema\Concerns\Filterable;
+use LaravelJsonApi\Core\Schema\Concerns\SparseField;
 use LaravelJsonApi\Core\Schema\SchemaAware;
 use LaravelJsonApi\Core\Support\Str;
-use LaravelJsonApi\Eloquent\Contracts\Fillable;
-use LaravelJsonApi\Eloquent\Fields\Concerns\EagerLoadable;
-use LaravelJsonApi\Eloquent\Fields\Concerns\ReadOnly;
-use LaravelJsonApi\Eloquent\Fields\Concerns\SparseField;
+use LaravelJsonApi\Eloquent\Schema;
+use LogicException;
+use function sprintf;
 
-abstract class Relation implements RelationContract, Fillable, SchemaAwareContract
+abstract class Relation implements RelationContract, SchemaAwareContract
 {
 
     use EagerLoadable;
-    use ReadOnly;
+    use Filterable;
     use SchemaAware;
     use SparseField;
 
@@ -56,13 +58,6 @@ abstract class Relation implements RelationContract, Fillable, SchemaAwareContra
      * @var string|null
      */
     private ?string $inverse = null;
-
-    /**
-     * Does the model need to exist in the database before the relation is filled?
-     *
-     * @return bool
-     */
-    abstract public function mustExist(): bool;
 
     /**
      * Guess the inverse resource type.
@@ -96,13 +91,13 @@ abstract class Relation implements RelationContract, Fillable, SchemaAwareContra
      *
      * @return string
      */
-    public function relation(): string
+    public function relationName(): string
     {
         if ($this->relation) {
             return $this->relation;
         }
 
-        return $this->relation = $this->guessRelation();
+        return $this->relation = $this->guessRelationName();
     }
 
     /**
@@ -131,6 +126,27 @@ abstract class Relation implements RelationContract, Fillable, SchemaAwareContra
     }
 
     /**
+     * Get the schema for the inverse resource type.
+     *
+     * @return Schema
+     */
+    public function schema(): Schema
+    {
+        $schema = $this->schemas()->schemaFor(
+            $this->inverse()
+        );
+
+        if ($schema instanceof Schema) {
+            return $schema;
+        }
+
+        throw new LogicException(sprintf(
+            'Expecting inverse schema for resource type %s to be an Eloquent schema.',
+            $this->inverse()
+        ));
+    }
+
+    /**
      * @inheritDoc
      */
     public function toMany(): bool
@@ -143,7 +159,7 @@ abstract class Relation implements RelationContract, Fillable, SchemaAwareContra
      *
      * @return string
      */
-    private function guessRelation(): string
+    private function guessRelationName(): string
     {
         return Str::camel($this->name());
     }

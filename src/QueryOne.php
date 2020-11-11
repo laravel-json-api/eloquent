@@ -22,6 +22,7 @@ namespace LaravelJsonApi\Eloquent;
 use Illuminate\Database\Eloquent\Model;
 use LaravelJsonApi\Contracts\Query\QueryParameters as QueryParametersContract;
 use LaravelJsonApi\Contracts\Store\QueryOneBuilder as QueryOneBuilderContract;
+use LaravelJsonApi\Core\Query\IncludePaths;
 
 class QueryOne implements QueryOneBuilderContract
 {
@@ -52,9 +53,9 @@ class QueryOne implements QueryOneBuilderContract
     private ?array $filters = null;
 
     /**
-     * @var mixed|null
+     * @var IncludePaths|null
      */
-    private $includePaths = null;
+    private ?IncludePaths $includePaths = null;
 
     /**
      * QueryOne constructor.
@@ -101,7 +102,7 @@ class QueryOne implements QueryOneBuilderContract
      */
     public function with($includePaths): QueryOneBuilderContract
     {
-        $this->includePaths = $includePaths;
+        $this->includePaths = IncludePaths::nullable($includePaths);
 
         return $this;
     }
@@ -112,9 +113,11 @@ class QueryOne implements QueryOneBuilderContract
     public function first(): ?object
     {
         if ($this->model && empty($this->filters)) {
-            return $this->schema->loader()
-                ->using($this->model)
+            $this->schema->loader()
+                ->forModel($this->model)
                 ->loadMissing($this->includePaths);
+
+            return $this->model;
         }
 
         return $this->query

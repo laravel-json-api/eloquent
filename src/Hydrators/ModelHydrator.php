@@ -23,9 +23,12 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
 use LaravelJsonApi\Contracts\Query\QueryParameters as QueryParametersContract;
 use LaravelJsonApi\Contracts\Schema\Attribute;
+use LaravelJsonApi\Contracts\Schema\Field;
 use LaravelJsonApi\Contracts\Store\ResourceBuilder;
 use LaravelJsonApi\Core\Query\IncludePaths;
 use LaravelJsonApi\Eloquent\Contracts\Fillable;
+use LaravelJsonApi\Eloquent\Contracts\FillableToMany;
+use LaravelJsonApi\Eloquent\Contracts\FillableToOne;
 use LaravelJsonApi\Eloquent\Fields\Relations\Relation;
 use LaravelJsonApi\Eloquent\Schema;
 use RuntimeException;
@@ -100,7 +103,7 @@ class ModelHydrator implements ResourceBuilder
 
         if ($this->includePaths) {
             $this->schema->loader()
-                ->using($model)
+                ->forModel($model)
                 ->loadMissing($this->includePaths);
         }
 
@@ -131,26 +134,26 @@ class ModelHydrator implements ResourceBuilder
      */
     private function fillAttributes(array $validatedData): void
     {
-        /** @var Attribute $attribute */
+        /** @var Attribute|Fillable $attribute */
         foreach ($this->schema->attributes() as $attribute) {
-            if ($attribute instanceof Fillable && array_key_exists($attribute->name(), $validatedData)) {
-                $this->fillAttribute($attribute, $validatedData[$attribute->name()]);
+            if ($this->mustFill($attribute, $validatedData)) {
+                $attribute->fill($this->model, $validatedData[$attribute->name()]);
             }
         }
     }
 
     /**
-     * Fill an attribute value.
-     *
-     * @param Fillable $attribute
-     * @param $value
-     * @return void
+     * @param Field $field
+     * @param array $validatedData
+     * @return bool
      */
-    private function fillAttribute(Fillable $attribute, $value): void
+    private function mustFill(Field $field, array $validatedData): bool
     {
-        if (true !== $attribute->isReadOnly($this->request)) {
-            $attribute->fill($this->model, $value);
+        if ($field instanceof Fillable) {
+            return $field->isNotReadOnly($this->request) && array_key_exists($field->name(), $validatedData);
         }
+
+        return false;
     }
 
     /**
@@ -164,15 +167,15 @@ class ModelHydrator implements ResourceBuilder
     {
         $defer = [];
 
-        /** @var Relation $field */
+        /** @var Relation|Fillable $field */
         foreach ($this->schema->relationships() as $field) {
-            if ($field->mustExist()) {
+            if ($field instanceof FillableToMany || ($field instanceof FillableToOne && $field->mustExist())) {
                 $defer[] = $field;
                 continue;
             }
 
-            if (array_key_exists($field->name(), $validatedData)) {
-                $this->fillRelationship($field, $validatedData[$field->name()]);
+            if ($this->mustFill($field, $validatedData)) {
+                $field->fill($this->model, $validatedData[$field->name()]);
             }
         }
 
@@ -187,24 +190,11 @@ class ModelHydrator implements ResourceBuilder
      */
     private function fillDeferredRelationships(iterable $deferred, array $validatedData): void
     {
-        /** @var Relation $field */
+        /** @var Relation|Fillable $field */
         foreach ($deferred as $field) {
-            if (array_key_exists($field->name(), $validatedData)) {
-                $this->fillRelationship($field, $validatedData[$field->name()]);
+            if ($this->mustFill($field, $validatedData)) {
+                $field->fill($this->model, $validatedData[$field->name()]);
             }
-        }
-    }
-
-    /**
-     * Fill a relationship value.
-     *
-     * @param Fillable $relation
-     * @param $value
-     */
-    private function fillRelationship(Fillable $relation, $value): void
-    {
-        if (true !== $relation->isReadOnly($this->request)) {
-            $relation->fill($this->model, $value);
         }
     }
 

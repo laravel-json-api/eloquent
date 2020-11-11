@@ -20,15 +20,16 @@ declare(strict_types=1);
 namespace LaravelJsonApi\Eloquent;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\HasOne as EloquentHasOne;
-use Illuminate\Database\Eloquent\Relations\Relation as EloquentRelation;
 use Illuminate\Database\Eloquent\Relations\BelongsTo as EloquentBelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasOne as EloquentHasOne;
+use Illuminate\Database\Eloquent\Relations\HasOneThrough as EloquentHasOneThrough;
+use Illuminate\Database\Eloquent\Relations\Relation as EloquentRelation;
 use LaravelJsonApi\Contracts\Query\QueryParameters;
 use LaravelJsonApi\Contracts\Query\QueryParameters as QueryParametersContract;
-use LaravelJsonApi\Contracts\Schema\Container;
 use LaravelJsonApi\Contracts\Store\QueryOneBuilder;
 use LaravelJsonApi\Contracts\Store\QueryOneBuilder as QueryOneBuilderContract;
-use LaravelJsonApi\Eloquent\Fields\Relations\BelongsTo;
+use LaravelJsonApi\Core\Query\IncludePaths;
+use LaravelJsonApi\Eloquent\Fields\Relations\ToOne;
 use LogicException;
 use function sprintf;
 
@@ -36,19 +37,14 @@ class QueryToOne implements QueryOneBuilder
 {
 
     /**
-     * @var Container
-     */
-    private Container $schemas;
-
-    /**
      * @var Model
      */
     private Model $model;
 
     /**
-     * @var BelongsTo
+     * @var ToOne
      */
-    private BelongsTo $relation;
+    private ToOne $relation;
 
     /**
      * @var array|null
@@ -56,20 +52,18 @@ class QueryToOne implements QueryOneBuilder
     private ?array $filters = null;
 
     /**
-     * @var mixed|null
+     * @var IncludePaths|null
      */
-    private $includePaths = null;
+    private ?IncludePaths $includePaths = null;
 
     /**
      * QueryToOne constructor.
      *
-     * @param Container $schemas
      * @param Model $model
-     * @param BelongsTo $relation
+     * @param ToOne $relation
      */
-    public function __construct(Container $schemas, Model $model, BelongsTo $relation)
+    public function __construct(Model $model, ToOne $relation)
     {
-        $this->schemas = $schemas;
         $this->model = $model;
         $this->relation = $relation;
     }
@@ -99,7 +93,7 @@ class QueryToOne implements QueryOneBuilder
      */
     public function with($includePaths): QueryOneBuilderContract
     {
-        $this->includePaths = $includePaths;
+        $this->includePaths = IncludePaths::nullable($includePaths);
 
         return $this;
     }
@@ -113,11 +107,7 @@ class QueryToOne implements QueryOneBuilder
             return $this->related();
         }
 
-        return $this
-            ->query()
-            ->filter($this->filters)
-            ->with($this->includePaths)
-            ->first();
+        return $this->prepareQuery()->first();
     }
 
     /**
@@ -125,17 +115,34 @@ class QueryToOne implements QueryOneBuilder
      */
     public function query(): Builder
     {
-        return new Builder($this->inverse(), $this->relation());
+        return new Builder(
+            $this->relation->schema(),
+            $this->getRelation(),
+            $this->relation
+        );
+    }
+
+    /**
+     * @return Builder
+     */
+    private function prepareQuery(): Builder
+    {
+        return $this->query()
+            ->filter($this->filters)
+            ->with($this->includePaths);
     }
 
     /**
      * @return EloquentRelation
      */
-    private function relation(): EloquentRelation
+    private function getRelation(): EloquentRelation
     {
         $relation = $this->model->{$this->relation->name()}();
 
-        if ($relation instanceof EloquentHasOne || $relation instanceof EloquentBelongsTo) {
+        if ($relation instanceof EloquentHasOne ||
+            $relation instanceof EloquentBelongsTo ||
+            $relation instanceof EloquentHasOneThrough
+        ) {
             return $relation;
         }
 
@@ -156,37 +163,19 @@ class QueryToOne implements QueryOneBuilder
     }
 
     /**
-     * @return Schema
-     */
-    private function inverse(): Schema
-    {
-        $schema = $this->schemas->schemaFor(
-            $this->relation->inverse()
-        );
-
-        if ($schema instanceof Schema) {
-            return $schema;
-        }
-
-        throw new LogicException(sprintf(
-            'Expecting inverse schema for resource type %s to be an Eloquent schema.',
-            $this->relation->inverse()
-        ));
-    }
-
-    /**
      * Return the already loaded related model.
      *
      * @return Model|null
      */
     private function related(): ?Model
     {
-        if ($related = $this->model->getRelation($this->relation->name())) {
-            return $this
-                ->inverse()
+        if ($related = $this->model->getRelation($this->relation->relationName())) {
+            $this->relation->schema()
                 ->loader()
-                ->using($related)
+                ->forModel($related)
                 ->loadMissing($this->includePaths);
+
+            return $related;
         }
 
         return null;

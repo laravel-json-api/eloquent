@@ -1,5 +1,5 @@
 <?php
-/**
+/*
  * Copyright 2020 Cloud Creativity Limited
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,35 +17,26 @@
 
 declare(strict_types=1);
 
-namespace LaravelJsonApi\Eloquent\Fields\Concerns;
+namespace LaravelJsonApi\Eloquent\Filters;
 
-trait SparseField
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use LogicException;
+
+class WherePivotIn extends WhereIn
 {
 
     /**
-     * @var bool
+     * @inheritDoc
      */
-    private bool $sparseField = true;
-
-    /**
-     * Mark the field as not allowed in sparse field sets.
-     *
-     * @return $this
-     */
-    public function notSparseField(): self
+    public function apply($query, $value)
     {
-        $this->sparseField = false;
+        if ($query instanceof BelongsToMany) {
+            return $query->wherePivotIn(
+                $this->column(),
+                $this->deserialize($value)
+            );
+        }
 
-        return $this;
-    }
-
-    /**
-     * Can the field be listed in sparse field sets?
-     *
-     * @return bool
-     */
-    public function isSparseField(): bool
-    {
-        return true === $this->sparseField;
+        throw new LogicException('Expecting pivot filter to be used with a belongs-to-many relation.');
     }
 }

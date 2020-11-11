@@ -21,10 +21,12 @@ namespace LaravelJsonApi\Eloquent;
 
 use Illuminate\Contracts\Support\Arrayable;
 use Illuminate\Database\Eloquent\Builder as EloquentBuilder;
-use Illuminate\Database\Eloquent\Relations\Relation;
+use Illuminate\Database\Eloquent\Relations\Relation as EloquentRelation;
+use Illuminate\Support\LazyCollection;
 use Illuminate\Support\Traits\ForwardsCalls;
 use InvalidArgumentException;
 use LaravelJsonApi\Contracts\Pagination\Page;
+use LaravelJsonApi\Contracts\Schema\Relation as SchemaRelation;
 use LaravelJsonApi\Core\Query\IncludePaths;
 use LaravelJsonApi\Core\Query\QueryParameters;
 use LaravelJsonApi\Core\Query\RelationshipPath;
@@ -52,9 +54,14 @@ class Builder
     private Schema $schema;
 
     /**
-     * @var EloquentBuilder|Relation
+     * @var EloquentBuilder|EloquentRelation
      */
     private $query;
+
+    /**
+     * @var SchemaRelation|null
+     */
+    private ?SchemaRelation $relation;
 
     /**
      * @var QueryParameters
@@ -67,15 +74,30 @@ class Builder
     private bool $singular = false;
 
     /**
+     * @var bool
+     */
+    private bool $eagerLoading = false;
+
+    /**
      * Builder constructor.
      *
      * @param Schema $schema
-     * @param EloquentBuilder|Relation $query
+     * @param EloquentBuilder|EloquentRelation $query
+     * @param SchemaRelation|null $relation
      */
-    public function __construct(Schema $schema, $query)
+    public function __construct(Schema $schema, $query, SchemaRelation $relation = null)
     {
+        if ($query instanceof EloquentRelation && !$relation) {
+            throw new InvalidArgumentException('Expecting a schema relation when querying an Eloquent relation.');
+        }
+
+        if ($relation && !$query instanceof EloquentRelation) {
+            throw new InvalidArgumentException('Expecting an Eloquent relation when querying a schema relation.');
+        }
+
         $this->schema = $schema;
         $this->query = $query;
+        $this->relation = $relation;
         $this->parameters = new QueryParameters();
     }
 
@@ -108,11 +130,13 @@ class Builder
             return $this;
         }
 
-        $actual = [];
+        $keys = [];
 
-        foreach ($this->schema->filters() as $filter) {
+        foreach ($this->filters() as $filter) {
             if ($filter instanceof Filter) {
-                if (array_key_exists($key = $filter->key(), $filters)) {
+                $keys[] = $key = $filter->key();
+
+                if (array_key_exists($key, $filters)) {
                     $filter->apply($this->query, $value = $filters[$key]);
                     $actual[$key] = $value;
 
@@ -124,12 +148,22 @@ class Builder
             }
 
             throw new RuntimeException(sprintf(
-                'Schema %s has a filter that does not implement the filter contract.',
+                'Schema %s has a filter that does not implement the Eloquent filter contract.',
                 $this->schema->type()
             ));
         }
 
-        $this->parameters->withFilters($actual);
+        $unrecognised = collect($filters)->keys()->diff($keys);
+
+        if ($unrecognised->isNotEmpty()) {
+            throw new RuntimeException(sprintf(
+                'Encountered filters that are not defined on the %s schema: %s',
+                $this->schema->type(),
+                $unrecognised->implode(', ')
+            ));
+        }
+
+        $this->parameters->withFilters($filters);
 
         return $this;
     }
@@ -151,6 +185,11 @@ class Builder
 
         /** @var SortField $sort */
         foreach ($fields as $sort) {
+            if ('id' === $sort->name()) {
+                $this->orderByResourceId($sort->getDirection());
+                continue;
+            }
+
             $field = $this->schema->attribute($sort->name());
 
             if ($field->isSortable() && $field instanceof Sortable) {
@@ -183,9 +222,15 @@ class Builder
             return $this;
         }
 
-        $this->schema->loader()
-            ->using($this->query)
-            ->with($includePaths);
+        $includePaths = IncludePaths::cast($includePaths);
+
+        if ($includePaths->isNotEmpty()) {
+            $this->schema->loader()
+                ->using($this->query)
+                ->with($includePaths);
+
+            $this->eagerLoading = true;
+        }
 
         $this->parameters->withIncludePaths($includePaths);
 
@@ -201,7 +246,7 @@ class Builder
     public function whereResourceId($resourceId): self
     {
         $column = $this->query->qualifyColumn(
-            $this->schema->idName()
+            $this->schema->idColumn()
         );
 
         if (is_string($resourceId)) {
@@ -218,6 +263,35 @@ class Builder
     }
 
     /**
+     * Add an "order by" clause to the query for the resource id column.
+     *
+     * @param string $direction
+     * @return $this
+     */
+    public function orderByResourceId(string $direction = 'asc'): self
+    {
+        $column = $this->query->qualifyColumn(
+            $this->schema->idColumn()
+        );
+
+        $this->query->orderBy($column, $direction);
+
+        return $this;
+    }
+
+    /**
+     * Add a descending "order by" clause to the query for the resource id column.
+     *
+     * @return $this
+     */
+    public function orderByResourceIdDescending(): self
+    {
+        $this->orderByResourceId('desc');
+
+        return $this;
+    }
+
+    /**
      * Has a singular filter been applied?
      *
      * @return bool
@@ -225,6 +299,26 @@ class Builder
     public function isSingular(): bool
     {
         return $this->singular;
+    }
+
+    /**
+     * Execute the query as a cursor.
+     *
+     * Eager loading does not work on a lazy collection. Therefore, if any include
+     * paths have been used, we must call `get()` instead of `cursor()`.
+     *
+     * The advantage of using this method is that we get the memory performance
+     * benefit if the client has not requested any eager loading.
+     *
+     * @return LazyCollection
+     */
+    public function cursor(): LazyCollection
+    {
+        if ($this->eagerLoading) {
+            return new LazyCollection($this->get());
+        }
+
+        return $this->query->cursor();
     }
 
     /**
@@ -269,11 +363,22 @@ class Builder
      */
     public function toBase(): EloquentBuilder
     {
-        if ($this->query instanceof Relation) {
+        if ($this->query instanceof EloquentRelation) {
             return $this->query->getQuery();
         }
 
         return $this->query;
     }
 
+    /**
+     * @return iterable
+     */
+    private function filters(): iterable
+    {
+        yield from $this->schema->filters();
+
+        if ($this->relation) {
+            yield from $this->relation->filters();
+        }
+    }
 }

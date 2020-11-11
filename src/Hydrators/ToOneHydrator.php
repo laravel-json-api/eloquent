@@ -21,20 +21,15 @@ namespace LaravelJsonApi\Eloquent\Hydrators;
 
 use Illuminate\Database\Eloquent\Model;
 use LaravelJsonApi\Contracts\Query\QueryParameters;
-use LaravelJsonApi\Contracts\Schema\Container as SchemaContainer;
 use LaravelJsonApi\Contracts\Store\ToOneBuilder;
 use LaravelJsonApi\Core\Query\IncludePaths;
-use LaravelJsonApi\Eloquent\Fields\Relations\BelongsTo;
-use LaravelJsonApi\Eloquent\Schema;
-use LogicException;
+use LaravelJsonApi\Core\Support\Str;
+use LaravelJsonApi\Eloquent\Contracts\FillableToOne;
+use LaravelJsonApi\Eloquent\Fields\Relations\ToOne;
+use UnexpectedValueException;
 
 class ToOneHydrator implements ToOneBuilder
 {
-
-    /**
-     * @var SchemaContainer
-     */
-    private SchemaContainer $schemas;
 
     /**
      * @var Model
@@ -42,9 +37,9 @@ class ToOneHydrator implements ToOneBuilder
     private Model $model;
 
     /**
-     * @var BelongsTo
+     * @var ToOne|FillableToOne
      */
-    private BelongsTo $relation;
+    private ToOne $relation;
 
     /**
      * @var IncludePaths|null
@@ -54,13 +49,18 @@ class ToOneHydrator implements ToOneBuilder
     /**
      * ToOneHydrator constructor.
      *
-     * @param SchemaContainer $schemas
      * @param Model $model
-     * @param BelongsTo $relation
+     * @param ToOne $relation
      */
-    public function __construct(SchemaContainer $schemas, Model $model, BelongsTo $relation)
+    public function __construct(Model $model, ToOne $relation)
     {
-        $this->schemas = $schemas;
+        if (!$relation instanceof FillableToOne) {
+            throw new UnexpectedValueException(sprintf(
+                'Relation %s cannot be hydrated.',
+                Str::dasherize(class_basename($relation))
+            ));
+        }
+
         $this->model = $model;
         $this->relation = $relation;
     }
@@ -80,7 +80,7 @@ class ToOneHydrator implements ToOneBuilder
      */
     public function with($includePaths): ToOneBuilder
     {
-        $this->includePaths = IncludePaths::cast($includePaths);
+        $this->includePaths = IncludePaths::nullable($includePaths);
 
         return $this;
     }
@@ -90,34 +90,17 @@ class ToOneHydrator implements ToOneBuilder
      */
     public function replace(?array $identifier): ?object
     {
-        $related = $this->relation->replace($this->model, $identifier);
+        $related = $this->model->getConnection()->transaction(
+            fn() => $this->relation->replace($this->model, $identifier)
+        );
 
         if ($this->includePaths && $related) {
-            $this->inverse()->loader()->using($related)->loadMissing(
+            $this->relation->schema()->loader()->forModel($related)->loadMissing(
                 $this->includePaths
             );
         }
 
         return $related;
-    }
-
-    /**
-     * @return Schema
-     */
-    private function inverse(): Schema
-    {
-        $schema = $this->schemas->schemaFor(
-            $this->relation->inverse()
-        );
-
-        if ($schema instanceof Schema) {
-            return $schema;
-        }
-
-        throw new LogicException(sprintf(
-            'Expecting inverse schema for resource type %s to be an Eloquent schema.',
-            $this->relation->inverse()
-        ));
     }
 
 }

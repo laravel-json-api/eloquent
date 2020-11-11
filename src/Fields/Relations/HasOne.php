@@ -22,10 +22,26 @@ namespace LaravelJsonApi\Eloquent\Fields\Relations;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasOne as EloquentHasOne;
 use Illuminate\Database\Eloquent\Relations\MorphOne as EloquentMorphOne;
+use LaravelJsonApi\Eloquent\Contracts\FillableToOne;
+use LaravelJsonApi\Eloquent\Fields\Concerns\ReadOnly;
 use LogicException;
 
-class HasOne extends BelongsTo
+class HasOne extends ToOne implements FillableToOne
 {
+
+    use ReadOnly;
+
+    /**
+     * Create a has-one relation.
+     *
+     * @param string $fieldName
+     * @param string|null $relation
+     * @return HasOne
+     */
+    public static function make(string $fieldName, string $relation = null): HasOne
+    {
+        return new self($fieldName, $relation);
+    }
 
     /**
      * @inheritDoc
@@ -40,35 +56,31 @@ class HasOne extends BelongsTo
      */
     public function fill(Model $model, $value): void
     {
-        $relation = $model->{$this->relation()}();
+        $relation = $model->{$this->relationName()}();
 
         if (!$relation instanceof EloquentHasOne && !$relation instanceof EloquentMorphOne) {
             throw new LogicException('Expecting an Eloquent has-one or morph-one relation.');
         }
 
         /** @var Model|null $current */
-        $current = $model->{$this->relation()};
+        $current = $model->{$this->relationName()};
         $related = $this->find($value);
 
         if ($this->willChange($current, $related)) {
             $current ? $this->clear($relation, $current) : null;
             $related ? $relation->save($related) : null;
-            $model->setRelation($this->relation(), $related);
+            $model->setRelation($this->relationName(), $related);
         }
     }
 
     /**
-     * Replace the relationship.
-     *
-     * @param Model $model
-     * @param $value
-     * @return Model|null
+     * @inheritDoc
      */
     public function replace(Model $model, $value): ?Model
     {
         $this->fill($model, $value);
 
-        return $model->getRelation($this->relation());
+        return $model->getRelation($this->relationName());
     }
 
     /**

@@ -48,11 +48,11 @@ class Where implements Filter
      *
      * @param string $name
      * @param string|null $column
-     * @return Where
+     * @return static
      */
     public static function make(string $name, string $column = null): self
     {
-        return new self($name, $column);
+        return new static($name, $column);
     }
 
     /**
@@ -135,10 +135,26 @@ class Where implements Filter
     public function apply($query, $value)
     {
         return $query->where(
-            $query->qualifyColumn($this->column),
-            $this->operator,
+            $query->qualifyColumn($this->column()),
+            $this->operator(),
             $this->deserialize($value)
         );
+    }
+
+    /**
+     * @return string
+     */
+    protected function column(): string
+    {
+        return $this->column;
+    }
+
+    /**
+     * @return string
+     */
+    protected function operator(): string
+    {
+        return $this->operator;
     }
 
     /**

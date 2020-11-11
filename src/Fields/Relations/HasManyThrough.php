@@ -1,5 +1,5 @@
 <?php
-/**
+/*
  * Copyright 2020 Cloud Creativity Limited
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,33 +17,20 @@
 
 declare(strict_types=1);
 
-namespace LaravelJsonApi\Eloquent\Fields\Concerns;
+namespace LaravelJsonApi\Eloquent\Fields\Relations;
 
-trait Sortable
+class HasManyThrough extends ToMany
 {
 
     /**
-     * @var bool
-     */
-    private bool $sortable = false;
-
-    /**
-     * Mark the attribute as sortable.
+     * Create a has-many-through relation.
      *
-     * @return $this
+     * @param string $fieldName
+     * @param string|null $relation
+     * @return HasManyThrough
      */
-    public function sortable(): self
+    public static function make(string $fieldName, string $relation = null): HasManyThrough
     {
-        $this->sortable = true;
-
-        return $this;
-    }
-
-    /**
-     * @inheritDoc
-     */
-    public function isSortable(): bool
-    {
-        return $this->sortable;
+        return new self($fieldName, $relation);
     }
 }

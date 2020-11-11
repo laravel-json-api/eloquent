@@ -23,17 +23,22 @@ use Illuminate\Database\Eloquent\Model;
 use LaravelJsonApi\Contracts\Schema\Container as SchemaContainer;
 use LaravelJsonApi\Contracts\Store\CreatesResources;
 use LaravelJsonApi\Contracts\Store\DeletesResources;
+use LaravelJsonApi\Contracts\Store\ModifiesToMany;
 use LaravelJsonApi\Contracts\Store\ModifiesToOne;
 use LaravelJsonApi\Contracts\Store\QueriesAll;
 use LaravelJsonApi\Contracts\Store\QueriesOne;
+use LaravelJsonApi\Contracts\Store\QueriesToMany;
 use LaravelJsonApi\Contracts\Store\QueriesToOne;
 use LaravelJsonApi\Contracts\Store\QueryAllBuilder;
+use LaravelJsonApi\Contracts\Store\QueryManyBuilder;
 use LaravelJsonApi\Contracts\Store\QueryOneBuilder;
 use LaravelJsonApi\Contracts\Store\Repository as RepositoryContract;
 use LaravelJsonApi\Contracts\Store\ResourceBuilder;
+use LaravelJsonApi\Contracts\Store\ToManyBuilder;
 use LaravelJsonApi\Contracts\Store\ToOneBuilder;
 use LaravelJsonApi\Contracts\Store\UpdatesResources;
 use LaravelJsonApi\Eloquent\Hydrators\ModelHydrator;
+use LaravelJsonApi\Eloquent\Hydrators\ToManyHydrator;
 use LaravelJsonApi\Eloquent\Hydrators\ToOneHydrator;
 use LogicException;
 use RuntimeException;
@@ -45,16 +50,13 @@ class Repository implements
     QueriesAll,
     QueriesOne,
     QueriesToOne,
+    QueriesToMany,
     CreatesResources,
     UpdatesResources,
     DeletesResources,
-    ModifiesToOne
+    ModifiesToOne,
+    ModifiesToMany
 {
-
-    /**
-     * @var SchemaContainer
-     */
-    private SchemaContainer $schemas;
 
     /**
      * @var Schema
@@ -69,12 +71,10 @@ class Repository implements
     /**
      * Repository constructor.
      *
-     * @param SchemaContainer $schemas
      * @param Schema $schema
      */
-    public function __construct(SchemaContainer $schemas, Schema $schema)
+    public function __construct(Schema $schema)
     {
-        $this->schemas = $schemas;
         $this->schema = $schema;
         $this->model = $schema->newInstance();
     }
@@ -84,10 +84,11 @@ class Repository implements
      */
     public function find(string $resourceId): ?object
     {
-        return $this
-            ->query()
-            ->whereResourceId($resourceId)
-            ->first();
+        if ($this->schema->id()->match($resourceId)) {
+            return $this->query()->whereResourceId($resourceId)->first();
+        }
+
+        return null;
     }
 
     /**
@@ -109,14 +110,27 @@ class Repository implements
     /**
      * @inheritDoc
      */
+    public function findMany(array $resourceIds): iterable
+    {
+        $field = $this->schema->id();
+
+        $ids = collect($resourceIds)
+            ->filter(fn($resourceId) => $field->match($resourceId))
+            ->all();
+
+        return $this->query()->whereResourceId($ids)->get();
+    }
+
+    /**
+     * @inheritDoc
+     */
     public function exists(string $resourceId): bool
     {
-        // @TODO check the resource id against a regex querying the database.
+        if ($this->schema->id()->match($resourceId)) {
+            return $this->query()->whereResourceId($resourceId)->exists();
+        }
 
-        return $this
-            ->query()
-            ->whereResourceId($resourceId)
-            ->exists();
+        return false;
     }
 
     /**
@@ -145,7 +159,7 @@ class Repository implements
                 $this->schema,
                 $this->query(),
                 $modelOrResourceId,
-                strval($modelOrResourceId->{$this->schema->idName()})
+                strval($modelOrResourceId->{$this->schema->idColumn()})
             );
         }
 
@@ -167,9 +181,19 @@ class Repository implements
     public function queryToOne($modelOrResourceId, string $fieldName): QueryOneBuilder
     {
         return new QueryToOne(
-            $this->schemas,
             $this->retrieve($modelOrResourceId),
-            $this->schema->belongsTo($fieldName)
+            $this->schema->toOne($fieldName)
+        );
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function queryToMany($modelOrResourceId, string $fieldName): QueryManyBuilder
+    {
+        return new QueryToMany(
+            $this->retrieve($modelOrResourceId),
+            $this->schema->toMany($fieldName)
         );
     }
 
@@ -213,9 +237,19 @@ class Repository implements
     public function modifyToOne($modelOrResourceId, string $fieldName): ToOneBuilder
     {
         return new ToOneHydrator(
-            $this->schemas,
             $this->retrieve($modelOrResourceId),
-            $this->schema->belongsTo($fieldName)
+            $this->schema->toOne($fieldName)
+        );
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function modifyToMany($modelOrResourceId, string $fieldName): ToManyBuilder
+    {
+        return new ToManyHydrator(
+            $this->retrieve($modelOrResourceId),
+            $this->schema->toMany($fieldName)
         );
     }
 

@@ -19,14 +19,23 @@ declare(strict_types=1);
 
 namespace LaravelJsonApi\Eloquent\Fields\Relations;
 
+use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Database\Eloquent\Model;
-use LaravelJsonApi\Core\Support\Str;
+use Illuminate\Database\Eloquent\Relations\HasMany as EloquentHasMany;
+use Illuminate\Database\Eloquent\Relations\MorphMany as EloquentMorphMany;
+use LaravelJsonApi\Eloquent\Contracts\FillableToMany;
+use LaravelJsonApi\Eloquent\Fields\Concerns\ReadOnly;
+use LogicException;
+use UnexpectedValueException;
+use function sprintf;
 
-class HasMany extends Relation
+class HasMany extends ToMany implements FillableToMany
 {
 
+    use ReadOnly;
+
     /**
-     * Create a to-many relation.
+     * Create a has-many relation.
      *
      * @param string $fieldName
      * @param string|null $relation
@@ -40,35 +49,103 @@ class HasMany extends Relation
     /**
      * @inheritDoc
      */
-    public function toOne(): bool
-    {
-        return false;
-    }
-
-    /**
-     * @inheritDoc
-     */
-    public function mustExist(): bool
-    {
-        return true;
-    }
-
-    /**
-     * @inheritDoc
-     */
     public function fill(Model $model, $value): void
     {
-        // TODO: Implement fill() method.
+        if (is_array($value)) {
+            $this->replace($model, $value);
+            return;
+        }
+
+        throw new UnexpectedValueException('Expecting value to be an array of identifiers.');
     }
 
     /**
      * @inheritDoc
      */
-    protected function guessInverse(): string
+    public function replace(Model $model, array $identifiers): EloquentCollection
     {
-        return Str::dasherize(
-            Str::plural($this->name())
+        $models = $this->findMany($identifiers);
+
+        $this->sync($model, $models);
+        $model->setRelation($this->relationName(), $models);
+
+        return $models;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function add(Model $model, array $identifiers): EloquentCollection
+    {
+        $models = $this->findMany($identifiers);
+
+        $this->getRelation($model)->saveMany($models);
+        $model->unsetRelation($this->relationName());
+
+        return $models;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function remove(Model $model, array $identifiers): EloquentCollection
+    {
+        $models = $this->findMany($identifiers);
+
+        $this->detach($model, $models);
+        $model->unsetRelation($this->relationName());
+
+        return $models;
+    }
+
+    /**
+     * @param Model $model
+     * @param EloquentCollection $new
+     */
+    protected function sync(Model $model, EloquentCollection $new): void
+    {
+        $relation = $this->getRelation($model);
+        $existing = $relation->get();
+
+        $this->detach(
+            $model,
+            $existing->reject(fn($model) => $new->contains($model))
         );
+
+        $relation->saveMany($new->reject(fn($model) => $existing->contains($model)));
+    }
+
+    /**
+     * @param Model $model
+     * @param EloquentCollection $remove
+     */
+    protected function detach(Model $model, EloquentCollection $remove): void
+    {
+        $relation = $this->getRelation($model);
+
+        /** @var Model $model */
+        foreach ($remove as $model) {
+            $model->setAttribute($relation->getForeignKeyName(), null)->save();
+        }
+    }
+
+    /**
+     * @param Model $model
+     * @return EloquentHasMany|EloquentMorphMany
+     */
+    private function getRelation(Model $model)
+    {
+        $relation = $model->{$this->relationName()}();
+
+        if ($relation instanceof EloquentHasMany || $relation instanceof EloquentMorphMany) {
+            return $relation;
+        }
+
+        throw new LogicException(sprintf(
+            'Expecting relation %s on model %s to be a has-many or morph-many relation.',
+            $this->relationName(),
+            get_class($model)
+        ));
     }
 
 }

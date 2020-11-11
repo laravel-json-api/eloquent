@@ -95,7 +95,7 @@ class EagerLoadPath implements IteratorAggregate
 
             if ($relation instanceof Relation && $relation->isIncludePath()) {
                 $schema = $this->schemas->schemaFor($relation->inverse());
-                yield $relation->relation();
+                yield $relation->relationName();
                 continue;
             }
 

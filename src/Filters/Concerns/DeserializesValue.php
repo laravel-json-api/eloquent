@@ -20,6 +20,7 @@ declare(strict_types=1);
 namespace LaravelJsonApi\Eloquent\Filters\Concerns;
 
 use Closure;
+use function filter_var;
 
 trait DeserializesValue
 {
@@ -30,6 +31,8 @@ trait DeserializesValue
     private ?Closure $deserializer = null;
 
     /**
+     * Use the supplied callback to deserialize the value.
+     *
      * @param Closure $deserializer
      * @return $this
      */
@@ -41,7 +44,23 @@ trait DeserializesValue
     }
 
     /**
-     * @param $value
+     * Deserialize value as a boolean.
+     *
+     * @return $this
+     */
+    public function asBoolean(): self
+    {
+        $this->deserializeUsing(
+            static fn($value) => filter_var($value, FILTER_VALIDATE_BOOL)
+        );
+
+        return $this;
+    }
+
+    /**
+     * Deserialize the value.
+     *
+     * @param mixed $value
      * @return mixed
      */
     protected function deserialize($value)

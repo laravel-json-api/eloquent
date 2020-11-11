@@ -24,7 +24,10 @@ use LaravelJsonApi\Contracts\Store\Repository as RepositoryContract;
 use LaravelJsonApi\Core\Resolver\ResourceClass;
 use LaravelJsonApi\Core\Resolver\ResourceType;
 use LaravelJsonApi\Core\Schema\Schema as BaseSchema;
+use LaravelJsonApi\Eloquent\Fields\ID;
 use LaravelJsonApi\Eloquent\Fields\Relations\BelongsTo;
+use LaravelJsonApi\Eloquent\Fields\Relations\ToMany;
+use LaravelJsonApi\Eloquent\Fields\Relations\ToOne;
 use LogicException;
 
 abstract class Schema extends BaseSchema
@@ -41,18 +44,16 @@ abstract class Schema extends BaseSchema
     protected static $resourceResolver;
 
     /**
-     * The key name for the resource id, or null to use the model's route key.
-     *
-     * @var string|null
-     */
-    protected ?string $primaryKey = null;
-
-    /**
      * The relationships that should always be eager loaded.
      *
      * @var array
      */
     protected array $with = [];
+
+    /**
+     * @var string|null
+     */
+    private ?string $idColumn = null;
 
     /**
      * Specify the callback to use to guess the resource type from the schema class.
@@ -121,7 +122,7 @@ abstract class Schema extends BaseSchema
      */
     public function repository(): RepositoryContract
     {
-        return new Repository($this->schemas(), $this);
+        return new Repository($this);
     }
 
     /**
@@ -145,31 +146,57 @@ abstract class Schema extends BaseSchema
     /**
      * @return string
      */
-    public function idName(): string
+    public function idColumn(): string
     {
-        if ($this->primaryKey) {
-            return $this->primaryKey;
+        if ($this->idColumn) {
+            return $this->idColumn;
         }
 
-        return $this->primaryKey = $this->newInstance()->getRouteKeyName();
+        $id = $this->id();
+
+        if ($id instanceof ID && $col = $id->column()) {
+            return $this->idColumn = $col;
+        }
+
+        return $this->idColumn = $this->newInstance()->getRouteKeyName();
     }
 
     /**
      * Get an Eloquent belongs-to field.
      *
      * @param string $fieldName
-     * @return BelongsTo
+     * @return ToOne
      */
-    public function belongsTo(string $fieldName): BelongsTo
+    public function toOne(string $fieldName): ToOne
     {
         $relation = $this->relationship($fieldName);
 
-        if ($relation instanceof BelongsTo) {
+        if ($relation instanceof ToOne) {
             return $relation;
         }
 
         throw new LogicException(sprintf(
-            'Expecting relationships %s to be an Eloquent to-one relationship.',
+            'Expecting relationships %s to be an Eloquent JSON API to-one relationship.',
+            $fieldName
+        ));
+    }
+
+    /**
+     * Get an Eloquent has-many field.
+     *
+     * @param string $fieldName
+     * @return ToMany
+     */
+    public function toMany(string $fieldName): ToMany
+    {
+        $relation = $this->relationship($fieldName);
+
+        if ($relation instanceof ToMany) {
+            return $relation;
+        }
+
+        throw new LogicException(sprintf(
+            'Expecting relationships %s to be an Eloquent JSON API to-many relationship.',
             $fieldName
         ));
     }

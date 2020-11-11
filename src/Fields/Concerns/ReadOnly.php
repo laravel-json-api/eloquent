@@ -84,4 +84,15 @@ trait ReadOnly
         return true === $this->readOnly;
     }
 
+    /**
+     * Is the field not read-only?
+     *
+     * @param Request $request
+     * @return bool
+     */
+    public function isNotReadOnly($request): bool
+    {
+        return !$this->isReadOnly($request);
+    }
+
 }

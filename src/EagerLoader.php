@@ -20,7 +20,11 @@ declare(strict_types=1);
 namespace LaravelJsonApi\Eloquent;
 
 use Generator;
+use Illuminate\Database\Eloquent\Builder as EloquentBuilder;
+use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\Relation as EloquentRelation;
+use InvalidArgumentException;
 use LaravelJsonApi\Contracts\Schema\Container;
 use LaravelJsonApi\Core\Query\IncludePaths;
 use LogicException;
@@ -45,7 +49,12 @@ class EagerLoader
     private ?Model $model = null;
 
     /**
-     * @var \Illuminate\Database\Eloquent\Builder|null
+     * @var EloquentCollection|null
+     */
+    private ?EloquentCollection $models = null;
+
+    /**
+     * @var EloquentBuilder|EloquentRelation|null
      */
     private $query;
 
@@ -62,23 +71,44 @@ class EagerLoader
     }
 
     /**
-     * @param Model|\Illuminate\Database\Eloquent\Builder $modelOrQuery
+     * @param Model $model
      * @return $this
      */
-    public function using($modelOrQuery): self
+    public function forModel(Model $model): self
     {
-        if ($modelOrQuery instanceof Model) {
-            $this->model = $modelOrQuery;
-        } else {
-            $this->query = $modelOrQuery;
-        }
+        $this->model = $model;
 
         return $this;
     }
 
     /**
+     * @param EloquentCollection $models
+     * @return $this
+     */
+    public function forModels(EloquentCollection $models): self
+    {
+        $this->models = $models;
+
+        return $this;
+    }
+
+    /**
+     * @param EloquentBuilder|EloquentRelation $query
+     * @return $this
+     */
+    public function using($query): self
+    {
+        if ($query instanceof EloquentBuilder || $query instanceof EloquentRelation) {
+            $this->query = $query;
+            return $this;
+        }
+
+        throw new InvalidArgumentException('Expecting an Eloquent builder or relation.');
+    }
+
+    /**
      * @param $includePaths
-     * @return \Illuminate\Database\Eloquent\Builder
+     * @return EloquentBuilder
      */
     public function with($includePaths)
     {
@@ -93,32 +123,44 @@ class EagerLoader
 
     /**
      * @param $includePaths
-     * @return Model
+     * @return void
      */
-    public function load($includePaths): Model
+    public function load($includePaths): void
     {
-        if ($this->model) {
-            return $this->model->load(
-                $this->toRelations($includePaths)
-            );
+        $relations = $this->toRelations($includePaths);
+
+        if ($this->models) {
+            $this->models->load($relations);
+            return;
         }
 
-        throw new LogicException('No model to load relations on.');
+        if ($this->model) {
+            $this->model->load($relations);
+            return;
+        }
+
+        throw new LogicException('No model or models to load relations on.');
     }
 
     /**
      * @param $includePaths
-     * @return Model
+     * @return void
      */
-    public function loadMissing($includePaths): Model
+    public function loadMissing($includePaths): void
     {
-        if ($this->model) {
-            return $this->model->loadMissing(
-                $this->toRelations($includePaths)
-            );
+        $relations = $this->toRelations($includePaths);
+
+        if ($this->models) {
+            $this->models->loadMissing($relations);
+            return;
         }
 
-        throw new LogicException('No model to load relations on.');
+        if ($this->model) {
+            $this->model->loadMissing($relations);
+            return;
+        }
+
+        throw new LogicException('No model or models to load relations on.');
     }
 
     /**

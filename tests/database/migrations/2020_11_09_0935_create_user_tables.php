@@ -21,7 +21,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-class CreateTables extends Migration
+class CreateUserTables extends Migration
 {
 
     /**
@@ -31,18 +31,32 @@ class CreateTables extends Migration
      */
     public function up(): void
     {
+        Schema::create('countries', function (Blueprint $table) {
+            $table->id();
+            $table->timestamps();
+            $table->string('name');
+        });
+
         Schema::create('users', function (Blueprint $table) {
             $table->id();
+            $table->timestamps();
+            $table->unsignedBigInteger('country_id')->nullable();
             $table->string('name');
             $table->string('email')->unique();
+            $table->boolean('admin')->default(false);
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
             $table->rememberToken();
-            $table->timestamps();
+
+            $table->foreign('country_id')
+                ->references('id')
+                ->on('countries')
+                ->cascadeOnDelete()
+                ->cascadeOnUpdate();
         });
 
         Schema::create('phones', function (Blueprint $table) {
-            $table->bigIncrements('id');
+            $table->id();
             $table->timestamps();
             $table->string('number')->unique();
             $table->unsignedBigInteger('user_id')->nullable();
@@ -50,8 +64,8 @@ class CreateTables extends Migration
             $table->foreign('user_id')
                 ->references('id')
                 ->on('users')
-                ->onDelete('set null')
-                ->onUpdate('cascade');
+                ->nullOnDelete()
+                ->cascadeOnUpdate();
         });
     }
 
@@ -62,13 +76,8 @@ class CreateTables extends Migration
      */
     public function down(): void
     {
-        $tables = [
-            'phones',
-            'users',
-        ];
-
-        foreach($tables as $table) {
-            Schema::dropIfExists($table);
-        }
+        Schema::dropIfExists('phones');
+        Schema::dropIfExists('users');
+        Schema::dropIfExists('countries');
     }
 }

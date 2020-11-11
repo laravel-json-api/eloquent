@@ -22,10 +22,11 @@ namespace App\Schemas;
 use App\Models\Phone;
 use LaravelJsonApi\Contracts\Pagination\Paginator;
 use LaravelJsonApi\Eloquent\Fields\DateTime;
+use LaravelJsonApi\Eloquent\Fields\ID;
 use LaravelJsonApi\Eloquent\Fields\Relations\BelongsTo;
 use LaravelJsonApi\Eloquent\Fields\Str;
 use LaravelJsonApi\Eloquent\Filters\Scope;
-use LaravelJsonApi\Eloquent\Filters\Where;
+use LaravelJsonApi\Eloquent\Filters\WhereIn;
 use LaravelJsonApi\Eloquent\Schema;
 
 class PhoneSchema extends Schema
@@ -44,6 +45,7 @@ class PhoneSchema extends Schema
     public function fields(): iterable
     {
         return [
+            ID::make(),
             DateTime::make('createdAt')->readOnly(),
             Str::make('number'),
             DateTime::make('updatedAt')->readOnly(),
@@ -57,6 +59,7 @@ class PhoneSchema extends Schema
     public function filters(): iterable
     {
         return [
+            WhereIn::make('id', $this->idColumn()),
             Scope::make('number', 'whereNumberLike'),
         ];
     }
