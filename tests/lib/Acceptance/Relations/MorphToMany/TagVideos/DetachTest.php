@@ -23,7 +23,7 @@ use App\Models\Tag;
 use App\Models\Video;
 use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 
-class RemoveTest extends TestCase
+class DetachTest extends TestCase
 {
 
     public function test(): void
@@ -44,7 +44,7 @@ class RemoveTest extends TestCase
 
         $actual = $this->repository
             ->modifyToMany($tag, 'videos')
-            ->remove($ids);
+            ->detach($ids);
 
         $this->assertInstanceOf(EloquentCollection::class, $actual);
         $this->assertVideos($remove, $actual);
@@ -87,7 +87,7 @@ class RemoveTest extends TestCase
         $actual = $this->repository
             ->modifyToMany($tag, 'videos')
             ->with('comments')
-            ->remove($ids);
+            ->detach($ids);
 
         $this->assertVideos($roles, $actual);
         $this->assertTrue($actual->every(fn(Video $video) => $video->relationLoaded('comments')));

@@ -17,43 +17,43 @@
 
 declare(strict_types=1);
 
-namespace LaravelJsonApi\Eloquent\Tests\Acceptance\Relations\MorphToMany\VideoTags;
+namespace LaravelJsonApi\Eloquent\Tests\Acceptance\Relations\MorphToMany\TagVideos;
 
 use App\Models\Tag;
 use App\Models\Video;
 use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 
-class ReplaceTest extends TestCase
+class SyncTest extends TestCase
 {
 
     public function test(): void
     {
-        /** @var Video $video */
-        $video = Video::factory()
-            ->has(Tag::factory()->count(3))
+        /** @var Tag $tag */
+        $tag = Tag::factory()
+            ->has(Video::factory()->count(3))
             ->create();
 
-        $existing = $video->tags()->get();
+        $existing = $tag->videos()->get();
         $remove = $existing->last();
 
         $expected = $existing->take(2)->push(
-            Tag::factory()->create()
+            Video::factory()->create()
         );
 
-        $actual = $this->repository->modifyToMany($video, 'tags')->replace(
-            $expected->map(fn(Tag $tag) => [
-                'type' => 'tags',
-                'id' => (string) $tag->getRouteKey(),
+        $actual = $this->repository->modifyToMany($tag, 'videos')->sync(
+            $expected->map(fn(Video $video) => [
+                'type' => 'videos',
+                'id' => (string) $video->getRouteKey(),
             ])->all()
         );
 
         $this->assertInstanceOf(EloquentCollection::class, $actual);
-        $this->assertTags($expected, $actual);
+        $this->assertVideos($expected, $actual);
 
-        $this->assertTrue($video->relationLoaded('tags'));
-        $this->assertSame($actual, $video->getRelation('tags'));
+        $this->assertTrue($tag->relationLoaded('videos'));
+        $this->assertSame($actual, $tag->getRelation('videos'));
 
-        foreach ($expected as $tag) {
+        foreach ($expected as $video) {
             $this->assertDatabaseHas('taggables', [
                 'tag_id' => $tag->getKey(),
                 'taggable_id' => $video->getKey(),
@@ -62,32 +62,32 @@ class ReplaceTest extends TestCase
         }
 
         $this->assertDatabaseMissing('taggables', [
-            'tag_id' => $remove->getKey(),
-            'taggable_id' => $video->getKey(),
+            'tag_id' => $tag->getKey(),
+            'taggable_id' => $remove->getKey(),
             'taggable_type' => Video::class,
         ]);
     }
 
     public function testEmpty(): void
     {
-        $video = Video::factory()
-            ->has(Tag::factory()->count(3))
+        $tag = Tag::factory()
+            ->has(Video::factory()->count(3))
             ->create();
 
-        $existing = $video->tags()->get();
+        $existing = $tag->videos()->get();
 
         $actual = $this->repository
-            ->modifyToMany($video, 'tags')
-            ->replace([]);
+            ->modifyToMany($tag, 'videos')
+            ->sync([]);
 
         $this->assertInstanceOf(EloquentCollection::class, $actual);
         $this->assertEquals(new EloquentCollection(), $actual);
-        $this->assertSame(0, $video->tags()->count());
+        $this->assertSame(0, $tag->videos()->count());
 
-        $this->assertTrue($video->relationLoaded('tags'));
-        $this->assertSame($actual, $video->getRelation('tags'));
+        $this->assertTrue($tag->relationLoaded('videos'));
+        $this->assertSame($actual, $tag->getRelation('videos'));
 
-        foreach ($existing as $tag) {
+        foreach ($existing as $video) {
             $this->assertDatabaseMissing('taggables', [
                 'tag_id' => $tag->getKey(),
                 'taggable_id' => $video->getKey(),
@@ -98,23 +98,22 @@ class ReplaceTest extends TestCase
 
     public function testWithIncludePaths(): void
     {
-        $video = Video::factory()->create();
-        $tags = Tag::factory()->count(3)->create();
+        $tag = Tag::factory()->create();
+        $videos = Video::factory()->count(3)->create();
 
-        $ids = $tags->map(fn(Tag $tag) => [
-            'type' => 'tags',
-            'id' => (string) $tag->getRouteKey(),
+        $ids = $videos->map(fn(Video $video) => [
+            'type' => 'videos',
+            'id' => (string) $video->getRouteKey(),
         ])->all();
 
         $actual = $this->repository
-            ->modifyToMany($video, 'tags')
-            ->with('posts')
-            ->replace($ids);
+            ->modifyToMany($tag, 'videos')
+            ->with('comments')
+            ->sync($ids);
 
         $this->assertCount(3, $actual);
-        $this->assertTrue($actual->every(fn(Tag $tag) => $tag->relationLoaded('posts')));
+        $this->assertTrue($actual->every(fn(Video $video) => $video->relationLoaded('comments')));
     }
-
 
     /**
      * The spec says:
@@ -124,23 +123,23 @@ class ReplaceTest extends TestCase
      */
     public function testWithDuplicates(): void
     {
-        /** @var Video $video */
-        $video = Video::factory()->create();
-        $tags = Tag::factory()->count(3)->create();
+        /** @var Tag $tag */
+        $tag = Tag::factory()->create();
+        $videos = Video::factory()->count(3)->create();
 
-        $video->tags()->attach($tags[2]);
+        $tag->videos()->attach($videos[2]);
 
-        $ids = collect($tags)->push($tags[1])->map(fn(Tag $tag) => [
-            'type' => 'tags',
-            'id' => (string) $tag->getRouteKey(),
+        $ids = collect($videos)->push($videos[1])->map(fn(Video $video) => [
+            'type' => 'videos',
+            'id' => (string) $video->getRouteKey(),
         ])->all();
 
         $actual = $this->repository
-            ->modifyToMany($video, 'tags')
-            ->replace($ids);
+            ->modifyToMany($tag, 'videos')
+            ->sync($ids);
 
         $this->assertCount(3, $actual);
-        $this->assertSame(3, $video->tags()->count());
-        $this->assertTags($tags, $actual);
+        $this->assertSame(3, $tag->videos()->count());
+        $this->assertVideos($videos, $actual);
     }
 }

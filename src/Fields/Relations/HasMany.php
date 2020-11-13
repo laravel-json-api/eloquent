@@ -52,7 +52,7 @@ class HasMany extends ToMany implements FillableToMany
     public function fill(Model $model, $value): void
     {
         if (is_array($value)) {
-            $this->replace($model, $value);
+            $this->sync($model, $value);
             return;
         }
 
@@ -62,11 +62,11 @@ class HasMany extends ToMany implements FillableToMany
     /**
      * @inheritDoc
      */
-    public function replace(Model $model, array $identifiers): EloquentCollection
+    public function sync(Model $model, array $identifiers): EloquentCollection
     {
         $models = $this->findMany($identifiers);
 
-        $this->sync($model, $models);
+        $this->doSync($model, $models);
         $model->setRelation($this->relationName(), $models);
 
         return $models;
@@ -75,7 +75,7 @@ class HasMany extends ToMany implements FillableToMany
     /**
      * @inheritDoc
      */
-    public function add(Model $model, array $identifiers): EloquentCollection
+    public function attach(Model $model, array $identifiers): EloquentCollection
     {
         $models = $this->findMany($identifiers);
 
@@ -88,11 +88,11 @@ class HasMany extends ToMany implements FillableToMany
     /**
      * @inheritDoc
      */
-    public function remove(Model $model, array $identifiers): EloquentCollection
+    public function detach(Model $model, array $identifiers): EloquentCollection
     {
         $models = $this->findMany($identifiers);
 
-        $this->detach($model, $models);
+        $this->doDetach($model, $models);
         $model->unsetRelation($this->relationName());
 
         return $models;
@@ -102,12 +102,12 @@ class HasMany extends ToMany implements FillableToMany
      * @param Model $model
      * @param EloquentCollection $new
      */
-    protected function sync(Model $model, EloquentCollection $new): void
+    private function doSync(Model $model, EloquentCollection $new): void
     {
         $relation = $this->getRelation($model);
         $existing = $relation->get();
 
-        $this->detach(
+        $this->doDetach(
             $model,
             $existing->reject(fn($model) => $new->contains($model))
         );
@@ -119,7 +119,7 @@ class HasMany extends ToMany implements FillableToMany
      * @param Model $model
      * @param EloquentCollection $remove
      */
-    protected function detach(Model $model, EloquentCollection $remove): void
+    private function doDetach(Model $model, EloquentCollection $remove): void
     {
         $relation = $this->getRelation($model);
 

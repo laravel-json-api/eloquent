@@ -23,7 +23,7 @@ use App\Models\Role;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 
-class ReplaceTest extends TestCase
+class SyncTest extends TestCase
 {
 
     public function test(): void
@@ -40,7 +40,7 @@ class ReplaceTest extends TestCase
             Role::factory()->create()
         );
 
-        $actual = $this->repository->modifyToMany($user, 'roles')->replace(
+        $actual = $this->repository->modifyToMany($user, 'roles')->sync(
             $expected->map(fn(Role $role) => [
                 'type' => 'roles',
                 'id' => (string) $role->getRouteKey(),
@@ -76,7 +76,7 @@ class ReplaceTest extends TestCase
 
         $actual = $this->repository
             ->modifyToMany($user, 'roles')
-            ->replace([]);
+            ->sync([]);
 
         $this->assertInstanceOf(EloquentCollection::class, $actual);
         $this->assertEquals(new EloquentCollection(), $actual);
@@ -106,7 +106,7 @@ class ReplaceTest extends TestCase
         $actual = $this->repository
             ->modifyToMany($user, 'roles')
             ->with('users')
-            ->replace($ids);
+            ->sync($ids);
 
         $this->assertCount(3, $actual);
         $this->assertTrue($actual->every(fn(Role $role) => $role->relationLoaded('users')));
@@ -134,7 +134,7 @@ class ReplaceTest extends TestCase
 
         $actual = $this->repository
             ->modifyToMany($user, 'roles')
-            ->replace($ids);
+            ->sync($ids);
 
         $this->assertCount(3, $actual);
         $this->assertSame(3, $user->roles()->count());

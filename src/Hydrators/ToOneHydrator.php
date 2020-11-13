@@ -89,10 +89,10 @@ class ToOneHydrator implements ToOneBuilder
     /**
      * @inheritDoc
      */
-    public function replace(?array $identifier): ?object
+    public function associate(?array $identifier): ?object
     {
         $related = $this->model->getConnection()->transaction(
-            fn() => $this->relation->replace($this->model, $identifier)
+            fn() => $this->relation->associate($this->model, $identifier)
         );
 
         return $this->prepareResult($related);

@@ -23,7 +23,7 @@ use App\Models\Role;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 
-class AddTest extends TestCase
+class AttachTest extends TestCase
 {
 
     public function test(): void
@@ -45,7 +45,7 @@ class AddTest extends TestCase
 
         $actual = $this->repository
             ->modifyToMany($user, 'roles')
-            ->add($ids);
+            ->attach($ids);
 
         $this->assertInstanceOf(EloquentCollection::class, $actual);
         $this->assertRoles($expected, $actual);
@@ -87,7 +87,7 @@ class AddTest extends TestCase
         $actual = $this->repository
             ->modifyToMany($user, 'roles')
             ->with('users')
-            ->add($ids);
+            ->attach($ids);
 
         $this->assertRoles($roles, $actual);
         $this->assertTrue($actual->every(fn(Role $role) => $role->relationLoaded('users')));
@@ -115,7 +115,7 @@ class AddTest extends TestCase
 
         $actual = $this->repository
             ->modifyToMany($user, 'roles')
-            ->add($ids);
+            ->attach($ids);
 
         $this->assertRoles($roles, $actual);
         $this->assertSame(2, $user->roles()->count());

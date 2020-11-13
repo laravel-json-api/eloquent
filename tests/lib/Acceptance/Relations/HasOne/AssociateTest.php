@@ -22,7 +22,7 @@ namespace LaravelJsonApi\Eloquent\Tests\Acceptance\Relations\HasOne;
 use App\Models\Phone;
 use App\Models\User;
 
-class ReplaceTest extends TestCase
+class AssociateTest extends TestCase
 {
 
     public function testNullToPhone(): void
@@ -30,7 +30,7 @@ class ReplaceTest extends TestCase
         $user = User::factory()->create();
         $phone = Phone::factory()->create(['user_id' => null]);
 
-        $actual = $this->repository->modifyToOne($user, 'phone')->replace([
+        $actual = $this->repository->modifyToOne($user, 'phone')->associate([
             'type' => 'phones',
             'id' => (string) $phone->getRouteKey(),
         ]);
@@ -50,7 +50,7 @@ class ReplaceTest extends TestCase
         $user = User::factory()->create();
         $phone = Phone::factory(['user_id' => $user])->create();
 
-        $actual = $this->repository->modifyToOne($user, 'phone')->replace(null);
+        $actual = $this->repository->modifyToOne($user, 'phone')->associate(null);
 
         $this->assertNull($actual);
         $this->assertTrue($user->relationLoaded('phone'));
@@ -68,7 +68,7 @@ class ReplaceTest extends TestCase
         $existing = Phone::factory()->create(['user_id' => $user]);
         $phone = Phone::factory()->create();
 
-        $actual = $this->repository->modifyToOne($user, 'phone')->replace([
+        $actual = $this->repository->modifyToOne($user, 'phone')->associate([
             'type' => 'phones',
             'id' => (string) $phone->getRouteKey(),
         ]);
@@ -93,7 +93,7 @@ class ReplaceTest extends TestCase
         $user = User::factory()->create();
         $phone = Phone::factory()->create(['user_id' => null]);
 
-        $actual = $this->repository->modifyToOne($user, 'phone')->with('user')->replace([
+        $actual = $this->repository->modifyToOne($user, 'phone')->with('user')->associate([
             'type' => 'phones',
             'id' => (string) $phone->getRouteKey(),
         ]);

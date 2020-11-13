@@ -76,7 +76,7 @@ class HasOne extends ToOne implements FillableToOne
     /**
      * @inheritDoc
      */
-    public function replace(Model $model, $value): ?Model
+    public function associate(Model $model, $value): ?Model
     {
         $this->fill($model, $value);
 

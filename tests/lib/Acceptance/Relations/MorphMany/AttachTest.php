@@ -20,10 +20,11 @@ declare(strict_types=1);
 namespace LaravelJsonApi\Eloquent\Tests\Acceptance\Relations\MorphMany;
 
 use App\Models\Comment;
+use App\Models\User;
 use App\Models\Video;
 use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 
-class RemoveTest extends TestCase
+class AttachTest extends TestCase
 {
 
     public function test(): void
@@ -34,21 +35,20 @@ class RemoveTest extends TestCase
 
         /** We force the relation to be loaded before the change, so that we can test it is unset. */
         $existing = clone $video->comments;
-        $remove = $existing->take(2);
-        $keep = $existing->last();
+        $expected = Comment::factory()->count(2)->create();
 
-        $ids = $remove->map(fn(Comment $comment) => [
+        $ids = $expected->map(fn(Comment $comment) => [
             'type' => 'comments',
             'id' => (string) $comment->getRouteKey(),
         ])->all();
 
         $actual = $this->repository
             ->modifyToMany($video, 'comments')
-            ->remove($ids);
+            ->attach($ids);
 
         $this->assertInstanceOf(EloquentCollection::class, $actual);
-        $this->assertComments($remove, $actual);
-        $this->assertSame(1, $video->comments()->count());
+        $this->assertComments($expected, $actual);
+        $this->assertSame(5, $video->comments()->count());
 
         /**
          * We expect the relation to be unloaded because we know it has changed in the
@@ -56,28 +56,19 @@ class RemoveTest extends TestCase
          */
         $this->assertFalse($video->relationLoaded('comments'));
 
-        $this->assertDatabaseHas('comments', [
-            'id' => $keep->getKey(),
-            'commentable_id' => $video->getKey(),
-            'commentable_type' => Video::class,
-        ]);
-
-        foreach ($remove as $comment) {
+        foreach ($existing->merge($expected) as $comment) {
             $this->assertDatabaseHas('comments', [
                 'id' => $comment->getKey(),
-                'commentable_id' => null,
-                'commentable_type' => null,
+                'commentable_id' => $video->getKey(),
+                'commentable_type' => Video::class,
             ]);
         }
     }
 
     public function testWithIncludePaths(): void
     {
-        $video = Video::factory()
-            ->has(Comment::factory()->count(3))
-            ->create();
-
-        $comments = clone $video->comments;
+        $video = Video::factory()->create();
+        $comments = Comment::factory()->count(2)->create();
 
         $ids = $comments->map(fn(Comment $comment) => [
             'type' => 'comments',
@@ -87,9 +78,37 @@ class RemoveTest extends TestCase
         $actual = $this->repository
             ->modifyToMany($video, 'comments')
             ->with('user')
-            ->remove($ids);
+            ->attach($ids);
 
         $this->assertComments($comments, $actual);
         $this->assertTrue($actual->every(fn(Comment $comment) => $comment->relationLoaded('user')));
+    }
+
+
+    /**
+     * The spec says:
+     * "If a given type and id is already in the relationship, the server MUST NOT add it again."
+     *
+     * This test checks that duplicate ids are not added.
+     */
+    public function testWithDuplicates(): void
+    {
+        /** @var Video $video */
+        $video = Video::factory()->create();
+        $comments = Comment::factory()->count(2)->create();
+
+        $comments[0]->commentable()->associate($video)->save();
+
+        $ids = collect($comments)->push($comments[0])->map(fn(Comment $comment) => [
+            'type' => 'comments',
+            'id' => (string) $comment->getRouteKey(),
+        ])->all();
+
+        $actual = $this->repository
+            ->modifyToMany($video, 'comments')
+            ->attach($ids);
+
+        $this->assertComments($comments, $actual);
+        $this->assertSame(2, $video->comments()->count());
     }
 }

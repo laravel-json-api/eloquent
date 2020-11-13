@@ -23,7 +23,7 @@ use App\Models\Image;
 use App\Models\Post;
 use App\Models\User;
 
-class ReplaceTest extends TestCase
+class AssociateTest extends TestCase
 {
 
     public function testNullToUser(): void
@@ -35,7 +35,7 @@ class ReplaceTest extends TestCase
 
         $user = User::factory()->create();
 
-        $actual = $this->repository->modifyToOne($image, 'imageable')->replace([
+        $actual = $this->repository->modifyToOne($image, 'imageable')->associate([
             'type' => 'users',
             'id' => (string) $user->getRouteKey(),
         ]);
@@ -57,7 +57,7 @@ class ReplaceTest extends TestCase
             ->for(User::factory(), 'imageable')
             ->create();
 
-        $actual = $this->repository->modifyToOne($image, 'imageable')->replace(null);
+        $actual = $this->repository->modifyToOne($image, 'imageable')->associate(null);
 
         $this->assertNull($actual);
         $this->assertTrue($image->relationLoaded('imageable'));
@@ -78,7 +78,7 @@ class ReplaceTest extends TestCase
 
         $post = Post::factory()->create();
 
-        $actual = $this->repository->modifyToOne($image, 'imageable')->replace([
+        $actual = $this->repository->modifyToOne($image, 'imageable')->associate([
             'type' => 'posts',
             'id' => (string) $post->getRouteKey(),
         ]);
@@ -99,7 +99,7 @@ class ReplaceTest extends TestCase
         $image = Image::factory()->create();
         $post = Post::factory()->create();
 
-        $actual = $this->repository->modifyToOne($image, 'imageable')->with('author')->replace([
+        $actual = $this->repository->modifyToOne($image, 'imageable')->with('author')->associate([
             'type' => 'posts',
             'id' => (string) $post->getRouteKey(),
         ]);

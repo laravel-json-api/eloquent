@@ -32,7 +32,7 @@ interface FillableToMany extends Fillable
      * @param array $identifiers
      * @return EloquentCollection
      */
-    public function replace(Model $model, array $identifiers): EloquentCollection;
+    public function sync(Model $model, array $identifiers): EloquentCollection;
 
     /**
      * Add the specified members to the relationship unless they are already present.
@@ -41,14 +41,14 @@ interface FillableToMany extends Fillable
      * @param array $identifiers
      * @return EloquentCollection
      */
-    public function add(Model $model, array $identifiers): EloquentCollection;
+    public function attach(Model $model, array $identifiers): EloquentCollection;
 
     /**
-     * Delete the specified members from the relationship.
+     * Remove the specified members from the relationship.
      *
      * @param Model $model
      * @param array $identifiers
      * @return EloquentCollection
      */
-    public function remove(Model $model, array $identifiers): EloquentCollection;
+    public function detach(Model $model, array $identifiers): EloquentCollection;
 }

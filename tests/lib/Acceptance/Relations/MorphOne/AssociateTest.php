@@ -22,7 +22,7 @@ namespace LaravelJsonApi\Eloquent\Tests\Acceptance\Relations\MorphOne;
 use App\Models\Image;
 use App\Models\Post;
 
-class ReplaceTest extends TestCase
+class AssociateTest extends TestCase
 {
 
     public function testNullToImage(): void
@@ -30,7 +30,7 @@ class ReplaceTest extends TestCase
         $post = Post::factory()->create();
         $image = Image::factory()->create(['imageable_id' => null, 'imageable_type' => null]);
 
-        $actual = $this->repository->modifyToOne($post, 'image')->replace([
+        $actual = $this->repository->modifyToOne($post, 'image')->associate([
             'type' => 'images',
             'id' => (string) $image->getRouteKey(),
         ]);
@@ -54,7 +54,7 @@ class ReplaceTest extends TestCase
             'imageable_type' => Post::class,
         ]);
 
-        $actual = $this->repository->modifyToOne($post, 'image')->replace(null);
+        $actual = $this->repository->modifyToOne($post, 'image')->associate(null);
 
         $this->assertNull($actual);
         $this->assertTrue($post->relationLoaded('image'));
@@ -79,7 +79,7 @@ class ReplaceTest extends TestCase
 
         $post = $image1->imageable;
 
-        $actual = $this->repository->modifyToOne($post, 'image')->replace([
+        $actual = $this->repository->modifyToOne($post, 'image')->associate([
             'type' => 'images',
             'id' => (string) $image2->getRouteKey(),
         ]);
@@ -106,7 +106,7 @@ class ReplaceTest extends TestCase
         $post = Post::factory()->create();
         $image = Image::factory()->create(['imageable_id' => null, 'imageable_type' => null]);
 
-        $actual = $this->repository->modifyToOne($post, 'image')->with('imageable')->replace([
+        $actual = $this->repository->modifyToOne($post, 'image')->with('imageable')->associate([
             'type' => 'images',
             'id' => (string) $image->getRouteKey(),
         ]);

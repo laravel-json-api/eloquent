@@ -35,8 +35,8 @@ interface FillableToOne extends Fillable
      * Replace the relationship.
      *
      * @param Model $model
-     * @param $value
+     * @param array|null $value
      * @return Model|null
      */
-    public function replace(Model $model, $value): ?Model;
+    public function associate(Model $model, ?array $value): ?Model;
 }

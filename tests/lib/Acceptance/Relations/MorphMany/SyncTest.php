@@ -20,47 +20,78 @@ declare(strict_types=1);
 namespace LaravelJsonApi\Eloquent\Tests\Acceptance\Relations\MorphMany;
 
 use App\Models\Comment;
-use App\Models\User;
 use App\Models\Video;
 use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 
-class AddTest extends TestCase
+class SyncTest extends TestCase
 {
 
     public function test(): void
+    {
+        /** @var Video $video */
+        $video = Video::factory()
+            ->has(Comment::factory()->count(3))
+            ->create();
+
+        $existing = $video->comments()->get();
+        $remove = $existing->last();
+
+        $expected = $existing->take(2)->push(
+            Comment::factory()->create()
+        );
+
+        $actual = $this->repository->modifyToMany($video, 'comments')->sync(
+            $expected->map(fn(Comment $comment) => [
+                'type' => 'comments',
+                'id' => (string) $comment->getRouteKey(),
+            ])->all()
+        );
+
+        $this->assertInstanceOf(EloquentCollection::class, $actual);
+        $this->assertComments($expected, $actual);
+
+        $this->assertTrue($video->relationLoaded('comments'));
+        $this->assertSame($actual, $video->getRelation('comments'));
+
+        foreach ($expected as $comment) {
+            $this->assertDatabaseHas('comments', [
+                'id' => $comment->getKey(),
+                'commentable_id' => $video->getKey(),
+                'commentable_type' => Video::class,
+            ]);
+        }
+
+        $this->assertDatabaseHas('comments', [
+            'id' => $remove->getKey(),
+            'commentable_id' => null,
+            'commentable_type' => null,
+        ]);
+    }
+
+    public function testEmpty(): void
     {
         $video = Video::factory()
             ->has(Comment::factory()->count(3))
             ->create();
 
-        /** We force the relation to be loaded before the change, so that we can test it is unset. */
-        $existing = clone $video->comments;
-        $expected = Comment::factory()->count(2)->create();
-
-        $ids = $expected->map(fn(Comment $comment) => [
-            'type' => 'comments',
-            'id' => (string) $comment->getRouteKey(),
-        ])->all();
+        $existing = $video->comments()->get();
 
         $actual = $this->repository
             ->modifyToMany($video, 'comments')
-            ->add($ids);
+            ->sync([]);
 
         $this->assertInstanceOf(EloquentCollection::class, $actual);
-        $this->assertComments($expected, $actual);
-        $this->assertSame(5, $video->comments()->count());
+        $this->assertEquals(new EloquentCollection(), $actual);
+        $this->assertSame(0, $video->comments()->count());
 
-        /**
-         * We expect the relation to be unloaded because we know it has changed in the
-         * database, but we don't know what it now is in its entirety.
-         */
-        $this->assertFalse($video->relationLoaded('comments'));
+        $this->assertTrue($video->relationLoaded('comments'));
+        $this->assertSame($actual, $video->getRelation('comments'));
 
-        foreach ($existing->merge($expected) as $comment) {
+        foreach ($existing as $comment) {
             $this->assertDatabaseHas('comments', [
                 'id' => $comment->getKey(),
-                'commentable_id' => $video->getKey(),
-                'commentable_type' => Video::class,
+                'commentable_id' => null,
+                'commentable_type' => null,
             ]);
         }
     }
@@ -68,7 +99,7 @@ class AddTest extends TestCase
     public function testWithIncludePaths(): void
     {
         $video = Video::factory()->create();
-        $comments = Comment::factory()->count(2)->create();
+        $comments = Comment::factory()->count(3)->create();
 
         $ids = $comments->map(fn(Comment $comment) => [
             'type' => 'comments',
@@ -78,12 +109,11 @@ class AddTest extends TestCase
         $actual = $this->repository
             ->modifyToMany($video, 'comments')
             ->with('user')
-            ->add($ids);
+            ->sync($ids);
 
-        $this->assertComments($comments, $actual);
+        $this->assertCount(3, $actual);
         $this->assertTrue($actual->every(fn(Comment $comment) => $comment->relationLoaded('user')));
     }
-
 
     /**
      * The spec says:
@@ -95,20 +125,21 @@ class AddTest extends TestCase
     {
         /** @var Video $video */
         $video = Video::factory()->create();
-        $comments = Comment::factory()->count(2)->create();
+        $comments = Comment::factory()->count(3)->create();
 
-        $comments[0]->commentable()->associate($video)->save();
+        $comments[1]->commentable()->associate($video)->save();
 
-        $ids = collect($comments)->push($comments[0])->map(fn(Comment $comment) => [
+        $ids = collect($comments)->push($comments[1])->map(fn(Comment $comment) => [
             'type' => 'comments',
             'id' => (string) $comment->getRouteKey(),
         ])->all();
 
         $actual = $this->repository
             ->modifyToMany($video, 'comments')
-            ->add($ids);
+            ->sync($ids);
 
+        $this->assertCount(3, $actual);
+        $this->assertSame(3, $video->comments()->count());
         $this->assertComments($comments, $actual);
-        $this->assertSame(2, $video->comments()->count());
     }
 }

@@ -71,7 +71,7 @@ class BelongsTo extends ToOne implements FillableToOne
     /**
      * @inheritDoc
      */
-    public function replace(Model $model, $value): ?Model
+    public function associate(Model $model, ?array $value): ?Model
     {
         $this->fill($model, $value);
         $model->save();

@@ -89,10 +89,10 @@ class ToManyHydrator implements ToManyBuilder
     /**
      * @inheritDoc
      */
-    public function replace(array $identifiers): iterable
+    public function sync(array $identifiers): iterable
     {
         $related = $this->model->getConnection()->transaction(
-            fn() => $this->relation->replace($this->model, $identifiers)
+            fn() => $this->relation->sync($this->model, $identifiers)
         );
 
         return $this->prepareResult($related);
@@ -101,10 +101,10 @@ class ToManyHydrator implements ToManyBuilder
     /**
      * @inheritDoc
      */
-    public function add(array $identifiers): iterable
+    public function attach(array $identifiers): iterable
     {
         $related = $this->model->getConnection()->transaction(
-            fn() => $this->relation->add($this->model, $identifiers)
+            fn() => $this->relation->attach($this->model, $identifiers)
         );
 
         return $this->prepareResult($related);
@@ -113,10 +113,10 @@ class ToManyHydrator implements ToManyBuilder
     /**
      * @inheritDoc
      */
-    public function remove(array $identifiers): iterable
+    public function detach(array $identifiers): iterable
     {
         $related = $this->model->getConnection()->transaction(
-            fn() => $this->relation->remove($this->model, $identifiers)
+            fn() => $this->relation->detach($this->model, $identifiers)
         );
 
         return $this->prepareResult($related);

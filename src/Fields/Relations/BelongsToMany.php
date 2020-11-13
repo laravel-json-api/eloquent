@@ -87,7 +87,7 @@ class BelongsToMany extends ToMany implements FillableToMany
     public function fill(Model $model, $value): void
     {
         if (is_array($value)) {
-            $this->replace($model, $value);
+            $this->sync($model, $value);
             return;
         }
 
@@ -97,7 +97,7 @@ class BelongsToMany extends ToMany implements FillableToMany
     /**
      * @inheritDoc
      */
-    public function replace(Model $model, array $identifiers): EloquentCollection
+    public function sync(Model $model, array $identifiers): EloquentCollection
     {
         $related = $this->findMany($identifiers);
         $relation = $this->getRelation($model);
@@ -116,7 +116,7 @@ class BelongsToMany extends ToMany implements FillableToMany
     /**
      * @inheritDoc
      */
-    public function add(Model $model, array $identifiers): EloquentCollection
+    public function attach(Model $model, array $identifiers): EloquentCollection
     {
         $related = $this->findMany($identifiers);
         $relation = $this->getRelation($model);
@@ -144,7 +144,7 @@ class BelongsToMany extends ToMany implements FillableToMany
     /**
      * @inheritDoc
      */
-    public function remove(Model $model, array $identifiers): EloquentCollection
+    public function detach(Model $model, array $identifiers): EloquentCollection
     {
         $related = $this->findMany($identifiers);
 

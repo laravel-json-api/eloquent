@@ -24,7 +24,7 @@ use App\Models\User;
 use App\Models\Video;
 use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 
-class AddTest extends TestCase
+class AttachTest extends TestCase
 {
 
     public function test(): void
@@ -46,7 +46,7 @@ class AddTest extends TestCase
 
         $actual = $this->repository
             ->modifyToMany($tag, 'videos')
-            ->add($ids);
+            ->attach($ids);
 
         $this->assertInstanceOf(EloquentCollection::class, $actual);
         $this->assertVideos($expected, $actual);
@@ -90,7 +90,7 @@ class AddTest extends TestCase
         $actual = $this->repository
             ->modifyToMany($tag, 'videos')
             ->with('comments')
-            ->add($ids);
+            ->attach($ids);
 
         $this->assertVideos($videos, $actual);
         $this->assertTrue($actual->every(fn(Video $video) => $video->relationLoaded('comments')));
@@ -118,7 +118,7 @@ class AddTest extends TestCase
 
         $actual = $this->repository
             ->modifyToMany($tag, 'videos')
-            ->add($ids);
+            ->attach($ids);
 
         $this->assertVideos($videos, $actual);
         $this->assertSame(2, $tag->videos()->count());
