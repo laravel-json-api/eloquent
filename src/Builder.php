@@ -168,7 +168,7 @@ class Builder
             ));
         }
 
-        $this->parameters->withFilters($filters);
+        $this->parameters->setFilters($filters);
 
         return $this;
     }
@@ -209,7 +209,7 @@ class Builder
             ));
         }
 
-        $this->parameters->withSortFields($fields);
+        $this->parameters->setSortFields($fields);
 
         return $this;
     }
@@ -237,7 +237,7 @@ class Builder
             $this->eagerLoading = true;
         }
 
-        $this->parameters->withIncludePaths($includePaths);
+        $this->parameters->setIncludePaths($includePaths);
 
         return $this;
     }
@@ -338,7 +338,7 @@ class Builder
 
         if ($paginator instanceof Paginator) {
             return $paginator->paginate($this->query, $page)->withQuery(
-                $this->parameters->withPagination($page)->toArray()
+                $this->parameters->setPagination($page)->toArray()
             );
         }
 
