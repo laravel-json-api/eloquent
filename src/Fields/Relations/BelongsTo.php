@@ -39,7 +39,7 @@ class BelongsTo extends ToOne implements FillableToOne
      */
     public static function make(string $fieldName, string $relation = null): BelongsTo
     {
-        return new self($fieldName, $relation);
+        return new static($fieldName, $relation);
     }
 
     /**

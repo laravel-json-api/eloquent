@@ -17,17 +17,17 @@
 
 declare(strict_types=1);
 
-namespace LaravelJsonApi\Eloquent\Tests\Acceptance\Relations\OneToMany;
+namespace LaravelJsonApi\Eloquent\Tests\Acceptance\Relations\MorphMany;
 
 use App\Models\Comment;
-use App\Models\Post;
+use App\Models\Video;
 
 class QueryTest extends TestCase
 {
 
     public function test(): void
     {
-        $post = Post::factory()
+        $video = Video::factory()
             ->has(Comment::factory()->count(3))
             ->create();
 
@@ -35,40 +35,40 @@ class QueryTest extends TestCase
         Comment::factory()->create();
 
         $actual = $this->repository
-            ->queryToMany($post, 'comments')
+            ->queryToMany($video, 'comments')
             ->cursor();
 
-        $this->assertComments($post->comments()->get(), $actual);
+        $this->assertComments($video->comments()->get(), $actual);
     }
 
     public function testWithIncludePaths(): void
     {
-        $post = Post::factory()
+        $video = Video::factory()
             ->has(Comment::factory()->count(3))
             ->create();
 
         $actual = $this->repository
-            ->queryToMany($post, 'comments')
+            ->queryToMany($video, 'comments')
             ->with('user')
             ->cursor();
 
-        $this->assertComments($post->comments()->get(), $actual);
+        $this->assertComments($video->comments()->get(), $actual);
         $this->assertTrue($actual->every(fn(Comment $comment) => $comment->relationLoaded('user')));
     }
 
     public function testWithFilter(): void
     {
-        $post = Post::factory()->create();
+        $video = Video::factory()->create();
 
         $comments = Comment::factory()
             ->count(3)
-            ->create(['post_id' => $post]);
+            ->create(['commentable_id' => $video->getKey(), 'commentable_type' => Video::class]);
 
         $expected = $comments->take(2);
         $ids = $expected->map(fn (Comment $comment) => $comment->getRouteKey())->all();
 
         $actual = $this->repository
-            ->queryToMany($post, 'comments')
+            ->queryToMany($video, 'comments')
             ->filter(['id' => $ids])
             ->cursor();
 
@@ -77,16 +77,16 @@ class QueryTest extends TestCase
 
     public function testWithSort(): void
     {
-        $post = Post::factory()->create();
+        $video = Video::factory()->create();
 
         $comments = Comment::factory()
             ->count(3)
-            ->create(['post_id' => $post]);
+            ->create(['commentable_id' => $video->getKey(), 'commentable_type' => Video::class]);
 
         $expected = $comments->sortByDesc('id');
 
         $actual = $this->repository
-            ->queryToMany($post, 'comments')
+            ->queryToMany($video, 'comments')
             ->sort('-id')
             ->cursor();
 

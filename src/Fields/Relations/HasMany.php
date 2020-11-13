@@ -125,6 +125,10 @@ class HasMany extends ToMany implements FillableToMany
 
         /** @var Model $model */
         foreach ($remove as $model) {
+            if ($relation instanceof EloquentMorphMany) {
+                $model->setAttribute($relation->getMorphType(), null);
+            }
+
             $model->setAttribute($relation->getForeignKeyName(), null)->save();
         }
     }

@@ -25,6 +25,7 @@ use LaravelJsonApi\Contracts\Store\ToOneBuilder;
 use LaravelJsonApi\Core\Query\IncludePaths;
 use LaravelJsonApi\Core\Support\Str;
 use LaravelJsonApi\Eloquent\Contracts\FillableToOne;
+use LaravelJsonApi\Eloquent\Fields\Relations\MorphTo;
 use LaravelJsonApi\Eloquent\Fields\Relations\ToOne;
 use UnexpectedValueException;
 
@@ -94,11 +95,31 @@ class ToOneHydrator implements ToOneBuilder
             fn() => $this->relation->replace($this->model, $identifier)
         );
 
-        if ($this->includePaths && $related) {
-            $this->relation->schema()->loader()->forModel($related)->loadMissing(
-                $this->includePaths
-            );
+        return $this->prepareResult($related);
+    }
+
+    /**
+     * @param Model|null $related
+     * @return Model|null
+     */
+    private function prepareResult(?Model $related): ?Model
+    {
+        if (is_null($related) || is_null($this->includePaths)) {
+            return $related;
         }
+
+        if ($this->relation instanceof MorphTo) {
+            $loader = $this->relation
+                ->schemaFor($related)
+                ->loader()
+                ->skipMissingFields();
+        } else {
+            $loader = $this->relation
+                ->schema()
+                ->loader();
+        }
+
+        $loader->forModel($related)->loadMissing($this->includePaths);
 
         return $related;
     }

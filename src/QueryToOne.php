@@ -23,6 +23,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo as EloquentBelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasOne as EloquentHasOne;
 use Illuminate\Database\Eloquent\Relations\HasOneThrough as EloquentHasOneThrough;
+use Illuminate\Database\Eloquent\Relations\MorphOne as EloquentMorphOne;
 use Illuminate\Database\Eloquent\Relations\Relation as EloquentRelation;
 use LaravelJsonApi\Contracts\Query\QueryParameters;
 use LaravelJsonApi\Contracts\Query\QueryParameters as QueryParametersContract;
@@ -141,7 +142,8 @@ class QueryToOne implements QueryOneBuilder
 
         if ($relation instanceof EloquentHasOne ||
             $relation instanceof EloquentBelongsTo ||
-            $relation instanceof EloquentHasOneThrough
+            $relation instanceof EloquentHasOneThrough ||
+            $relation instanceof EloquentMorphOne
         ) {
             return $relation;
         }

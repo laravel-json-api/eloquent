@@ -25,6 +25,7 @@ use LaravelJsonApi\Eloquent\Fields\DateTime;
 use LaravelJsonApi\Eloquent\Fields\ID;
 use LaravelJsonApi\Eloquent\Fields\Relations\BelongsTo;
 use LaravelJsonApi\Eloquent\Fields\Relations\BelongsToMany;
+use LaravelJsonApi\Eloquent\Fields\Relations\HasMany;
 use LaravelJsonApi\Eloquent\Fields\Relations\HasOne;
 use LaravelJsonApi\Eloquent\Fields\Str;
 use LaravelJsonApi\Eloquent\Filters\Where;
@@ -48,12 +49,14 @@ class UserSchema extends Schema
     {
         return [
             ID::make(),
+            HasMany::make('comments'),
             BelongsTo::make('country'),
             DateTime::make('createdAt')->readOnly(),
             Str::make('email'),
+            HasOne::make('image'),
             Str::make('name'),
             HasOne::make('phone'),
-            BelongsToMany::make('roles')->fields(new RoleUserPivot()),
+            BelongsToMany::make('roles')->fields(new ApprovedPivot()),
             DateTime::make('updatedAt')->readOnly(),
         ];
     }

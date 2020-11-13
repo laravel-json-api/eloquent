@@ -65,14 +65,14 @@ class CreateTest extends TestCase
 
     public function testEmpty(): void
     {
-        $post = $this->repository->create()->store([
+        $user = $this->repository->create()->store([
             'email' => 'john.doe@example.com',
             'name' => 'John Doe',
             'roles' => [],
         ]);
 
-        $this->assertTrue($post->relationLoaded('roles'));
-        $this->assertEquals(new EloquentCollection(), $post->getRelation('roles'));
+        $this->assertTrue($user->relationLoaded('roles'));
+        $this->assertEquals(new EloquentCollection(), $user->getRelation('roles'));
     }
 
 

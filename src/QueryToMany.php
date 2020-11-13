@@ -23,6 +23,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany as EloquentBelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany as EloquentHasMany;
 use Illuminate\Database\Eloquent\Relations\HasManyThrough as EloquentHasManyThrough;
+use Illuminate\Database\Eloquent\Relations\MorphMany as EloquentMorphMany;
 use Illuminate\Database\Eloquent\Relations\Relation as EloquentRelation;
 use Illuminate\Support\Collection;
 use Illuminate\Support\LazyCollection;
@@ -185,7 +186,8 @@ class QueryToMany implements QueryManyBuilder
 
         if ($relation instanceof EloquentHasMany ||
             $relation instanceof EloquentBelongsToMany ||
-            $relation instanceof EloquentHasManyThrough
+            $relation instanceof EloquentHasManyThrough ||
+            $relation instanceof EloquentMorphMany
         ) {
             return $relation;
         }

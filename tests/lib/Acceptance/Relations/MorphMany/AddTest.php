@@ -17,65 +17,58 @@
 
 declare(strict_types=1);
 
-namespace LaravelJsonApi\Eloquent\Tests\Acceptance\Relations\OneToMany;
+namespace LaravelJsonApi\Eloquent\Tests\Acceptance\Relations\MorphMany;
 
 use App\Models\Comment;
-use App\Models\Post;
+use App\Models\User;
+use App\Models\Video;
 use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 
-class RemoveTest extends TestCase
+class AddTest extends TestCase
 {
 
     public function test(): void
     {
-        $post = Post::factory()
+        $video = Video::factory()
             ->has(Comment::factory()->count(3))
             ->create();
 
         /** We force the relation to be loaded before the change, so that we can test it is unset. */
-        $existing = clone $post->comments;
-        $remove = $existing->take(2);
-        $keep = $existing->last();
+        $existing = clone $video->comments;
+        $expected = Comment::factory()->count(2)->create();
 
-        $ids = $remove->map(fn(Comment $comment) => [
+        $ids = $expected->map(fn(Comment $comment) => [
             'type' => 'comments',
             'id' => (string) $comment->getRouteKey(),
         ])->all();
 
         $actual = $this->repository
-            ->modifyToMany($post, 'comments')
-            ->remove($ids);
+            ->modifyToMany($video, 'comments')
+            ->add($ids);
 
         $this->assertInstanceOf(EloquentCollection::class, $actual);
-        $this->assertComments($remove, $actual);
-        $this->assertSame(1, $post->comments()->count());
+        $this->assertComments($expected, $actual);
+        $this->assertSame(5, $video->comments()->count());
 
         /**
          * We expect the relation to be unloaded because we know it has changed in the
          * database, but we don't know what it now is in its entirety.
          */
-        $this->assertFalse($post->relationLoaded('comments'));
+        $this->assertFalse($video->relationLoaded('comments'));
 
-        $this->assertDatabaseHas('comments', [
-            'id' => $keep->getKey(),
-            'post_id' => $post->getKey(),
-        ]);
-
-        foreach ($remove as $comment) {
+        foreach ($existing->merge($expected) as $comment) {
             $this->assertDatabaseHas('comments', [
                 'id' => $comment->getKey(),
-                'post_id' => null,
+                'commentable_id' => $video->getKey(),
+                'commentable_type' => Video::class,
             ]);
         }
     }
 
     public function testWithIncludePaths(): void
     {
-        $post = Post::factory()
-            ->has(Comment::factory()->count(3))
-            ->create();
-
-        $comments = clone $post->comments;
+        $video = Video::factory()->create();
+        $comments = Comment::factory()->count(2)->create();
 
         $ids = $comments->map(fn(Comment $comment) => [
             'type' => 'comments',
@@ -83,11 +76,39 @@ class RemoveTest extends TestCase
         ])->all();
 
         $actual = $this->repository
-            ->modifyToMany($post, 'comments')
+            ->modifyToMany($video, 'comments')
             ->with('user')
-            ->remove($ids);
+            ->add($ids);
 
         $this->assertComments($comments, $actual);
         $this->assertTrue($actual->every(fn(Comment $comment) => $comment->relationLoaded('user')));
+    }
+
+
+    /**
+     * The spec says:
+     * "If a given type and id is already in the relationship, the server MUST NOT add it again."
+     *
+     * This test checks that duplicate ids are not added.
+     */
+    public function testWithDuplicates(): void
+    {
+        /** @var Video $video */
+        $video = Video::factory()->create();
+        $comments = Comment::factory()->count(2)->create();
+
+        $comments[0]->commentable()->associate($video)->save();
+
+        $ids = collect($comments)->push($comments[0])->map(fn(Comment $comment) => [
+            'type' => 'comments',
+            'id' => (string) $comment->getRouteKey(),
+        ])->all();
+
+        $actual = $this->repository
+            ->modifyToMany($video, 'comments')
+            ->add($ids);
+
+        $this->assertComments($comments, $actual);
+        $this->assertSame(2, $video->comments()->count());
     }
 }

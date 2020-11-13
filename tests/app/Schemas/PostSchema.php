@@ -24,7 +24,9 @@ use LaravelJsonApi\Contracts\Pagination\Paginator;
 use LaravelJsonApi\Eloquent\Fields\DateTime;
 use LaravelJsonApi\Eloquent\Fields\ID;
 use LaravelJsonApi\Eloquent\Fields\Relations\BelongsTo;
+use LaravelJsonApi\Eloquent\Fields\Relations\BelongsToMany;
 use LaravelJsonApi\Eloquent\Fields\Relations\HasMany;
+use LaravelJsonApi\Eloquent\Fields\Relations\HasOne;
 use LaravelJsonApi\Eloquent\Fields\Str;
 use LaravelJsonApi\Eloquent\Filters\WhereIn;
 use LaravelJsonApi\Eloquent\Filters\Where;
@@ -52,7 +54,9 @@ class PostSchema extends Schema
             DateTime::make('createdAt')->readOnly(),
             HasMany::make('comments'),
             Str::make('content'),
+            HasOne::make('image'),
             Str::make('slug')->sortable(),
+            BelongsToMany::make('tags')->fields(new ApprovedPivot()),
             Str::make('title'),
             DateTime::make('updatedAt')->readOnly(),
         ];

@@ -22,7 +22,9 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
+use Illuminate\Database\Eloquent\Relations\MorphOne;
+use Illuminate\Database\Eloquent\Relations\MorphToMany;
 
 class Post extends Model
 {
@@ -39,11 +41,29 @@ class Post extends Model
     ];
 
     /**
-     * @return HasMany
+     * @return MorphMany
      */
-    public function comments(): HasMany
+    public function comments(): MorphMany
     {
-        return $this->hasMany(Comment::class);
+        return $this->morphMany(Comment::class, 'commentable');
+    }
+
+    /**
+     * @return MorphOne
+     */
+    public function image(): MorphOne
+    {
+        return $this->morphOne(Image::class, 'imageable');
+    }
+
+    /**
+     * @return MorphToMany
+     */
+    public function tags(): MorphToMany
+    {
+        return $this
+            ->morphToMany(Tag::class, 'taggable')
+            ->withPivot('approved');
     }
 
     /**

@@ -17,10 +17,10 @@
 
 declare(strict_types=1);
 
-namespace LaravelJsonApi\Eloquent\Tests\Acceptance\Relations\OneToMany;
+namespace LaravelJsonApi\Eloquent\Tests\Acceptance\Relations\MorphMany;
 
 use App\Models\Comment;
-use App\Models\Post;
+use App\Models\Video;
 use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 
 class UpdateTest extends TestCase
@@ -28,61 +28,64 @@ class UpdateTest extends TestCase
 
     public function test(): void
     {
-        /** @var Post $post */
-        $post = Post::factory()
+        /** @var Video $video */
+        $video = Video::factory()
             ->has(Comment::factory()->count(3))
             ->create();
 
-        $existing = $post->comments()->get();
+        $existing = $video->comments()->get();
         $remove = $existing->last();
 
         $expected = $existing->take(2)->push(
             Comment::factory()->create()
         );
 
-        $this->repository->update($post)->store([
+        $this->repository->update($video)->store([
             'comments' => $expected->map(fn(Comment $comment) => [
                 'type' => 'comments',
                 'id' => (string) $comment->getRouteKey(),
             ])->all(),
         ]);
 
-        $this->assertTrue($post->relationLoaded('comments'));
-        $this->assertInstanceOf(EloquentCollection::class, $actual = $post->getRelation('comments'));
+        $this->assertTrue($video->relationLoaded('comments'));
+        $this->assertInstanceOf(EloquentCollection::class, $actual = $video->getRelation('comments'));
         $this->assertComments($expected, $actual);
 
         foreach ($expected as $comment) {
             $this->assertDatabaseHas('comments', [
                 'id' => $comment->getKey(),
-                'post_id' => $post->getKey(),
+                'commentable_id' => $video->getKey(),
+                'commentable_type' => Video::class,
             ]);
         }
 
         $this->assertDatabaseHas('comments', [
             'id' => $remove->getKey(),
-            'post_id' => null,
+            'commentable_id' => null,
+            'commentable_type' => null,
         ]);
     }
 
     public function testEmpty(): void
     {
-        $post = Post::factory()
+        $video = Video::factory()
             ->has(Comment::factory()->count(3))
             ->create();
 
-        $existing = $post->comments()->get();
+        $existing = $video->comments()->get();
 
-        $this->repository->update($post)->store([
+        $this->repository->update($video)->store([
             'comments' => [],
         ]);
 
-        $this->assertTrue($post->relationLoaded('comments'));
-        $this->assertEquals(new EloquentCollection(), $post->getRelation('comments'));
+        $this->assertTrue($video->relationLoaded('comments'));
+        $this->assertEquals(new EloquentCollection(), $video->getRelation('comments'));
 
         foreach ($existing as $comment) {
             $this->assertDatabaseHas('comments', [
                 'id' => $comment->getKey(),
-                'post_id' => null,
+                'commentable_id' => null,
+                'commentable_type' => null,
             ]);
         }
     }
@@ -95,39 +98,41 @@ class UpdateTest extends TestCase
      */
     public function testWithDuplicates(): void
     {
-        /** @var Post $post */
-        $post = Post::factory()
+        /** @var Video $video */
+        $video = Video::factory()
             ->has(Comment::factory()->count(3))
             ->create();
 
-        $existing = $post->comments()->get();
+        $existing = $video->comments()->get();
         $remove = $existing->last();
 
         $expected = $existing->take(2)->push(
             Comment::factory()->create()
         );
 
-        $this->repository->update($post)->store([
+        $this->repository->update($video)->store([
             'comments' => collect($expected)->push($expected[1])->map(fn(Comment $comment) => [
                 'type' => 'comments',
                 'id' => (string) $comment->getRouteKey(),
             ])->all(),
         ]);
 
-        $this->assertTrue($post->relationLoaded('comments'));
-        $this->assertInstanceOf(EloquentCollection::class, $actual = $post->getRelation('comments'));
+        $this->assertTrue($video->relationLoaded('comments'));
+        $this->assertInstanceOf(EloquentCollection::class, $actual = $video->getRelation('comments'));
         $this->assertComments($expected, $actual);
 
         foreach ($expected as $comment) {
             $this->assertDatabaseHas('comments', [
                 'id' => $comment->getKey(),
-                'post_id' => $post->getKey(),
+                'commentable_id' => $video->getKey(),
+                'commentable_type' => Video::class,
             ]);
         }
 
         $this->assertDatabaseHas('comments', [
             'id' => $remove->getKey(),
-            'post_id' => null,
+            'commentable_id' => null,
+            'commentable_type' => null,
         ]);
     }
 }

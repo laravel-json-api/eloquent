@@ -36,7 +36,7 @@ abstract class Schema extends BaseSchema
     /**
      * @var callable|null
      */
-    protected static $resourceTypeResolver;
+    public static $resourceTypeResolver;
 
     /**
      * @var callable|null

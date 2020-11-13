@@ -24,6 +24,7 @@ use LaravelJsonApi\Contracts\Pagination\Paginator;
 use LaravelJsonApi\Eloquent\Fields\DateTime;
 use LaravelJsonApi\Eloquent\Fields\ID;
 use LaravelJsonApi\Eloquent\Fields\Relations\BelongsTo;
+use LaravelJsonApi\Eloquent\Fields\Relations\MorphTo;
 use LaravelJsonApi\Eloquent\Fields\Str;
 use LaravelJsonApi\Eloquent\Filters\WhereIn;
 use LaravelJsonApi\Eloquent\Pagination\StandardPaginator;
@@ -47,8 +48,8 @@ class CommentSchema extends Schema
         return [
             ID::make(),
             DateTime::make('createdAt')->readOnly(),
+            MorphTo::make('commentable'),
             Str::make('content'),
-            BelongsTo::make('post'),
             DateTime::make('updatedAt')->readOnly(),
             BelongsTo::make('user'),
         ];

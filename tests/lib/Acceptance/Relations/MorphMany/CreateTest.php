@@ -17,62 +17,51 @@
 
 declare(strict_types=1);
 
-namespace LaravelJsonApi\Eloquent\Tests\Acceptance\Relations\OneToMany;
+namespace LaravelJsonApi\Eloquent\Tests\Acceptance\Relations\MorphMany;
 
 use App\Models\Comment;
-use App\Models\Post;
-use App\Models\User;
+use App\Models\Video;
 use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 
 class CreateTest extends TestCase
 {
 
-    protected function setUp(): void
-    {
-        parent::setUp();
-
-        Post::creating(static fn (Post $post) => $post->user()->associate(
-            User::factory()->create()
-        ));
-    }
-
     public function test(): void
     {
         $comments = Comment::factory()->count(2)->create();
 
-        $post = $this->repository->create()->store([
+        $video = $this->repository->create()->store([
             'comments' => $comments->map(fn(Comment $comment) => [
                 'type' => 'comments',
                 'id' => (string) $comment->getRouteKey(),
             ])->all(),
-            'content' => '...',
-            'title' => 'Hello World!',
-            'slug' => 'hello-world',
+            'title' => 'Video 123',
+            'url' => 'http://example.com/videos/123.mov',
         ]);
 
-        $this->assertTrue($post->relationLoaded('comments'));
-        $this->assertInstanceOf(EloquentCollection::class, $actual = $post->getRelation('comments'));
+        $this->assertTrue($video->relationLoaded('comments'));
+        $this->assertInstanceOf(EloquentCollection::class, $actual = $video->getRelation('comments'));
         $this->assertComments($comments, $actual);
 
         foreach ($comments as $comment) {
             $this->assertDatabaseHas('comments', [
                 'id' => $comment->getKey(),
-                'post_id' => $post->getKey(),
+                'commentable_id' => $video->getKey(),
+                'commentable_type' => Video::class,
             ]);
         }
     }
 
     public function testEmpty(): void
     {
-        $post = $this->repository->create()->store([
+        $video = $this->repository->create()->store([
             'comments' => [],
-            'content' => '...',
-            'title' => 'Hello World!',
-            'slug' => 'hello-world',
+            'title' => 'Video 123',
+            'url' => 'http://example.com/videos/123.mov',
         ]);
 
-        $this->assertTrue($post->relationLoaded('comments'));
-        $this->assertEquals(new EloquentCollection(), $post->getRelation('comments'));
+        $this->assertTrue($video->relationLoaded('comments'));
+        $this->assertEquals(new EloquentCollection(), $video->getRelation('comments'));
     }
 
 
@@ -86,25 +75,25 @@ class CreateTest extends TestCase
     {
         $comments = Comment::factory()->count(2)->create();
 
-        $post = $this->repository->create()->store([
+        $video = $this->repository->create()->store([
             'comments' => collect($comments)->push($comments[1])->map(fn(Comment $comment) => [
                 'type' => 'comments',
                 'id' => (string) $comment->getRouteKey(),
             ])->all(),
-            'content' => '...',
-            'title' => 'Hello World!',
-            'slug' => 'hello-world',
+            'title' => 'Video 123',
+            'url' => 'http://example.com/videos/123.mov',
         ]);
 
-        $this->assertTrue($post->relationLoaded('comments'));
-        $this->assertInstanceOf(EloquentCollection::class, $actual = $post->getRelation('comments'));
+        $this->assertTrue($video->relationLoaded('comments'));
+        $this->assertInstanceOf(EloquentCollection::class, $actual = $video->getRelation('comments'));
         $this->assertComments($comments, $actual);
-        $this->assertSame(2, $post->comments()->count());
+        $this->assertSame(2, $video->comments()->count());
 
         foreach ($comments as $comment) {
             $this->assertDatabaseHas('comments', [
                 'id' => $comment->getKey(),
-                'post_id' => $post->getKey(),
+                'commentable_id' => $video->getKey(),
+                'commentable_type' => Video::class,
             ]);
         }
     }

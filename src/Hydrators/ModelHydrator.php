@@ -31,7 +31,10 @@ use LaravelJsonApi\Eloquent\Contracts\FillableToMany;
 use LaravelJsonApi\Eloquent\Contracts\FillableToOne;
 use LaravelJsonApi\Eloquent\Fields\Relations\Relation;
 use LaravelJsonApi\Eloquent\Schema;
+use LogicException;
 use RuntimeException;
+use UnexpectedValueException;
+use function sprintf;
 
 class ModelHydrator implements ResourceBuilder
 {
@@ -116,6 +119,18 @@ class ModelHydrator implements ResourceBuilder
      */
     public function hydrate(array $validatedData): Model
     {
+        $unrecognised = collect($validatedData)->keys()->diff(
+            $this->schema->fieldNames()
+        );
+
+        if ($unrecognised->isNotEmpty()) {
+            throw new LogicException(sprintf(
+                'Validated data for resource type %s contains unrecognised fields: %s',
+                $this->schema->type(),
+                $unrecognised->implode(', ')
+            ));
+        }
+
         $this->model->getConnection()->transaction(function () use ($validatedData) {
             $this->fillAttributes($validatedData);
             $deferred = $this->fillRelationships($validatedData);

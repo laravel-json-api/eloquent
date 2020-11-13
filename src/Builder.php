@@ -21,6 +21,7 @@ namespace LaravelJsonApi\Eloquent;
 
 use Illuminate\Contracts\Support\Arrayable;
 use Illuminate\Database\Eloquent\Builder as EloquentBuilder;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\Relation as EloquentRelation;
 use Illuminate\Support\LazyCollection;
 use Illuminate\Support\Traits\ForwardsCalls;
@@ -82,11 +83,15 @@ class Builder
      * Builder constructor.
      *
      * @param Schema $schema
-     * @param EloquentBuilder|EloquentRelation $query
+     * @param EloquentBuilder|EloquentRelation|Model $query
      * @param SchemaRelation|null $relation
      */
     public function __construct(Schema $schema, $query, SchemaRelation $relation = null)
     {
+        if ($query instanceof Model) {
+            $query = $query->newQuery();
+        }
+
         if ($query instanceof EloquentRelation && !$relation) {
             throw new InvalidArgumentException('Expecting a schema relation when querying an Eloquent relation.');
         }

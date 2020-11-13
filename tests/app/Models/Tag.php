@@ -17,39 +17,39 @@
 
 declare(strict_types=1);
 
-namespace App\Schemas;
+namespace App\Models;
 
-use Illuminate\Support\Facades\Auth;
-use LaravelJsonApi\Eloquent\Filters\WherePivot;
-use function boolval;
-use function optional;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\MorphToMany;
 
-class RoleUserPivot
+class Tag extends Model
 {
 
+    use HasFactory;
+
     /**
-     * Get the pivot attributes.
-     *
-     * @param $parent
-     * @param $related
-     * @return array
+     * @var string[]
      */
-    public function __invoke($parent, $related): array
+    protected $fillable = ['name'];
+
+    /**
+     * @return MorphToMany
+     */
+    public function posts(): MorphToMany
     {
-        return [
-            'approved' => boolval(optional(Auth::user())->admin),
-        ];
+        return $this
+            ->morphedByMany(Post::class, 'taggable')
+            ->withPivot('approved');
     }
 
     /**
-     * Get filters for the pivot table.
-     *
-     * @return array
+     * @return MorphToMany
      */
-    public function filters(): array
+    public function videos(): MorphToMany
     {
-        return [
-            WherePivot::make('approved')->asBoolean(),
-        ];
+        return $this
+            ->morphedByMany(Video::class, 'taggable')
+            ->withPivot('approved');
     }
 }

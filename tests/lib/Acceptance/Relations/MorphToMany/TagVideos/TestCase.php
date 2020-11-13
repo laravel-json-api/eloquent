@@ -17,9 +17,9 @@
 
 declare(strict_types=1);
 
-namespace LaravelJsonApi\Eloquent\Tests\Acceptance\Relations\OneToMany;
+namespace LaravelJsonApi\Eloquent\Tests\Acceptance\Relations\MorphToMany\TagVideos;
 
-use App\Models\Comment;
+use App\Models\Video;
 use LaravelJsonApi\Eloquent\Repository;
 use LaravelJsonApi\Eloquent\Tests\Acceptance\TestCase as BaseTestCase;
 
@@ -38,7 +38,7 @@ class TestCase extends BaseTestCase
     {
         parent::setUp();
 
-        $this->repository = $this->schemas()->schemaFor('posts')->repository();
+        $this->repository = $this->schemas()->schemaFor('tags')->repository();
     }
 
     /**
@@ -46,10 +46,10 @@ class TestCase extends BaseTestCase
      * @param iterable $actual
      * @return void
      */
-    protected function assertComments(iterable $expected, iterable $actual): void
+    protected function assertVideos(iterable $expected, iterable $actual): void
     {
         $expected = collect($expected)
-            ->map($fn = fn(Comment $comment) => $comment->getKey())
+            ->map($fn = fn(Video $video) => $video->getKey())
             ->values()
             ->all();
 

@@ -20,7 +20,6 @@ declare(strict_types=1);
 namespace LaravelJsonApi\Eloquent;
 
 use Illuminate\Database\Eloquent\Model;
-use LaravelJsonApi\Contracts\Schema\Container as SchemaContainer;
 use LaravelJsonApi\Contracts\Store\CreatesResources;
 use LaravelJsonApi\Contracts\Store\DeletesResources;
 use LaravelJsonApi\Contracts\Store\ModifiesToMany;
@@ -37,6 +36,7 @@ use LaravelJsonApi\Contracts\Store\ResourceBuilder;
 use LaravelJsonApi\Contracts\Store\ToManyBuilder;
 use LaravelJsonApi\Contracts\Store\ToOneBuilder;
 use LaravelJsonApi\Contracts\Store\UpdatesResources;
+use LaravelJsonApi\Eloquent\Fields\Relations\MorphTo;
 use LaravelJsonApi\Eloquent\Hydrators\ModelHydrator;
 use LaravelJsonApi\Eloquent\Hydrators\ToManyHydrator;
 use LaravelJsonApi\Eloquent\Hydrators\ToOneHydrator;
@@ -180,10 +180,14 @@ class Repository implements
      */
     public function queryToOne($modelOrResourceId, string $fieldName): QueryOneBuilder
     {
-        return new QueryToOne(
-            $this->retrieve($modelOrResourceId),
-            $this->schema->toOne($fieldName)
-        );
+        $model = $this->retrieve($modelOrResourceId);
+        $relation = $this->schema->toOne($fieldName);
+
+        if ($relation instanceof MorphTo) {
+            return new QueryMorphTo($model, $relation);
+        }
+
+        return new QueryToOne($model, $relation);
     }
 
     /**

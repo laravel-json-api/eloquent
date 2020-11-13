@@ -21,6 +21,7 @@ namespace LaravelJsonApi\Eloquent\Fields\Relations;
 
 use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Support\Collection;
+use LaravelJsonApi\Contracts\Schema\Schema;
 use LaravelJsonApi\Core\Support\Str;
 
 abstract class ToMany extends Relation
@@ -42,11 +43,13 @@ abstract class ToMany extends Relation
     {
         $schemas = $this->schemas();
 
-        $items = collect($identifiers)->groupBy('type')->map(
-            fn(Collection $ids, $type) => collect($schemas->schemaFor($type)->repository()->findMany(
+        $items = collect($identifiers)->groupBy('type')->map(function(Collection $ids, $type) use ($schemas) {
+            $this->assertInverseType($type);
+
+            return collect($schemas->schemaFor($type)->repository()->findMany(
                 $ids->pluck('id')->unique()->all()
-            ))
-        )->flatten();
+            ));
+        })->flatten();
 
         return new EloquentCollection($items);
     }

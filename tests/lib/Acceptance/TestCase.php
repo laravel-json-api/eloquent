@@ -1,5 +1,5 @@
 <?php
-/**
+/*
  * Copyright 2020 Cloud Creativity Limited
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -41,11 +41,14 @@ class TestCase extends BaseTestCase
             Schemas\CarSchema::class,
             Schemas\CommentSchema::class,
             Schemas\CountrySchema::class,
+            Schemas\ImageSchema::class,
             Schemas\MechanicSchema::class,
             Schemas\PhoneSchema::class,
             Schemas\PostSchema::class,
             Schemas\RoleSchema::class,
+            Schemas\TagSchema::class,
             Schemas\UserSchema::class,
+            Schemas\VideoSchema::class,
         ]));
     }
 

@@ -55,7 +55,7 @@ class QueryTest extends TestCase
             ->cursor();
 
         $this->assertRoles($user->roles()->get(), $actual);
-        $this->assertTrue($actual->every(fn(Role $comment) => $comment->relationLoaded('users')));
+        $this->assertTrue($actual->every(fn(Role $role) => $role->relationLoaded('users')));
     }
 
     public function testWithFilter(): void

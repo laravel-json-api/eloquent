@@ -21,7 +21,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-class CreatePostTables extends Migration
+class CreatePostAndVideoTables extends Migration
 {
 
     /**
@@ -46,22 +46,54 @@ class CreatePostTables extends Migration
                 ->cascadeOnUpdate();
         });
 
+        Schema::create('videos', function (Blueprint $table) {
+            $table->id();
+            $table->timestamps();
+            $table->string('title');
+            $table->string('url');
+        });
+
         Schema::create('comments', function (Blueprint $table) {
             $table->id();
             $table->timestamps();
-            $table->unsignedBigInteger('post_id')->nullable();
-            $table->unsignedBigInteger('user_id');
+            $table->unsignedBigInteger('user_id')->nullable();
+            $table->nullableMorphs('commentable');
             $table->text('content');
-
-            $table->foreign('post_id')
-                ->references('id')
-                ->on('posts')
-                ->cascadeOnDelete()
-                ->cascadeOnUpdate();
 
             $table->foreign('user_id')
                 ->references('id')
                 ->on('posts')
+                ->cascadeOnDelete()
+                ->cascadeOnUpdate();
+        });
+
+        Schema::create('images', function (Blueprint $table) {
+            $table->id();
+            $table->timestamps();
+            $table->string('url');
+            $table->nullableMorphs('imageable');
+        });
+
+        Schema::create('tags', function (Blueprint $table) {
+            $table->id();
+            $table->timestamps();
+            $table->string('name');
+        });
+
+        Schema::create('taggables', function (Blueprint $table) {
+            $table->unsignedBigInteger('tag_id');
+            $table->morphs('taggable');
+            $table->boolean('approved')->default(false);
+
+            $table->primary([
+                'tag_id',
+                'taggable_id',
+                'taggable_type',
+            ]);
+
+            $table->foreign('tag_id')
+                ->references('id')
+                ->on('tags')
                 ->cascadeOnDelete()
                 ->cascadeOnUpdate();
         });
@@ -74,7 +106,9 @@ class CreatePostTables extends Migration
      */
     public function down(): void
     {
+        Schema::dropIfExists('images');
         Schema::dropIfExists('comments');
+        Schema::dropIfExists('videos');
         Schema::dropIfExists('posts');
     }
 }

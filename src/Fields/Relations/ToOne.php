@@ -22,6 +22,7 @@ namespace LaravelJsonApi\Eloquent\Fields\Relations;
 use Illuminate\Database\Eloquent\Model;
 use LaravelJsonApi\Core\Document\ResourceIdentifier;
 use LaravelJsonApi\Core\Support\Str;
+use LogicException;
 
 abstract class ToOne extends Relation
 {
@@ -55,6 +56,8 @@ abstract class ToOne extends Relation
         }
 
         $identifier = ResourceIdentifier::fromArray($value);
+
+        $this->assertInverseType($identifier->type());
 
         return $this
             ->schemas()

@@ -22,6 +22,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\MorphTo;
 
 class Comment extends Model
 {
@@ -34,11 +35,11 @@ class Comment extends Model
     protected $fillable = ['content'];
 
     /**
-     * @return BelongsTo
+     * @return MorphTo
      */
-    public function post(): BelongsTo
+    public function commentable(): MorphTo
     {
-        return $this->belongsTo(Post::class);
+        return $this->morphTo();
     }
 
     /**

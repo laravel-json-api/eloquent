@@ -22,6 +22,7 @@ namespace LaravelJsonApi\Eloquent;
 use IteratorAggregate;
 use LaravelJsonApi\Contracts\Schema\Container;
 use LaravelJsonApi\Core\Query\RelationshipPath;
+use LaravelJsonApi\Eloquent\Fields\Relations\MorphTo;
 use LaravelJsonApi\Eloquent\Fields\Relations\Relation;
 use LogicException;
 use function implode;
@@ -46,6 +47,11 @@ class EagerLoadPath implements IteratorAggregate
     private RelationshipPath $path;
 
     /**
+     * @var bool
+     */
+    private bool $skipMissingFields = false;
+
+    /**
      * EagerLoadPath constructor.
      *
      * @param Container $schemas
@@ -57,6 +63,17 @@ class EagerLoadPath implements IteratorAggregate
         $this->schemas = $schemas;
         $this->schema = $schema;
         $this->path = $path;
+    }
+
+    /**
+     * @param bool $skip
+     * @return $this
+     */
+    public function skipMissingFields(bool $skip = true): self
+    {
+        $this->skipMissingFields = $skip;
+
+        return $this;
     }
 
     /**
@@ -90,16 +107,44 @@ class EagerLoadPath implements IteratorAggregate
     {
         $schema = $this->schema;
 
-        foreach ($this->path->names() as $field) {
+        foreach ($this->path->names() as $idx => $field) {
+            if ($this->skipMissingFields && false === $schema->isRelationship($field)) {
+                break;
+            }
+
             $relation = $schema->relationship($field);
 
-            if ($relation instanceof Relation && $relation->isIncludePath()) {
+            if (!$relation->isIncludePath()) {
+                throw new LogicException(sprintf(
+                    'Unsupported include field %s in path %s.',
+                    $field,
+                    $this->path
+                ));
+            }
+
+            /**
+             * If we have a morph to relation, we will only yield the
+             * relation name if we are at the end of the relationship
+             * path. Otherwise we need to use a morph map.
+             */
+            if ($relation instanceof MorphTo) {
+                if ($idx === ($this->path->count() - 1)) {
+                    yield $relation->relationName();
+                }
+                break;
+            }
+
+            if ($relation instanceof Relation) {
                 $schema = $this->schemas->schemaFor($relation->inverse());
                 yield $relation->relationName();
                 continue;
             }
 
-            throw new LogicException("Field {$field} is not a valid Eloquent include path.");
+            throw new LogicException(sprintf(
+                'Field %s in path %s is not an Eloquent include path.',
+                $field,
+                $this->path
+            ));
         }
     }
 

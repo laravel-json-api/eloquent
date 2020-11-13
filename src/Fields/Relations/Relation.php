@@ -155,6 +155,22 @@ abstract class Relation implements RelationContract, SchemaAwareContract
     }
 
     /**
+     * @param string $type
+     * @return void
+     */
+    protected function assertInverseType(string $type): void
+    {
+        if ($this->inverse() !== $type) {
+            throw new LogicException(sprintf(
+                'Resource type %s is not a valid inverse resource type for relation %s: expecting %s.',
+                $type,
+                $this->name(),
+                $this->inverse()
+            ));
+        }
+    }
+
+    /**
      * Guess the relation name on the model.
      *
      * @return string

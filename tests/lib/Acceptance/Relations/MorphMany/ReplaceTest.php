@@ -17,10 +17,10 @@
 
 declare(strict_types=1);
 
-namespace LaravelJsonApi\Eloquent\Tests\Acceptance\Relations\OneToMany;
+namespace LaravelJsonApi\Eloquent\Tests\Acceptance\Relations\MorphMany;
 
 use App\Models\Comment;
-use App\Models\Post;
+use App\Models\Video;
 use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 
 class ReplaceTest extends TestCase
@@ -28,19 +28,19 @@ class ReplaceTest extends TestCase
 
     public function test(): void
     {
-        /** @var Post $post */
-        $post = Post::factory()
+        /** @var Video $video */
+        $video = Video::factory()
             ->has(Comment::factory()->count(3))
             ->create();
 
-        $existing = $post->comments()->get();
+        $existing = $video->comments()->get();
         $remove = $existing->last();
 
         $expected = $existing->take(2)->push(
             Comment::factory()->create()
         );
 
-        $actual = $this->repository->modifyToMany($post, 'comments')->replace(
+        $actual = $this->repository->modifyToMany($video, 'comments')->replace(
             $expected->map(fn(Comment $comment) => [
                 'type' => 'comments',
                 'id' => (string) $comment->getRouteKey(),
@@ -50,52 +50,55 @@ class ReplaceTest extends TestCase
         $this->assertInstanceOf(EloquentCollection::class, $actual);
         $this->assertComments($expected, $actual);
 
-        $this->assertTrue($post->relationLoaded('comments'));
-        $this->assertSame($actual, $post->getRelation('comments'));
+        $this->assertTrue($video->relationLoaded('comments'));
+        $this->assertSame($actual, $video->getRelation('comments'));
 
         foreach ($expected as $comment) {
             $this->assertDatabaseHas('comments', [
                 'id' => $comment->getKey(),
-                'post_id' => $post->getKey(),
+                'commentable_id' => $video->getKey(),
+                'commentable_type' => Video::class,
             ]);
         }
 
         $this->assertDatabaseHas('comments', [
             'id' => $remove->getKey(),
-            'post_id' => null,
+            'commentable_id' => null,
+            'commentable_type' => null,
         ]);
     }
 
     public function testEmpty(): void
     {
-        $post = Post::factory()
+        $video = Video::factory()
             ->has(Comment::factory()->count(3))
             ->create();
 
-        $existing = $post->comments()->get();
+        $existing = $video->comments()->get();
 
         $actual = $this->repository
-            ->modifyToMany($post, 'comments')
+            ->modifyToMany($video, 'comments')
             ->replace([]);
 
         $this->assertInstanceOf(EloquentCollection::class, $actual);
         $this->assertEquals(new EloquentCollection(), $actual);
-        $this->assertSame(0, $post->comments()->count());
+        $this->assertSame(0, $video->comments()->count());
 
-        $this->assertTrue($post->relationLoaded('comments'));
-        $this->assertSame($actual, $post->getRelation('comments'));
+        $this->assertTrue($video->relationLoaded('comments'));
+        $this->assertSame($actual, $video->getRelation('comments'));
 
         foreach ($existing as $comment) {
             $this->assertDatabaseHas('comments', [
                 'id' => $comment->getKey(),
-                'post_id' => null,
+                'commentable_id' => null,
+                'commentable_type' => null,
             ]);
         }
     }
 
     public function testWithIncludePaths(): void
     {
-        $post = Post::factory()->create();
+        $video = Video::factory()->create();
         $comments = Comment::factory()->count(3)->create();
 
         $ids = $comments->map(fn(Comment $comment) => [
@@ -104,7 +107,7 @@ class ReplaceTest extends TestCase
         ])->all();
 
         $actual = $this->repository
-            ->modifyToMany($post, 'comments')
+            ->modifyToMany($video, 'comments')
             ->with('user')
             ->replace($ids);
 
@@ -120,11 +123,11 @@ class ReplaceTest extends TestCase
      */
     public function testWithDuplicates(): void
     {
-        /** @var Post $post */
-        $post = Post::factory()->create();
+        /** @var Video $video */
+        $video = Video::factory()->create();
         $comments = Comment::factory()->count(3)->create();
 
-        $comments[1]->post()->associate($post)->save();
+        $comments[1]->commentable()->associate($video)->save();
 
         $ids = collect($comments)->push($comments[1])->map(fn(Comment $comment) => [
             'type' => 'comments',
@@ -132,11 +135,11 @@ class ReplaceTest extends TestCase
         ])->all();
 
         $actual = $this->repository
-            ->modifyToMany($post, 'comments')
+            ->modifyToMany($video, 'comments')
             ->replace($ids);
 
         $this->assertCount(3, $actual);
-        $this->assertSame(3, $post->comments()->count());
+        $this->assertSame(3, $video->comments()->count());
         $this->assertComments($comments, $actual);
     }
 }
