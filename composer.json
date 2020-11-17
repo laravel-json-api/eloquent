@@ -26,21 +26,18 @@
     "repositories": [
         {
             "type": "path",
-            "url": "../laravel"
-        },
-        {
-            "type": "path",
-            "url": "../spec"
+            "url": "../core"
         }
     ],
     "require": {
         "php": "^7.4",
         "ext-json": "*",
-        "illuminate/database": "^8.0"
+        "illuminate/database": "^8.0",
+        "illuminate/support": "^8.0",
+        "laravel-json-api/core": "*"
     },
     "require-dev": {
         "orchestra/testbench": "^6.4",
-        "laravel-json-api/laravel": "*",
         "phpunit/phpunit": "^9.4"
     },
     "autoload": {
