@@ -71,7 +71,7 @@ class ToManyHydrator implements ToManyBuilder
      */
     public function using(QueryParameters $query): ToManyBuilder
     {
-        $this->with($query);
+        $this->with($query->includePaths());
 
         return $this;
     }
