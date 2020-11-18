@@ -134,7 +134,7 @@ abstract class Attribute implements AttributeContract, Fillable, Selectable, Sor
     public function sort($query, bool $ascending)
     {
         return $query->orderBy(
-            $this->column(),
+            $query->getModel()->qualifyColumn($this->column()),
             $ascending ? 'asc' : 'desc'
         );
     }

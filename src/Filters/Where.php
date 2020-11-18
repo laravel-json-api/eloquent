@@ -135,7 +135,7 @@ class Where implements Filter
     public function apply($query, $value)
     {
         return $query->where(
-            $query->qualifyColumn($this->column()),
+            $query->getModel()->qualifyColumn($this->column()),
             $this->operator(),
             $this->deserialize($value)
         );

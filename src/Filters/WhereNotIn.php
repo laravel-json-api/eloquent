@@ -28,7 +28,7 @@ class WhereNotIn extends WhereIn
     public function apply($query, $value)
     {
         return $query->whereNotIn(
-            $query->qualifyColumn($this->column()),
+            $query->getModel()->qualifyColumn($this->column()),
             $this->deserialize($value)
         );
     }

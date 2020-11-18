@@ -250,7 +250,7 @@ class Builder
      */
     public function whereResourceId($resourceId): self
     {
-        $column = $this->query->qualifyColumn(
+        $column = $this->query->getModel()->qualifyColumn(
             $this->schema->idColumn()
         );
 
@@ -275,7 +275,7 @@ class Builder
      */
     public function orderByResourceId(string $direction = 'asc'): self
     {
-        $column = $this->query->qualifyColumn(
+        $column = $this->query->getModel()->qualifyColumn(
             $this->schema->idColumn()
         );
 
