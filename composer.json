@@ -5,7 +5,6 @@
         "jsonapi.org",
         "json-api",
         "jsonapi",
-        "json:api",
         "laravel"
     ],
     "homepage": "https://github.com/laravel-json-api/eloquent",
@@ -24,11 +23,11 @@
         }
     ],
     "require": {
-        "php": "^7.3",
+        "php": "^7.4",
         "ext-json": "*"
     },
     "require-dev": {
-        "phpunit/phpunit": "^9.0"
+        "phpunit/phpunit": "^9.4"
     },
     "autoload": {
         "psr-4": {
