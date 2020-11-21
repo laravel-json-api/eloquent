@@ -34,4 +34,17 @@ class Number extends Attribute
         return new self($fieldName, $column);
     }
 
+    /**
+     * @inheritDoc
+     */
+    protected function assertValue($value): void
+    {
+        if (!is_null($value) && !is_int($value) && !is_float($value)) {
+            throw new \UnexpectedValueException(sprintf(
+                'Expecting the value of attribute %s to be an integer or float.',
+                $this->name()
+            ));
+        }
+    }
+
 }

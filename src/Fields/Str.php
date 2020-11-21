@@ -34,4 +34,17 @@ class Str extends Attribute
         return new self($fieldName, $column);
     }
 
+    /**
+     * @inheritDoc
+     */
+    protected function assertValue($value): void
+    {
+        if (!is_null($value) && !is_string($value)) {
+            throw new \UnexpectedValueException(sprintf(
+                'Expecting the value of attribute %s to be a string.',
+                $this->name()
+            ));
+        }
+    }
+
 }

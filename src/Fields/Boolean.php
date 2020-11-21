@@ -34,4 +34,16 @@ class Boolean extends Attribute
         return new self($fieldName, $column);
     }
 
+    /**
+     * @inheritDoc
+     */
+    protected function assertValue($value): void
+    {
+        if (!is_null($value) && !is_bool($value)) {
+            throw new \UnexpectedValueException(sprintf(
+                'Expecting the value of attribute %s to be a boolean.',
+                $this->name()
+            ));
+        }
+    }
 }

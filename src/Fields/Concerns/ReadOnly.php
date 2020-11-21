@@ -77,7 +77,7 @@ trait ReadOnly
      */
     public function isReadOnly($request): bool
     {
-        if ($this->readOnly instanceof Closure) {
+        if (is_callable($this->readOnly)) {
             return true === ($this->readOnly)($request);
         }
 

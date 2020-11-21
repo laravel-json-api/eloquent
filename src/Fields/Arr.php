@@ -19,6 +19,8 @@ declare(strict_types=1);
 
 namespace LaravelJsonApi\Eloquent\Fields;
 
+use Illuminate\Support\Arr as IlluminateArr;
+
 class Arr extends Attribute
 {
 
@@ -32,6 +34,19 @@ class Arr extends Attribute
     public static function make(string $fieldName, string $column = null): self
     {
         return new self($fieldName, $column);
+    }
+
+    /**
+     * @inheritDoc
+     */
+    protected function assertValue($value): void
+    {
+        if ((!is_null($value) && !is_array($value)) || (is_array($value) && IlluminateArr::isAssoc($value))) {
+            throw new \UnexpectedValueException(sprintf(
+                'Expecting the value of attribute %s to be an array list.',
+                $this->name()
+            ));
+        }
     }
 
 }

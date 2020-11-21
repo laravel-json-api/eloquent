@@ -20,7 +20,6 @@ declare(strict_types=1);
 namespace LaravelJsonApi\Eloquent\Fields;
 
 use Carbon\Carbon;
-use Illuminate\Database\Eloquent\Model;
 use function config;
 
 class DateTime extends Attribute
@@ -93,14 +92,33 @@ class DateTime extends Attribute
     /**
      * @inheritDoc
      */
-    protected function deserialize(Model $model, $value)
+    protected function deserialize($value)
     {
-        $value = parent::deserialize($model, $value);
+        $value = parent::deserialize($value);
 
-        if ($value && true === $this->useTz) {
-            return Carbon::parse($value)->setTimezone($this->timezone());
+        if (is_null($value)) {
+            return null;
+        }
+
+        $value = Carbon::parse($value);
+
+        if (true === $this->useTz) {
+            return $value->setTimezone($this->timezone());
         }
 
         return $value;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    protected function assertValue($value): void
+    {
+        if (!is_null($value) && !is_string($value)) {
+            throw new \UnexpectedValueException(sprintf(
+                'Expecting the value of attribute %s to be a string (datetime).',
+                $this->name()
+            ));
+        }
     }
 }

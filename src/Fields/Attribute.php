@@ -47,14 +47,27 @@ abstract class Attribute implements AttributeContract, Fillable, Selectable, Sor
     private string $column;
 
     /**
+     * @var Closure|null
+     */
+    private ?Closure $deserializer = null;
+
+    /**
+     * @var Closure|null
+     */
+    private ?Closure $hydrator = null;
+
+    /**
      * @var bool
      */
     private bool $force = false;
 
     /**
-     * @var Closure|null
+     * Assert that the attribute JSON value is as expected.
+     *
+     * @param $value
+     * @return void
      */
-    private ?Closure $deserializer = null;
+    abstract protected function assertValue($value): void;
 
     /**
      * Attribute constructor.
@@ -93,6 +106,33 @@ abstract class Attribute implements AttributeContract, Fillable, Selectable, Sor
     }
 
     /**
+     * Customise the hydration of the model attribute.
+     *
+     * @param Closure $hydrator
+     * @return $this
+     */
+    public function fillUsing(Closure $hydrator): self
+    {
+        $this->hydrator = $hydrator;
+
+        return $this;
+    }
+
+    /**
+     * Ignore mass-assignment and always fill the attribute.
+     *
+     * @return $this
+     */
+    public function unguarded(): self
+    {
+        $this->force = true;
+
+        return $this;
+    }
+
+    /**
+     * Customise deserialization of the value.
+     *
      * @param Closure $deserializer
      * @return $this
      */
@@ -104,28 +144,23 @@ abstract class Attribute implements AttributeContract, Fillable, Selectable, Sor
     }
 
     /**
-     * @return $this
-     */
-    public function forceFill(): self
-    {
-        $this->force = true;
-
-        return $this;
-    }
-
-    /**
      * @inheritDoc
      */
     public function fill(Model $model, $value): void
     {
-        $value = $this->deserialize($model, $value);
+        $value = $this->deserialize($value);
 
-        if ($this->force) {
-            $model->forceFill([$this->column() => $value]);
+        if ($this->hydrator) {
+            ($this->hydrator)($model, $this->column(), $value);
             return;
         }
 
-        $model->fill([$this->column() => $value]);
+        if (false === $this->force) {
+            $model->fill([$this->column() => $value]);
+            return;
+        }
+
+        $model->{$this->column()} = $value;
     }
 
     /**
@@ -140,16 +175,17 @@ abstract class Attribute implements AttributeContract, Fillable, Selectable, Sor
     }
 
     /**
-     * Convert the JSON value for this field for setting on the provided model.
+     * Convert the JSON value for this field.
      *
-     * @param Model $model
      * @param mixed $value
      * @return mixed
      */
-    protected function deserialize(Model $model, $value)
+    protected function deserialize($value)
     {
+        $this->assertValue($value);
+
         if ($this->deserializer) {
-            return ($this->deserializer)($model, $value);
+            return ($this->deserializer)($value);
         }
 
         return $value;
