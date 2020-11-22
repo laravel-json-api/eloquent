@@ -28,8 +28,8 @@ interface Sortable
      * Apply the sort order to the query.
      *
      * @param Builder $query
-     * @param bool $ascending
+     * @param string $direction
      * @return Builder
      */
-    public function sort($query, bool $ascending);
+    public function sort($query, string $direction = 'asc');
 }

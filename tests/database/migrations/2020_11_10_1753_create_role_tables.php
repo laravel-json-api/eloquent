@@ -35,6 +35,7 @@ class CreateRoleTables extends Migration
             $table->id();
             $table->timestamps();
             $table->string('name');
+            $table->json('permissions')->nullable();
         });
 
         Schema::create('role_user', function (Blueprint $table) {

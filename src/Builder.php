@@ -198,7 +198,7 @@ class Builder
             $field = $this->schema->attribute($sort->name());
 
             if ($field->isSortable() && $field instanceof Sortable) {
-                $field->sort($this->query, $sort->isAscending());
+                $field->sort($this->query, $sort->getDirection());
                 continue;
             }
 

@@ -17,37 +17,21 @@
 
 declare(strict_types=1);
 
-namespace App\Models;
+namespace LaravelJsonApi\Eloquent\Tests\Integration;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Orchestra\Testbench\TestCase as BaseTestCase;
 
-class Role extends Model
+class TestCase extends BaseTestCase
 {
 
-    use HasFactory;
-
     /**
-     * @var string[]
+     * @inheritDoc
      */
-    protected $fillable = ['name', 'permissions'];
-
-    /**
-     * @var string[]
-     */
-    protected $casts = [
-        'permissions' => 'array',
-    ];
-
-    /**
-     * @return BelongsToMany
-     */
-    public function users(): BelongsToMany
+    protected function setUp(): void
     {
-        return $this
-            ->belongsToMany(User::class)
-            ->withPivot('approved')
-            ->withTimestamps();
+        parent::setUp();
+
+        $this->loadMigrationsFrom(__DIR__ . '/../../database/migrations');
     }
+
 }
