@@ -1,4 +1,19 @@
 <?php
+/*
+ * Copyright 2020 Cloud Creativity Limited
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
 declare(strict_types=1);
 
@@ -64,6 +79,7 @@ class ArrTest extends TestCase
         return [
             [[]],
             [['foo', 'bar']],
+            [['foo' => 'bar', 'baz' => 'bat']],
             [null],
         ];
     }
@@ -92,7 +108,6 @@ class ArrTest extends TestCase
             [1.0],
             ['foo'],
             [''],
-            [['foo' => 'bar']],
             [new \DateTime()],
         ];
     }
@@ -153,6 +168,97 @@ class ArrTest extends TestCase
 
         $attr->fill($role, ['foo']);
         $this->assertSame(['foo', 'bar'], $role->permissions);
+    }
+
+    public function testSorted(): void
+    {
+        $model = new Role();
+        $attr = Arr::make('permissions')->sorted();
+
+        $attr->fill($model, ['foo', 'bar']);
+        $this->assertSame(['bar', 'foo'], $model->permissions);
+    }
+
+    public function testSortedWithAssoc(): void
+    {
+        $model = new Role();
+        $attr = Arr::make('permissions')->sorted();
+
+        $attr->fill($model, ['bar' => 'foobar', 'foo' => 'bazbat']);
+        $this->assertSame(['foo' => 'bazbat', 'bar' => 'foobar'], $model->permissions);
+    }
+
+    public function testSortedKeys(): void
+    {
+        $model = new Role();
+        $attr = Arr::make('permissions')->sortedKeys();
+
+        $attr->fill($model, ['foo' => 'bar', 'baz' => 'bat']);
+        $this->assertSame(['baz' => 'bat', 'foo' => 'bar'], $model->permissions);
+    }
+
+    public function testCamelize(): void
+    {
+        $model = new Role();
+        $attr = Arr::make('permissions')->camelize();
+
+        $attr->fill($model, [
+            'foo_bar' => 'foobar',
+            'baz_bat' => 'bazbat',
+        ]);
+
+        $this->assertSame([
+            'fooBar' => 'foobar',
+            'bazBat' => 'bazbat',
+        ], $model->permissions);
+    }
+
+    public function testDasherize(): void
+    {
+        $model = new Role();
+        $attr = Arr::make('permissions')->dasherize();
+
+        $attr->fill($model, [
+            'foo_bar' => 'foobar',
+            'baz_bat' => 'bazbat',
+        ]);
+
+        $this->assertSame([
+            'foo-bar' => 'foobar',
+            'baz-bat' => 'bazbat',
+        ], $model->permissions);
+    }
+
+    public function testSnake(): void
+    {
+        $model = new Role();
+        $attr = Arr::make('permissions')->snake();
+
+        $attr->fill($model, [
+            'fooBar' => 'foobar',
+            'bazBat' => 'bazbat',
+        ]);
+
+        $this->assertSame([
+            'foo_bar' => 'foobar',
+            'baz_bat' => 'bazbat',
+        ], $model->permissions);
+    }
+
+    public function testUnderscore(): void
+    {
+        $model = new Role();
+        $attr = Arr::make('permissions')->underscore();
+
+        $attr->fill($model, [
+            'fooBar' => 'foobar',
+            'bazBat' => 'bazbat',
+        ]);
+
+        $this->assertSame([
+            'foo_bar' => 'foobar',
+            'baz_bat' => 'bazbat',
+        ], $model->permissions);
     }
 
     public function testReadOnly(): void

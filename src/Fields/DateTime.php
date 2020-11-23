@@ -114,7 +114,7 @@ class DateTime extends Attribute
      */
     protected function assertValue($value): void
     {
-        if (!is_null($value) && !is_string($value)) {
+        if (!is_null($value) && (!is_string($value) || empty($value))) {
             throw new \UnexpectedValueException(sprintf(
                 'Expecting the value of attribute %s to be a string (datetime).',
                 $this->name()

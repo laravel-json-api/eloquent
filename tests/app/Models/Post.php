@@ -36,8 +36,16 @@ class Post extends Model
      */
     protected $fillable = [
         'content',
+        'published_at',
         'slug',
         'title',
+    ];
+
+    /**
+     * @var string[]
+     */
+    protected $casts = [
+        'published_at' => 'datetime',
     ];
 
     /**

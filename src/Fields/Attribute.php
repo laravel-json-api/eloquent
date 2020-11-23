@@ -21,6 +21,7 @@ namespace LaravelJsonApi\Eloquent\Fields;
 
 use Closure;
 use Illuminate\Database\Eloquent\Model;
+use InvalidArgumentException;
 use LaravelJsonApi\Contracts\Schema\Attribute as AttributeContract;
 use LaravelJsonApi\Core\Schema\Concerns\Sortable;
 use LaravelJsonApi\Core\Schema\Concerns\SparseField;
@@ -77,6 +78,10 @@ abstract class Attribute implements AttributeContract, Fillable, Selectable, Sor
      */
     public function __construct(string $fieldName, string $column = null)
     {
+        if (empty($fieldName)) {
+            throw new InvalidArgumentException('Expecting a non-empty string field name.');
+        }
+
         $this->name = $fieldName;
         $this->column = $column ?: $this->guessColumn();
     }

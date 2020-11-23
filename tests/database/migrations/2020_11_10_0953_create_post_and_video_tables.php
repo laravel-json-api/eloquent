@@ -38,6 +38,7 @@ class CreatePostAndVideoTables extends Migration
             $table->string('title');
             $table->string('slug')->unique();
             $table->text('content');
+            $table->timestamp('published_at')->nullable();
 
             $table->foreign('user_id')
                 ->references('id')
