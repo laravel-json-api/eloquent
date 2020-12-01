@@ -147,7 +147,11 @@ class QueryToMany implements QueryManyBuilder
      */
     public function getOrPaginate(?array $page): iterable
     {
-        if (empty($page)) {
+        if (is_null($page)) {
+            $page = $this->relation->defaultPagination();
+        }
+
+        if (is_null($page)) {
             return $this->get();
         }
 

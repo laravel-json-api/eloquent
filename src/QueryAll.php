@@ -29,6 +29,11 @@ class QueryAll implements QueryAllBuilder
 {
 
     /**
+     * @var Schema
+     */
+    private Schema $schema;
+
+    /**
      * @var Builder
      */
     private Builder $query;
@@ -36,10 +41,12 @@ class QueryAll implements QueryAllBuilder
     /**
      * QueryAll constructor.
      *
+     * @param Schema $schema
      * @param Builder $query
      */
-    public function __construct(Builder $query)
+    public function __construct(Schema $schema, Builder $query)
     {
+        $this->schema = $schema;
         $this->query = $query;
     }
 
@@ -133,7 +140,11 @@ class QueryAll implements QueryAllBuilder
      */
     public function getOrPaginate(?array $page): iterable
     {
-        if (empty($page)) {
+        if (is_null($page)) {
+            $page = $this->schema->defaultPagination();
+        }
+
+        if (is_null($page)) {
             return $this->get();
         }
 
@@ -145,7 +156,11 @@ class QueryAll implements QueryAllBuilder
      */
     public function firstOrPaginate(?array $page)
     {
-        if (empty($page)) {
+        if (is_null($page)) {
+            $page = $this->schema->defaultPagination();
+        }
+
+        if (is_null($page)) {
             return $this->firstOrMany();
         }
 

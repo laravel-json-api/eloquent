@@ -146,7 +146,7 @@ class Repository implements
      */
     public function queryAll(): QueryAllBuilder
     {
-        return new QueryAll($this->query());
+        return new QueryAll($this->schema, $this->query());
     }
 
     /**

@@ -22,6 +22,7 @@ namespace LaravelJsonApi\Eloquent\Pagination;
 use Illuminate\Database\Eloquent\Builder as EloquentBuilder;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Database\Query\Builder as QueryBuilder;
+use Illuminate\Pagination\AbstractPaginator;
 use LaravelJsonApi\Contracts\Pagination\Page as PageContract;
 use LaravelJsonApi\Core\Pagination\Page;
 use LaravelJsonApi\Eloquent\Contracts\Paginator;
@@ -32,32 +33,37 @@ class StandardPaginator implements Paginator
     /**
      * @var string
      */
-    protected string $pageKey;
+    private string $pageKey;
 
     /**
      * @var string
      */
-    protected string  $perPageKey;
+    private string $perPageKey;
 
     /**
      * @var array|null
      */
-    protected ?array $columns = null;
+    private ?array $columns = null;
 
     /**
      * @var bool|null
      */
-    protected ?bool $simplePagination = null;
+    private ?bool $simplePagination = null;
 
     /**
      * @var string|null
      */
-    protected ?string $metaKey;
+    private ?string $metaKey;
 
     /**
      * @var string|null
      */
-    protected ?string $primaryKey = null;
+    private ?string $metaCase = null;
+
+    /**
+     * @var string|null
+     */
+    private ?string $primaryKey = null;
 
     /**
      * Fluent constructor.
@@ -67,6 +73,19 @@ class StandardPaginator implements Paginator
     public static function make(): self
     {
         return new self();
+    }
+
+    /**
+     * Override the page resolver to read the page parameter from the JSON:API request.
+     *
+     * @return void
+     */
+    public static function bindPageResolver(): void
+    {
+        AbstractPaginator::currentPageResolver(static function ($pageName) {
+            $pagination = \request()->query($pageName);
+            return $pagination['number'] ?? null;
+        });
     }
 
     /**
@@ -91,10 +110,7 @@ class StandardPaginator implements Paginator
     }
 
     /**
-     * Set the qualified column name that is being used for the resource's ID.
-     *
-     * @param string $keyName
-     * @return $this
+     * @inheritDoc
      */
     public function withQualifiedKeyName(string $keyName): self
     {
@@ -183,6 +199,42 @@ class StandardPaginator implements Paginator
     }
 
     /**
+     * Use snake-case meta keys.
+     *
+     * @return $this
+     */
+    public function withSnakeCaseMeta(): self
+    {
+        $this->metaCase = 'snake';
+
+        return $this;
+    }
+
+    /**
+     * Use dash-case meta keys.
+     *
+     * @return $this
+     */
+    public function withDashCaseMeta(): self
+    {
+        $this->metaCase = 'dash';
+
+        return $this;
+    }
+
+    /**
+     * Use camel-case meta keys.
+     *
+     * @return $this
+     */
+    public function withCamelCaseMeta(): self
+    {
+        $this->metaCase = null;
+
+        return $this;
+    }
+
+    /**
      * @inheritDoc
      */
     public function paginate($query, array $page): PageContract
@@ -191,10 +243,11 @@ class StandardPaginator implements Paginator
             ->defaultOrder($query)
             ->query($query, $page);
 
-        return (new Page($paginator))
+        return Page::make($paginator)
             ->withNestedMeta($this->metaKey)
             ->withPageParam($this->pageKey)
-            ->withPerPageParam($this->perPageKey);
+            ->withPerPageParam($this->perPageKey)
+            ->withMetaCase($this->metaCase);
     }
 
     /**
@@ -255,7 +308,7 @@ class StandardPaginator implements Paginator
      * @return $this
      * @see https://github.com/cloudcreativity/laravel-json-api/issues/313
      */
-    protected function defaultOrder($query)
+    protected function defaultOrder($query): self
     {
         if ($this->doesRequireOrdering($query)) {
             $query->orderBy($this->primaryKey);
@@ -273,7 +326,7 @@ class StandardPaginator implements Paginator
      * @param QueryBuilder|EloquentBuilder|Relation $query
      * @return bool
      */
-    protected function doesRequireOrdering($query)
+    protected function doesRequireOrdering($query): bool
     {
         if (!$this->primaryKey) {
             return false;
@@ -296,9 +349,10 @@ class StandardPaginator implements Paginator
     {
         $size = $this->getPerPage($page) ?: $this->getDefaultPerPage($query);
         $cols = $this->getColumns();
+        $pageNumber = $page[$this->pageKey] ?? null;
 
         return $this->willSimplePaginate($query) ?
-            $query->simplePaginate($size, $cols, $this->pageKey) :
-            $query->paginate($size, $cols, $this->pageKey);
+            $query->simplePaginate($size, $cols, $this->pageKey, $pageNumber) :
+            $query->paginate($size, $cols, $this->pageKey, $pageNumber);
     }
 }

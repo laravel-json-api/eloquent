@@ -23,11 +23,22 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\Relations\MorphToMany;
+use Illuminate\Support\Str;
 
 class Video extends Model
 {
 
     use HasFactory;
+
+    /**
+     * @var bool
+     */
+    public $incrementing = false;
+
+    /**
+     * @var string
+     */
+    protected $primaryKey = 'uuid';
 
     /**
      * @var string[]
@@ -36,6 +47,16 @@ class Video extends Model
         'title',
         'url',
     ];
+
+    /**
+     * @inheritDoc
+     */
+    protected static function booting()
+    {
+        self::creating(static function (Video $video) {
+            $video->uuid = $video->uuid ?: Str::uuid()->toString();
+        });
+    }
 
     /**
      * @return MorphMany

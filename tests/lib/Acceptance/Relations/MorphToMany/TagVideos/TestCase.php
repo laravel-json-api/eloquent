@@ -50,10 +50,11 @@ class TestCase extends BaseTestCase
     {
         $expected = collect($expected)
             ->map($fn = fn(Video $video) => $video->getKey())
+            ->sort()
             ->values()
             ->all();
 
-        $actual = collect($actual)->map($fn)->values()->all();
+        $actual = collect($actual)->map($fn)->sort()->values()->all();
 
         $this->assertSame($expected, $actual);
     }

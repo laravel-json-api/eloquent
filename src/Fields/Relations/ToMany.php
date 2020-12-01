@@ -28,11 +28,44 @@ abstract class ToMany extends Relation
 {
 
     /**
+     * Should the relationship use the schema's default pagination?
+     *
+     * @var bool
+     */
+    private bool $defaultPagination = true;
+
+    /**
      * @inheritDoc
      */
     public function toOne(): bool
     {
         return false;
+    }
+
+    /**
+     * Mark the relation as not using default-pagination.
+     *
+     * @return $this
+     */
+    public function withoutDefaultPagination(): self
+    {
+        $this->defaultPagination = false;
+
+        return $this;
+    }
+
+    /**
+     * Get the default pagination for the relation.
+     *
+     * @return array|null
+     */
+    public function defaultPagination(): ?array
+    {
+        if (true === $this->defaultPagination) {
+            return $this->schema()->defaultPagination();
+        }
+
+        return null;
     }
 
     /**

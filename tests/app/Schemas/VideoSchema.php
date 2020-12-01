@@ -45,12 +45,12 @@ class VideoSchema extends Schema
     public function fields(): iterable
     {
         return [
-            ID::make(),
-            DateTime::make('createdAt')->readOnly(),
+            ID::make()->uuid(),
+            DateTime::make('createdAt')->sortable()->readOnly(),
             HasMany::make('comments'),
             BelongsToMany::make('tags')->fields(new ApprovedPivot()),
             Str::make('title'),
-            DateTime::make('updatedAt')->readOnly(),
+            DateTime::make('updatedAt')->sortable()->readOnly(),
             Str::make('url'),
         ];
     }

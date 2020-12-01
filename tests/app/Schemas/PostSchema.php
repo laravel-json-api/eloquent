@@ -44,6 +44,11 @@ class PostSchema extends Schema
     public static string $model = Post::class;
 
     /**
+     * @var array|null
+     */
+    protected ?array $defaultPagination = ['number' => '1'];
+
+    /**
      * @inheritDoc
      */
     public function fields(): iterable
@@ -51,14 +56,14 @@ class PostSchema extends Schema
         return [
             ID::make(),
             BelongsTo::make('author', 'user'),
-            DateTime::make('createdAt')->readOnly(),
+            DateTime::make('createdAt')->sortable()->readOnly(),
             HasMany::make('comments'),
             Str::make('content'),
             HasOne::make('image'),
             Str::make('slug')->sortable(),
             BelongsToMany::make('tags')->fields(new ApprovedPivot()),
             Str::make('title'),
-            DateTime::make('updatedAt')->readOnly(),
+            DateTime::make('updatedAt')->sortable()->readOnly(),
         ];
     }
 

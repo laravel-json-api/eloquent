@@ -27,6 +27,18 @@ interface Paginator extends BasePaginator
 {
 
     /**
+     * Set the qualified key column.
+     *
+     * The key column must be used to ensure the paginator
+     * has a deterministic order.
+     *
+     * @param string $column
+     * @return $this
+     * @see https://github.com/cloudcreativity/laravel-json-api/issues/313
+     */
+    public function withQualifiedKeyName(string $column): self;
+
+    /**
      * Execute the query and return a JSON API page.
      *
      * @param Builder $query

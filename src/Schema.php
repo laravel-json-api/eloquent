@@ -38,6 +38,13 @@ abstract class Schema extends BaseSchema
     protected array $with = [];
 
     /**
+     * The default paging parameters to use if the client supplies none.
+     *
+     * @var array|null
+     */
+    protected ?array $defaultPagination = null;
+
+    /**
      * @var string|null
      */
     private ?string $idColumn = null;
@@ -152,6 +159,21 @@ abstract class Schema extends BaseSchema
     public function loader(): EagerLoader
     {
         return new EagerLoader($this->schemas(), $this);
+    }
+
+    /**
+     * Get the default pagination parameters.
+     *
+     * The default pagination parameters are used if the client supplies no page
+     * parameters. Returning `null` from this method indicates that there
+     * should be no default pagination - i.e. if the client supplies no page
+     * parameters, they receive ALL resources.
+     *
+     * @return array|null
+     */
+    public function defaultPagination(): ?array
+    {
+        return $this->defaultPagination;
     }
 
 }

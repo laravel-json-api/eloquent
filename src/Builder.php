@@ -250,9 +250,7 @@ class Builder
      */
     public function whereResourceId($resourceId): self
     {
-        $column = $this->query->getModel()->qualifyColumn(
-            $this->schema->idColumn()
-        );
+        $column = $this->qualifiedIdColumn();
 
         if (is_string($resourceId)) {
             $this->query->where($column, '=', $resourceId);
@@ -275,9 +273,7 @@ class Builder
      */
     public function orderByResourceId(string $direction = 'asc'): self
     {
-        $column = $this->query->getModel()->qualifyColumn(
-            $this->schema->idColumn()
-        );
+        $column = $this->qualifiedIdColumn();
 
         $this->query->orderBy($column, $direction);
 
@@ -337,9 +333,10 @@ class Builder
         $paginator = $this->schema->pagination();
 
         if ($paginator instanceof Paginator) {
-            return $paginator->paginate($this->query, $page)->withQuery(
-                $this->parameters->setPagination($page)->toArray()
-            );
+            return $paginator
+                ->withQualifiedKeyName($this->qualifiedIdColumn())
+                ->paginate($this->query, $page)
+                ->withQuery($this->parameters->setPagination($page)->toArray());
         }
 
         if ($paginator) {
@@ -385,5 +382,17 @@ class Builder
         if ($this->relation) {
             yield from $this->relation->filters();
         }
+    }
+
+    /**
+     * Get the qualified id column.
+     *
+     * @return string
+     */
+    private function qualifiedIdColumn(): string
+    {
+        return $this->query->getModel()->qualifyColumn(
+            $this->schema->idColumn()
+        );
     }
 }
