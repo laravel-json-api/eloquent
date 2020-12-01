@@ -142,6 +142,48 @@ class StandardPagingTest extends TestCase
     }
 
     /**
+     * If the schema has default pagination, but the client has used
+     * a singular filter AND not provided paging parameters, we
+     * expect the singular filter to be respected I.e. the default
+     * pagination must be ignored.
+     */
+    public function testDefaultPaginationWithSingularFilter(): void
+    {
+        $this->posts->method('defaultPagination')->willReturn(['number' => 1]);
+
+        $posts = Post::factory()->count(4)->create();
+        $post = $posts[2];
+
+        $actual = $this->posts
+            ->repository()
+            ->queryAll()
+            ->filter(['slug' => $post->slug])
+            ->firstOrPaginate(null);
+
+        $this->assertInstanceOf(Post::class, $actual);
+        $this->assertTrue($post->is($actual));
+    }
+
+    /**
+     * If the client uses a singular filter, but provides page parameters,
+     * they should get a page - not a zero-to-one response.
+     */
+    public function testPaginationWithSingularFilter(): void
+    {
+        $posts = Post::factory()->count(4)->create();
+        $post = $posts[2];
+
+        $actual = $this->posts
+            ->repository()
+            ->queryAll()
+            ->filter(['slug' => $post->slug])
+            ->firstOrPaginate(['number' => '1']);
+
+        $this->assertInstanceOf(Page::class, $actual);
+        $this->assertPage([$post], $actual);
+    }
+
+    /**
      * If the search does not match any models, then there are no pages.
      */
     public function testNoPages(): void

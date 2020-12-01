@@ -303,6 +303,16 @@ class Builder
     }
 
     /**
+     * Has no singular filter been applied?
+     *
+     * @return bool
+     */
+    public function isNotSingular(): bool
+    {
+        return !$this->isSingular();
+    }
+
+    /**
      * Execute the query as a cursor.
      *
      * Eager loading does not work on a lazy collection. Therefore, if any include

@@ -156,7 +156,14 @@ class QueryAll implements QueryAllBuilder
      */
     public function firstOrPaginate(?array $page)
     {
-        if (is_null($page)) {
+        /**
+         * If page is `null`, then we need to use the schema's default
+         * pagination - UNLESS a singular filter has been used.
+         * That's because if we add default pagination when a singular
+         * filter has been used, they'll get a page when they're
+         * expecting zero-to-one resource.
+         */
+        if (is_null($page) && $this->query->isNotSingular()) {
             $page = $this->schema->defaultPagination();
         }
 
