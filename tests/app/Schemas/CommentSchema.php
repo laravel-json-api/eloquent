@@ -27,7 +27,7 @@ use LaravelJsonApi\Eloquent\Fields\Relations\BelongsTo;
 use LaravelJsonApi\Eloquent\Fields\Relations\MorphTo;
 use LaravelJsonApi\Eloquent\Fields\Str;
 use LaravelJsonApi\Eloquent\Filters\WhereIn;
-use LaravelJsonApi\Eloquent\Pagination\StandardPaginator;
+use LaravelJsonApi\Eloquent\Pagination\PagePagination;
 use LaravelJsonApi\Eloquent\Schema;
 
 class CommentSchema extends Schema
@@ -70,7 +70,7 @@ class CommentSchema extends Schema
      */
     public function pagination(): ?Paginator
     {
-        return StandardPaginator::make();
+        return PagePagination::make();
     }
 
 }

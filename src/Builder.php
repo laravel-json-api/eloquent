@@ -344,7 +344,7 @@ class Builder
 
         if ($paginator instanceof Paginator) {
             return $paginator
-                ->withQualifiedKeyName($this->qualifiedIdColumn())
+                ->withKeyName($this->schema->idColumn())
                 ->paginate($this->query, $page)
                 ->withQuery($this->parameters->setPagination($page)->toArray());
         }

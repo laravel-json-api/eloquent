@@ -15,6 +15,8 @@
  * limitations under the License.
  */
 
+declare(strict_types=1);
+
 namespace LaravelJsonApi\Eloquent\Tests\Acceptance\Pagination;
 
 use App\Models\Post;
@@ -27,17 +29,17 @@ use Illuminate\Pagination\AbstractPaginator;
 use Illuminate\Support\LazyCollection;
 use LaravelJsonApi\Contracts\Pagination\Page;
 use LaravelJsonApi\Core\Support\Arr;
-use LaravelJsonApi\Eloquent\Pagination\StandardPaginator;
+use LaravelJsonApi\Eloquent\Pagination\PagePagination;
 use LaravelJsonApi\Eloquent\Tests\Acceptance\TestCase;
 use PHPUnit\Framework\MockObject\MockObject;
 
-class StandardPagingTest extends TestCase
+class PagePaginationTest extends TestCase
 {
 
     /**
-     * @var StandardPaginator
+     * @var PagePagination
      */
-    private StandardPaginator $paginator;
+    private PagePagination $paginator;
 
     /**
      * @var PostSchema|MockObject
@@ -56,7 +58,7 @@ class StandardPagingTest extends TestCase
     {
         parent::setUp();
 
-        $this->paginator = StandardPaginator::make();
+        $this->paginator = PagePagination::make();
 
         $this->posts = $this
             ->getMockBuilder(PostSchema::class)
@@ -83,7 +85,7 @@ class StandardPagingTest extends TestCase
     }
 
     /**
-     * An adapter's default pagination is used if no pagination parameters are sent.
+     * An schema's default pagination is used if no pagination parameters are sent.
      *
      * @see https://github.com/cloudcreativity/laravel-json-api/issues/131
      */
@@ -293,6 +295,93 @@ class StandardPagingTest extends TestCase
         $this->assertSame(['page' => $meta], $page->meta());
         $this->assertSame($links, $page->links()->toArray());
         $this->assertPage([$posts->last()], $page);
+    }
+
+    /**
+     * When no page size is provided, the default is used from the model.
+     */
+    public function testItUsesModelDefaultPerPage(): void
+    {
+        $expected = (new Post())->getPerPage();
+        $posts = Post::factory()->count($expected + 1)->create();
+
+        $meta = [
+            'currentPage' => 1,
+            'from' => 1,
+            'lastPage' => 2,
+            'perPage' => $expected,
+            'to' => $expected,
+            'total' => $expected + 1,
+        ];
+
+        $links = [
+            'first' => [
+                'href' => $first = 'http://localhost/api/v1/posts?' . Arr::query([
+                    'page' => ['number' => '1', 'size' => $expected]
+                ]),
+            ],
+            'last' => [
+                'href' => $first = 'http://localhost/api/v1/posts?' . Arr::query([
+                    'page' => ['number' => '2', 'size' => $expected]
+                ]),
+            ],
+            'next' => [
+                'href' => $first = 'http://localhost/api/v1/posts?' . Arr::query([
+                    'page' => ['number' => '2', 'size' => $expected]
+                ]),
+            ],
+        ];
+
+        $page = $this->posts->newQuery()->paginate(['number' => '1']);
+
+        $this->assertSame(['page' => $meta], $page->meta());
+        $this->assertSame($links, $page->links()->toArray());
+        $this->assertPage($posts->take($expected), $page);
+    }
+
+    /**
+     * The default per-page value can be overridden on the paginator.
+     */
+    public function testItUsesDefaultPerPage(): void
+    {
+        $expected = (new Post())->getPerPage() - 5;
+
+        $this->paginator->withDefaultPerPage($expected);
+
+        $posts = Post::factory()->count($expected + 1)->create();
+
+        $meta = [
+            'currentPage' => 1,
+            'from' => 1,
+            'lastPage' => 2,
+            'perPage' => $expected,
+            'to' => $expected,
+            'total' => $expected + 1,
+        ];
+
+        $links = [
+            'first' => [
+                'href' => $first = 'http://localhost/api/v1/posts?' . Arr::query([
+                        'page' => ['number' => '1', 'size' => $expected]
+                    ]),
+            ],
+            'last' => [
+                'href' => $first = 'http://localhost/api/v1/posts?' . Arr::query([
+                        'page' => ['number' => '2', 'size' => $expected]
+                    ]),
+            ],
+            'next' => [
+                'href' => $first = 'http://localhost/api/v1/posts?' . Arr::query([
+                        'page' => ['number' => '2', 'size' => $expected]
+                    ]),
+            ],
+        ];
+
+        $page = $this->posts->newQuery()->paginate(['number' => '1']);
+
+        $this->assertSame(['page' => $meta], $page->meta());
+        $this->assertSame($links, $page->links()->toArray());
+        $this->assertPage($posts->take($expected), $page);
     }
 
     public function testPageWithReverseKey(): void

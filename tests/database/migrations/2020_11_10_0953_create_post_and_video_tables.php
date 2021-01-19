@@ -50,6 +50,7 @@ class CreatePostAndVideoTables extends Migration
         Schema::create('videos', function (Blueprint $table) {
             $table->uuid('uuid')->primary();
             $table->timestamps();
+            $table->string('slug')->unique();
             $table->string('title');
             $table->string('url');
         });

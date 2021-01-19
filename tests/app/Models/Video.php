@@ -44,6 +44,7 @@ class Video extends Model
      * @var string[]
      */
     protected $fillable = [
+        'slug',
         'title',
         'url',
     ];

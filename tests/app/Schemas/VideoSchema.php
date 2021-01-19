@@ -26,6 +26,7 @@ use LaravelJsonApi\Eloquent\Fields\ID;
 use LaravelJsonApi\Eloquent\Fields\Relations\BelongsToMany;
 use LaravelJsonApi\Eloquent\Fields\Relations\HasMany;
 use LaravelJsonApi\Eloquent\Fields\Str;
+use LaravelJsonApi\Eloquent\Filters\Where;
 use LaravelJsonApi\Eloquent\Filters\WhereIn;
 use LaravelJsonApi\Eloquent\Schema;
 
@@ -48,6 +49,7 @@ class VideoSchema extends Schema
             ID::make()->uuid(),
             DateTime::make('createdAt')->sortable()->readOnly(),
             HasMany::make('comments'),
+            Str::make('slug'),
             BelongsToMany::make('tags')->fields(new ApprovedPivot()),
             Str::make('title'),
             DateTime::make('updatedAt')->sortable()->readOnly(),
@@ -62,6 +64,7 @@ class VideoSchema extends Schema
     {
         return [
             WhereIn::make('id', $this->idColumn()),
+            Where::make('slug')->singular(),
         ];
     }
 

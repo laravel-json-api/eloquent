@@ -19,16 +19,17 @@ declare(strict_types=1);
 
 namespace LaravelJsonApi\Eloquent\Pagination;
 
-use Illuminate\Database\Eloquent\Builder as EloquentBuilder;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\Relation;
-use Illuminate\Database\Query\Builder as QueryBuilder;
 use Illuminate\Pagination\AbstractPaginator;
 use LaravelJsonApi\Contracts\Pagination\Page as PageContract;
 use LaravelJsonApi\Core\Pagination\Page;
 use LaravelJsonApi\Eloquent\Contracts\Paginator;
 
-class StandardPaginator implements Paginator
+class PagePagination implements Paginator
 {
+
+    use Concerns\HasPageMeta;
 
     /**
      * @var string
@@ -53,22 +54,17 @@ class StandardPaginator implements Paginator
     /**
      * @var string|null
      */
-    private ?string $metaKey;
-
-    /**
-     * @var string|null
-     */
-    private ?string $metaCase = null;
-
-    /**
-     * @var string|null
-     */
     private ?string $primaryKey = null;
+
+    /**
+     * @var int|null
+     */
+    private ?int $defaultPerPage = null;
 
     /**
      * Fluent constructor.
      *
-     * @return StandardPaginator
+     * @return PagePagination
      */
     public static function make(): self
     {
@@ -89,7 +85,7 @@ class StandardPaginator implements Paginator
     }
 
     /**
-     * StandardStrategy constructor.
+     * PagePagination constructor.
      */
     public function __construct()
     {
@@ -112,14 +108,16 @@ class StandardPaginator implements Paginator
     /**
      * @inheritDoc
      */
-    public function withQualifiedKeyName(string $keyName): self
+    public function withKeyName(string $column): self
     {
-        $this->primaryKey = $keyName;
+        $this->primaryKey = $column;
 
         return $this;
     }
 
     /**
+     * Set the key name for the page number.
+     *
      * @param string $key
      * @return $this
      */
@@ -131,6 +129,8 @@ class StandardPaginator implements Paginator
     }
 
     /**
+     * Set the key name for the per-page amount.
+     *
      * @param string $key
      * @return $this
      */
@@ -142,17 +142,18 @@ class StandardPaginator implements Paginator
     }
 
     /**
-     * @param array|string $cols
-     * @return $this;
+     * @inheritDoc
      */
-    public function withColumns($cols): self
+    public function withColumns($columns): self
     {
-        $this->columns = $cols;
+        $this->columns = $columns;
 
         return $this;
     }
 
     /**
+     * Use simple pagination.
+     *
      * @return $this
      */
     public function withSimplePagination(): self
@@ -163,6 +164,8 @@ class StandardPaginator implements Paginator
     }
 
     /**
+     * Use length-aware pagination.
+     *
      * @return $this
      */
     public function withLengthAwarePagination(): self
@@ -173,63 +176,17 @@ class StandardPaginator implements Paginator
     }
 
     /**
-     * Set the key for the paging meta.
+     * Use the provided number as the default items per-page.
      *
-     * Use this to 'nest' the paging meta in a sub-key of the JSON API document's top-level meta object.
-     * A string sets the key to use for nesting. Use `null` to indicate no nesting.
+     * If null, Laravel automatically uses the default set on the model
+     * class.
      *
-     * @param string|null $key
+     * @param int|null $perPage
      * @return $this
      */
-    public function withMetaKey(?string $key): self
+    public function withDefaultPerPage(?int $perPage): self
     {
-        $this->metaKey = $key ?: null;
-
-        return $this;
-    }
-
-    /**
-     * Mark the paginator as not nesting page meta.
-     *
-     * @return $this
-     */
-    public function withoutNestedMeta(): self
-    {
-        return $this->withMetaKey(null);
-    }
-
-    /**
-     * Use snake-case meta keys.
-     *
-     * @return $this
-     */
-    public function withSnakeCaseMeta(): self
-    {
-        $this->metaCase = 'snake';
-
-        return $this;
-    }
-
-    /**
-     * Use dash-case meta keys.
-     *
-     * @return $this
-     */
-    public function withDashCaseMeta(): self
-    {
-        $this->metaCase = 'dash';
-
-        return $this;
-    }
-
-    /**
-     * Use camel-case meta keys.
-     *
-     * @return $this
-     */
-    public function withCamelCaseMeta(): self
-    {
-        $this->metaCase = null;
+        $this->defaultPerPage = $perPage;
 
         return $this;
     }
@@ -251,6 +208,10 @@ class StandardPaginator implements Paginator
     }
 
     /**
+     * Get the number of items to return per-page.
+     *
+     * If this method returns zero, the default per-page will be used.
+     *
      * @param array $page
      * @return int
      */
@@ -268,18 +229,17 @@ class StandardPaginator implements Paginator
      * which then delegates to the model to get the default. Otherwise the Laravel
      * standard default is 15.
      *
-     * @param $query
      * @return int|null
      */
-    protected function getDefaultPerPage($query)
+    protected function getDefaultPerPage(): ?int
     {
-        return $query instanceof EloquentBuilder ? null : 15;
+        return $this->defaultPerPage;
     }
 
     /**
      * @return array
      */
-    protected function getColumns()
+    protected function getColumns(): array
     {
         return $this->columns ?: ['*'];
     }
@@ -287,16 +247,16 @@ class StandardPaginator implements Paginator
     /**
      * @return bool
      */
-    protected function isSimplePagination()
+    protected function isSimplePagination(): bool
     {
         return (bool) $this->simplePagination;
     }
 
     /**
-     * @param $query
+     * @param Builder|Relation $query
      * @return bool
      */
-    protected function willSimplePaginate($query)
+    private function willSimplePaginate($query): bool
     {
         return $this->isSimplePagination() && method_exists($query, 'simplePaginate');
     }
@@ -304,11 +264,11 @@ class StandardPaginator implements Paginator
     /**
      * Apply a deterministic order to the page.
      *
-     * @param QueryBuilder|EloquentBuilder|Relation $query
+     * @param Builder|Relation $query
      * @return $this
      * @see https://github.com/cloudcreativity/laravel-json-api/issues/313
      */
-    protected function defaultOrder($query): self
+    private function defaultOrder($query): self
     {
         if ($this->doesRequireOrdering($query)) {
             $query->orderBy($this->primaryKey);
@@ -323,16 +283,16 @@ class StandardPaginator implements Paginator
      * If the primary key has not been used for a sort order already, we use it
      * to ensure the page has a deterministic order.
      *
-     * @param QueryBuilder|EloquentBuilder|Relation $query
+     * @param Builder|Relation $query
      * @return bool
      */
-    protected function doesRequireOrdering($query): bool
+    private function doesRequireOrdering($query): bool
     {
         if (!$this->primaryKey) {
             return false;
         }
 
-        $query = ($query instanceof Relation) ? $query->getBaseQuery() : $query->getQuery();
+        $query = $query->toBase();
 
         return !collect($query->orders ?: [])->contains(function (array $order) {
             $col = $order['column'] ?? '';
@@ -341,13 +301,13 @@ class StandardPaginator implements Paginator
     }
 
     /**
-     * @param QueryBuilder|EloquentBuilder|Relation $query
+     * @param Builder|Relation $query
      * @param array $page
      * @return mixed
      */
-    protected function query($query, array $page)
+    private function query($query, array $page)
     {
-        $size = $this->getPerPage($page) ?: $this->getDefaultPerPage($query);
+        $size = $this->getPerPage($page) ?: $this->getDefaultPerPage();
         $cols = $this->getColumns();
         $pageNumber = $page[$this->pageKey] ?? null;
 

@@ -30,7 +30,7 @@ use LaravelJsonApi\Eloquent\Fields\Relations\HasOne;
 use LaravelJsonApi\Eloquent\Fields\Str;
 use LaravelJsonApi\Eloquent\Filters\WhereIn;
 use LaravelJsonApi\Eloquent\Filters\Where;
-use LaravelJsonApi\Eloquent\Pagination\StandardPaginator;
+use LaravelJsonApi\Eloquent\Pagination\PagePagination;
 use LaravelJsonApi\Eloquent\Schema;
 
 class PostSchema extends Schema
@@ -84,7 +84,7 @@ class PostSchema extends Schema
      */
     public function pagination(): ?Paginator
     {
-        return StandardPaginator::make();
+        return PagePagination::make();
     }
 
 }

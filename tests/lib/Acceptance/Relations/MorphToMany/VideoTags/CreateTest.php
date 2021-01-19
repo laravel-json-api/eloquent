@@ -34,6 +34,7 @@ class CreateTest extends TestCase
         $this->actingAs(User::factory()->create(['admin' => true]));
 
         $video = $this->repository->create()->store([
+            'slug' => 'my-first-video',
             'tags' => $tags->map(fn(Tag $tag) => [
                 'type' => 'tags',
                 'id' => (string) $tag->getRouteKey(),
@@ -59,6 +60,7 @@ class CreateTest extends TestCase
     public function testEmpty(): void
     {
         $video = $this->repository->create()->store([
+            'slug' => 'my-first-video',
             'tags' => [],
             'title' => 'Video 123',
             'url' => 'http://example.com/videos/123.mov',
@@ -79,6 +81,7 @@ class CreateTest extends TestCase
         $tags = Tag::factory()->count(2)->create();
 
         $video = $this->repository->create()->store([
+            'slug' => 'my-first-video',
             'tags' => collect($tags)->push($tags[1])->map(fn(Tag $tag) => [
                 'type' => 'tags',
                 'id' => (string) $tag->getRouteKey(),

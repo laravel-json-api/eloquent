@@ -38,6 +38,7 @@ class VideoFactory extends Factory
     public function definition()
     {
         return [
+            'slug' => $this->faker->unique()->slug,
             'title' => $this->faker->words(5, true),
             'url' => $this->faker->url,
         ];

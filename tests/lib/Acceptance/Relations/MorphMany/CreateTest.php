@@ -35,6 +35,7 @@ class CreateTest extends TestCase
                 'type' => 'comments',
                 'id' => (string) $comment->getRouteKey(),
             ])->all(),
+            'slug' => 'my-first-video',
             'title' => 'Video 123',
             'url' => 'http://example.com/videos/123.mov',
         ]);
@@ -56,6 +57,7 @@ class CreateTest extends TestCase
     {
         $video = $this->repository->create()->store([
             'comments' => [],
+            'slug' => 'my-first-video',
             'title' => 'Video 123',
             'url' => 'http://example.com/videos/123.mov',
         ]);
@@ -80,6 +82,7 @@ class CreateTest extends TestCase
                 'type' => 'comments',
                 'id' => (string) $comment->getRouteKey(),
             ])->all(),
+            'slug' => 'my-first-video',
             'title' => 'Video 123',
             'url' => 'http://example.com/videos/123.mov',
         ]);
