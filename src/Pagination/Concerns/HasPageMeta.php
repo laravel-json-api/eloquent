@@ -33,6 +33,11 @@ trait HasPageMeta
     private ?string $metaCase = null;
 
     /**
+     * @var bool
+     */
+    private bool $hasMeta = true;
+
+    /**
      * Set the key for the paging meta.
      *
      * Use this to 'nest' the paging meta in a sub-key of the JSON API document's top-level meta object.
@@ -90,6 +95,16 @@ trait HasPageMeta
     public function withCamelCaseMeta(): self
     {
         $this->metaCase = null;
+
+        return $this;
+    }
+
+    /**
+     * @return $this
+     */
+    public function withoutMeta(): self
+    {
+        $this->hasMeta = false;
 
         return $this;
     }

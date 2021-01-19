@@ -24,7 +24,6 @@ use LaravelJsonApi\Contracts\Pagination\Page;
 use LaravelJsonApi\Eloquent\Contracts\Paginator;
 use LaravelJsonApi\Eloquent\Pagination\Cursor\Cursor;
 use LaravelJsonApi\Eloquent\Pagination\Cursor\CursorBuilder;
-use LaravelJsonApi\Eloquent\Pagination\CursorPage;
 
 class CursorPagination implements Paginator
 {
@@ -78,7 +77,7 @@ class CursorPagination implements Paginator
      */
     public static function make(): self
     {
-        return new self();
+        return new static();
     }
 
     /**
@@ -231,6 +230,7 @@ class CursorPagination implements Paginator
             ->withBeforeParam($this->before)
             ->withAfterParam($this->after)
             ->withLimitParam($this->limit)
+            ->withMeta($this->hasMeta)
             ->withNestedMeta($this->metaKey)
             ->withMetaCase($this->metaCase);
     }

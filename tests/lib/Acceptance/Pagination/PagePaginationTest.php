@@ -439,17 +439,17 @@ class PagePaginationTest extends TestCase
         $links = [
             'first' => [
                 'href' => $first = 'http://localhost/api/v1/posts?' . Arr::query([
-                        'page' => ['page' => '1', 'limit' => '3']
+                        'page' => ['limit' => '3', 'page' => '1']
                     ]),
             ],
             'last' => [
                 'href' => $first = 'http://localhost/api/v1/posts?' . Arr::query([
-                        'page' => ['page' => '2', 'limit' => '3']
+                        'page' => ['limit' => '3', 'page' => '2']
                     ]),
             ],
             'next' => [
                 'href' => $first = 'http://localhost/api/v1/posts?' . Arr::query([
-                        'page' => ['page' => '2', 'limit' => '3']
+                        'page' => ['limit' => '3', 'page' => '2']
                     ]),
             ],
         ];
@@ -564,7 +564,7 @@ class PagePaginationTest extends TestCase
         $this->assertPage($posts->take(3), $page);
     }
 
-    public function testMetaNotNested1(): void
+    public function testMetaNotNested(): void
     {
         $posts = Post::factory()->count(4)->create();
 
@@ -582,6 +582,37 @@ class PagePaginationTest extends TestCase
         $page = $this->posts->newQuery()->paginate(['number' => '1', 'size' => '3']);
 
         $this->assertSame($meta, $page->meta());
+        $this->assertPage($posts->take(3), $page);
+    }
+
+    public function testItCanRemoveMeta(): void
+    {
+        $posts = Post::factory()->count(4)->create();
+
+        $this->paginator->withoutMeta();
+
+        $links = [
+            'first' => [
+                'href' => $first = 'http://localhost/api/v1/posts?' . Arr::query([
+                    'page' => ['number' => '1', 'size' => '3']
+                ]),
+            ],
+            'last' => [
+                'href' => $first = 'http://localhost/api/v1/posts?' . Arr::query([
+                    'page' => ['number' => '2', 'size' => '3']
+                ]),
+            ],
+            'next' => [
+                'href' => $first = 'http://localhost/api/v1/posts?' . Arr::query([
+                    'page' => ['number' => '2', 'size' => '3']
+                ]),
+            ],
+        ];
+
+        $page = $this->posts->newQuery()->paginate(['size' => 3]);
+
+        $this->assertEmpty($page->meta());
+        $this->assertSame($links, $page->links()->toArray());
         $this->assertPage($posts->take(3), $page);
     }
 

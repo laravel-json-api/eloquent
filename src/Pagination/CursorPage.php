@@ -20,25 +20,17 @@ declare(strict_types=1);
 namespace LaravelJsonApi\Eloquent\Pagination;
 
 use InvalidArgumentException;
-use LaravelJsonApi\Contracts\Pagination\Page as PageContract;
 use LaravelJsonApi\Core\Document\Link;
-use LaravelJsonApi\Core\Document\Links;
-use LaravelJsonApi\Core\Responses\PaginatedResourceResponse;
-use LaravelJsonApi\Core\Support\Arr;
+use LaravelJsonApi\Core\Pagination\AbstractPage;
 use LaravelJsonApi\Eloquent\Pagination\Cursor\CursorPaginator;
 
-class CursorPage implements PageContract
+class CursorPage extends AbstractPage
 {
 
     /**
      * @var CursorPaginator
      */
     private CursorPaginator $paginator;
-
-    /**
-     * @var array|null
-     */
-    private ?array $queryParameters = null;
 
     /**
      * @var string
@@ -54,16 +46,6 @@ class CursorPage implements PageContract
      * @var string
      */
     private string $limit;
-
-    /**
-     * @var string|null
-     */
-    private ?string $metaKey = null;
-
-    /**
-     * @var string|null
-     */
-    private ?string $metaCase = null;
 
     /**
      * Fluent constructor.
@@ -84,90 +66,6 @@ class CursorPage implements PageContract
     public function __construct(CursorPaginator $paginator)
     {
         $this->paginator = $paginator;
-    }
-
-    /**
-     * Use snake-case keys in the meta object.
-     *
-     * @return $this
-     */
-    public function withSnakeCaseMeta(): self
-    {
-        return $this->withMetaCase('snake');
-    }
-
-    /**
-     * Use dash-case keys in the meta object.
-     *
-     * @return $this
-     */
-    public function withDashCaseMeta(): self
-    {
-        return $this->withMetaCase('dash');
-    }
-
-    /**
-     * Use camel-case keys in the meta object.
-     *
-     * @return $this
-     */
-    public function withCamelCaseMeta(): self
-    {
-        return $this->withMetaCase(null);
-    }
-
-    /**
-     * Set the key-case to use for meta.
-     *
-     * @param string|null $case
-     * @return $this
-     */
-    public function withMetaCase(?string $case): self
-    {
-        if (in_array($case, [null, 'snake', 'dash'], true)) {
-            $this->metaCase = $case;
-            return $this;
-        }
-
-        throw new InvalidArgumentException('Invalid meta case: ' . $case ?? 'null');
-    }
-
-    /**
-     * Nest page meta using the provided key.
-     *
-     * @param string|null $key
-     * @return $this
-     */
-    public function withNestedMeta(?string $key = 'page'): self
-    {
-        $this->metaKey = $key;
-
-        return $this;
-    }
-
-    /**
-     * @inheritDoc
-     */
-    public function meta(): array
-    {
-        $meta = [
-            'perPage' => $this->paginator->getPerPage(),
-            'from' => $this->paginator->getFrom(),
-            'to' => $this->paginator->getTo(),
-            'hasMore' => $this->paginator->hasMorePages(),
-        ];
-
-        if ('snake' === $this->metaCase) {
-            $meta = Arr::underscore($meta);
-        } else if ('dash' === $this->metaCase) {
-            $meta = Arr::dasherize($meta);
-        }
-
-        if ($this->metaKey) {
-            return [$this->metaKey => $meta];
-        }
-
-        return $meta;
     }
 
     /**
@@ -224,30 +122,7 @@ class CursorPage implements PageContract
     /**
      * @inheritDoc
      */
-    public function withQuery(iterable $query): PageContract
-    {
-        $this->queryParameters = collect($query)->all();
-
-        return $this;
-    }
-
-    /**
-     * @inheritDoc
-     */
-    public function links(): Links
-    {
-        return new Links(...array_filter([
-            $this->first(),
-            $this->prev(),
-            $this->next(),
-            $this->last(),
-        ]));
-    }
-
-    /**
-     * @return Link
-     */
-    public function first(): Link
+    public function first(): ?Link
     {
         return new Link('first', $this->url([
             $this->limit => $this->paginator->getPerPage(),
@@ -255,7 +130,7 @@ class CursorPage implements PageContract
     }
 
     /**
-     * @return Link|null
+     * @inheritDoc
      */
     public function prev(): ?Link
     {
@@ -270,7 +145,7 @@ class CursorPage implements PageContract
     }
 
     /**
-     * @return Link|null
+     * @inheritDoc
      */
     public function next(): ?Link
     {
@@ -285,7 +160,7 @@ class CursorPage implements PageContract
     }
 
     /**
-     * @return Link|null
+     * @inheritDoc
      */
     public function last(): ?Link
     {
@@ -298,12 +173,7 @@ class CursorPage implements PageContract
      */
     public function url(array $page): string
     {
-        $params = collect($this->queryParameters)
-            ->put('page', collect($page)->sortKeys()->all())
-            ->sortKeys()
-            ->all();
-
-        return $this->paginator->path() . '?' . Arr::query($params);
+        return $this->paginator->path() . '?' . $this->stringifyQuery($page);
     }
 
     /**
@@ -323,20 +193,15 @@ class CursorPage implements PageContract
     }
 
     /**
-     * @param $request
-     * @return PaginatedResourceResponse
-     */
-    public function prepareResponse($request): PaginatedResourceResponse
-    {
-        return new PaginatedResourceResponse($this);
-    }
-
-    /**
      * @inheritDoc
      */
-    public function toResponse($request)
+    protected function metaForPage(): array
     {
-        return $this->prepareResponse($request)->toResponse($request);
+        return [
+            'perPage' => $this->paginator->getPerPage(),
+            'from' => $this->paginator->getFrom(),
+            'to' => $this->paginator->getTo(),
+            'hasMore' => $this->paginator->hasMorePages(),
+        ];
     }
-
 }

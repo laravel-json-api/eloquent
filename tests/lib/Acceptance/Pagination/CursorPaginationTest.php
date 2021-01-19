@@ -91,10 +91,10 @@ class CursorPaginationTest extends TestCase
         $expected = $videos->take(3);
 
         $meta = [
-            'perPage' => 3,
             'from' => $expected[0]->getRouteKey(),
-            'to' => $expected[2]->getRouteKey(),
             'hasMore' => true,
+            'perPage' => 3,
+            'to' => $expected[2]->getRouteKey(),
         ];
 
         $links = $this->createLinks($expected[0], $expected[2], 3);
@@ -170,10 +170,10 @@ class CursorPaginationTest extends TestCase
     public function testNoPages(): void
     {
         $meta = [
-            'perPage' => 10,
             'from' => null,
-            'to' => null,
             'hasMore' => false,
+            'perPage' => 10,
+            'to' => null,
         ];
 
         $links = [
@@ -198,10 +198,10 @@ class CursorPaginationTest extends TestCase
         ])->sortByDesc('created_at')->values();
 
         $meta = [
-            'perPage' => 4,
             'from' => $videos[0]->getRouteKey(),
-            'to' => $videos[3]->getRouteKey(),
             'hasMore' => true,
+            'perPage' => 4,
+            'to' => $videos[3]->getRouteKey(),
         ];
 
         $links = $this->createLinks($videos[0], $videos[3], 4);
@@ -222,10 +222,10 @@ class CursorPaginationTest extends TestCase
         $expected = [$videos[4], $videos[5], $videos[6]];
 
         $meta = [
-            'perPage' => 3,
             'from' => $expected[0]->getRouteKey(),
-            'to' => $expected[2]->getRouteKey(),
             'hasMore' => true,
+            'perPage' => 3,
+            'to' => $expected[2]->getRouteKey(),
         ];
 
         $links = $this->createLinks($expected[0], $expected[2], 3);
@@ -251,10 +251,10 @@ class CursorPaginationTest extends TestCase
         $expected = [$videos[4], $videos[5], $videos[6]];
 
         $meta = [
-            'perPage' => 3,
             'from' => $expected[0]->getRouteKey(),
-            'to' => $expected[2]->getRouteKey(),
             'hasMore' => true,
+            'perPage' => 3,
+            'to' => $expected[2]->getRouteKey(),
         ];
 
         $links = $this->createLinks($expected[0], $expected[2], 3);
@@ -282,10 +282,10 @@ class CursorPaginationTest extends TestCase
         $expected = [$recent, $equal[0], $equal[1]];
 
         $meta = [
-            'perPage' => 15,
             'from' => $expected[0]->getRouteKey(),
-            'to' => $expected[2]->getRouteKey(),
             'hasMore' => true,
+            'perPage' => 15,
+            'to' => $expected[2]->getRouteKey(),
         ];
 
         $links = $this->createLinks($expected[0], $expected[2], 15);
@@ -323,10 +323,10 @@ class CursorPaginationTest extends TestCase
         $expected = [$videos[4], $videos[5], $videos[6]];
 
         $meta = [
-            'perPage' => 3,
             'from' => $expected[0]->getRouteKey(),
-            'to' => $expected[2]->getRouteKey(),
             'hasMore' => true,
+            'perPage' => 3,
+            'to' => $expected[2]->getRouteKey(),
         ];
 
         $links = $this->createLinks($expected[0], $expected[2], 3);
@@ -352,10 +352,10 @@ class CursorPaginationTest extends TestCase
         $expected = [$videos[4], $videos[5], $videos[6]];
 
         $meta = [
-            'perPage' => 3,
             'from' => $expected[0]->getRouteKey(),
-            'to' => $expected[2]->getRouteKey(),
             'hasMore' => true,
+            'perPage' => 3,
+            'to' => $expected[2]->getRouteKey(),
         ];
 
         $links = $this->createLinks($expected[0], $expected[2], 3);
@@ -379,10 +379,10 @@ class CursorPaginationTest extends TestCase
         $expected = [$videos[2], $videos[3]];
 
         $meta = [
-            'perPage' => 10,
             'from' => $expected[0]->getRouteKey(),
-            'to' => $expected[1]->getRouteKey(),
             'hasMore' => false,
+            'perPage' => 10,
+            'to' => $expected[1]->getRouteKey(),
         ];
 
         $links = $this->createLinks($expected[0], $expected[1], 10);
@@ -411,10 +411,10 @@ class CursorPaginationTest extends TestCase
         $expected = [$equal[1], $equal[2], $oldest];
 
         $meta = [
-            'perPage' => 15,
             'from' => $expected[0]->getRouteKey(),
-            'to' => $expected[2]->getRouteKey(),
             'hasMore' => false,
+            'perPage' => 15,
+            'to' => $expected[2]->getRouteKey(),
         ];
 
         $links = $this->createLinks($expected[0], $expected[2], 15);
@@ -443,10 +443,10 @@ class CursorPaginationTest extends TestCase
         $expected = [$videos[2], $videos[3], $videos[4]];
 
         $meta = [
-            'perPage' => 3,
             'from' => $expected[0]->getRouteKey(),
-            'to' => $expected[2]->getRouteKey(),
             'hasMore' => true,
+            'perPage' => 3,
+            'to' => $expected[2]->getRouteKey(),
         ];
 
         $links = [
@@ -512,10 +512,10 @@ class CursorPaginationTest extends TestCase
         $expected = [$videos[2], $videos[3], $videos[4]];
 
         $meta = [
-            'perPage' => 3,
             'from' => $expected[0]->getRouteKey(),
-            'to' => $expected[2]->getRouteKey(),
             'hasMore' => true,
+            'perPage' => 3,
+            'to' => $expected[2]->getRouteKey(),
         ];
 
         $links = $this->createLinks($expected[0], $expected[2], 3);
@@ -546,10 +546,10 @@ class CursorPaginationTest extends TestCase
         $expected = [$videos[1], $videos[2], $videos[3]];
 
         $meta = [
-            'perPage' => 3,
             'from' => $expected[0]->getRouteKey(),
-            'to' => $expected[2]->getRouteKey(),
             'hasMore' => true,
+            'perPage' => 3,
+            'to' => $expected[2]->getRouteKey(),
         ];
 
         $links = $this->createLinks($expected[0], $expected[2], 3);
@@ -576,10 +576,10 @@ class CursorPaginationTest extends TestCase
         $expected = [$videos[1], $videos[2], $videos[3]];
 
         $meta = [
-            'per_page' => 3,
             'from' => $expected[0]->getRouteKey(),
-            'to' => $expected[2]->getRouteKey(),
             'has_more' => true,
+            'per_page' => 3,
+            'to' => $expected[2]->getRouteKey(),
         ];
 
         $page = $this->videos->newQuery()->paginate([
@@ -602,10 +602,10 @@ class CursorPaginationTest extends TestCase
         $expected = [$videos[1], $videos[2], $videos[3]];
 
         $meta = [
-            'per-page' => 3,
             'from' => $expected[0]->getRouteKey(),
-            'to' => $expected[2]->getRouteKey(),
             'has-more' => true,
+            'per-page' => 3,
+            'to' => $expected[2]->getRouteKey(),
         ];
 
         $page = $this->videos->newQuery()->paginate([
@@ -631,10 +631,10 @@ class CursorPaginationTest extends TestCase
         $expected = [$videos[1], $videos[2], $videos[3]];
 
         $meta = [
-            'perPage' => 3,
             'from' => $expected[0]->getRouteKey(),
-            'to' => $expected[2]->getRouteKey(),
             'hasMore' => true,
+            'perPage' => 3,
+            'to' => $expected[2]->getRouteKey(),
         ];
 
         $links = $this->createLinks($expected[0], $expected[2], 3);
@@ -661,10 +661,10 @@ class CursorPaginationTest extends TestCase
         ])->sortByDesc('created_at')->values();
 
         $meta = [
-            'perPage' => $expected,
             'from' => $videos[1]->getRouteKey(),
-            'to' => $videos[$expected]->getRouteKey(),
             'hasMore' => true,
+            'perPage' => $expected,
+            'to' => $videos[$expected]->getRouteKey(),
         ];
 
         $links = $this->createLinks($videos[1], $videos[$expected], $expected);
@@ -690,10 +690,10 @@ class CursorPaginationTest extends TestCase
         ])->sortByDesc('created_at')->values();
 
         $meta = [
-            'perPage' => $expected,
             'from' => $videos[1]->getRouteKey(),
-            'to' => $videos[$expected]->getRouteKey(),
             'hasMore' => true,
+            'perPage' => $expected,
+            'to' => $videos[$expected]->getRouteKey(),
         ];
 
         $links = $this->createLinks($videos[1], $videos[$expected], $expected);
@@ -703,6 +703,23 @@ class CursorPaginationTest extends TestCase
         $this->assertSame(['page' => $meta], $page->meta());
         $this->assertSame($links, $page->links()->toArray());
         $this->assertPage($videos->skip(1)->take($expected), $page);
+    }
+
+    public function testItCanRemoveMeta(): void
+    {
+        $this->paginator->withoutMeta();
+
+        $videos = Video::factory()->count(4)->create([
+            'created_at' => fn() => $this->faker->dateTime,
+        ])->sortByDesc('created_at')->values();
+
+        $links = $this->createLinks($videos[0], $videos[2], 3);
+
+        $page = $this->videos->newQuery()->paginate(['limit' => '3']);
+
+        $this->assertEmpty($page->meta());
+        $this->assertSame($links, $page->links()->toArray());
+        $this->assertPage($videos->take(3), $page);
     }
 
     /**

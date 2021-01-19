@@ -68,7 +68,7 @@ class PagePagination implements Paginator
      */
     public static function make(): self
     {
-        return new self();
+        return new static();
     }
 
     /**
@@ -201,9 +201,10 @@ class PagePagination implements Paginator
             ->query($query, $page);
 
         return Page::make($paginator)
-            ->withNestedMeta($this->metaKey)
             ->withPageParam($this->pageKey)
             ->withPerPageParam($this->perPageKey)
+            ->withMeta($this->hasMeta)
+            ->withNestedMeta($this->metaKey)
             ->withMetaCase($this->metaCase);
     }
 
