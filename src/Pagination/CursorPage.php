@@ -17,7 +17,7 @@
 
 declare(strict_types=1);
 
-namespace LaravelJsonApi\Eloquent\Pagination\Cursor;
+namespace LaravelJsonApi\Eloquent\Pagination;
 
 use InvalidArgumentException;
 use LaravelJsonApi\Contracts\Pagination\Page as PageContract;
@@ -25,6 +25,7 @@ use LaravelJsonApi\Core\Document\Link;
 use LaravelJsonApi\Core\Document\Links;
 use LaravelJsonApi\Core\Responses\PaginatedResourceResponse;
 use LaravelJsonApi\Core\Support\Arr;
+use LaravelJsonApi\Eloquent\Pagination\Cursor\CursorPaginator;
 
 class CursorPage implements PageContract
 {

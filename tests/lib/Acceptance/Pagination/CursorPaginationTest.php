@@ -27,7 +27,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Pagination\AbstractPaginator;
 use Illuminate\Support\LazyCollection;
 use LaravelJsonApi\Core\Support\Arr;
-use LaravelJsonApi\Eloquent\Pagination\Cursor\CursorPage;
+use LaravelJsonApi\Eloquent\Pagination\CursorPage;
 use LaravelJsonApi\Eloquent\Pagination\CursorPagination;
 use LaravelJsonApi\Eloquent\Tests\Acceptance\TestCase;
 

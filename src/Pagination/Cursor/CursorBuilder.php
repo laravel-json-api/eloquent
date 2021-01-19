@@ -25,6 +25,7 @@ use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Database\Query\Builder as QueryBuilder;
 use InvalidArgumentException;
 use LogicException;
+use OutOfRangeException;
 use function in_array;
 
 class CursorBuilder
@@ -63,17 +64,11 @@ class CursorBuilder
      *      the column to use for the cursor.
      * @param string|null $key
      *      the key column that the before/after cursors related to.
-     * @param string $direction
-     *      the query order direction.
      */
-    public function __construct($query, string $column = null, string $key = null, string $direction = 'asc')
+    public function __construct($query, string $column = null, string $key = null)
     {
         if (!$query instanceof Builder && !$query instanceof Relation) {
             throw new InvalidArgumentException('Expecting an Eloquent query builder or relation.');
-        }
-
-        if (!in_array($direction, ['asc', 'desc'])) {
-            throw new InvalidArgumentException('Invalid direction.');
         }
 
         if (!empty($query->orders)) {
@@ -83,10 +78,30 @@ class CursorBuilder
         $this->query = $query;
         $this->column = $column ?: $this->guessColumn();
         $this->keyName = $key ?: $this->guessKey();
-        $this->direction = $direction;
+        $this->direction = 'desc';
     }
 
     /**
+     * Set the query direction.
+     *
+     * @param string $direction
+     * @return $this
+     */
+    public function withDirection(string $direction): self
+    {
+        if (in_array($direction, ['asc', 'desc'])) {
+            $this->direction = $direction;
+            return $this;
+        }
+
+        throw new InvalidArgumentException('Unexpected query direction.');
+    }
+
+    /**
+     * Set the default number of items per-page.
+     *
+     * If null, the default from the `Model::getPage()` method will be used.
+     *
      * @param int|null $perPage
      * @return $this
      */
@@ -157,7 +172,7 @@ class CursorBuilder
      * @param Cursor $cursor
      * @param array|string $columns
      * @return CursorPaginator
-     * @throws \OutOfRangeException
+     * @throws OutOfRangeException
      *      if the cursor contains a before/after id that does not exist.
      */
     private function next(Cursor $cursor, $columns): CursorPaginator
@@ -327,7 +342,7 @@ class CursorBuilder
      *
      * @param string|int $id
      * @return mixed
-     * @throws \OutOfRangeException
+     * @throws OutOfRangeException
      *      if the id does not exist.
      */
     private function getColumnValue($id)
@@ -340,7 +355,7 @@ class CursorBuilder
             ->value($this->getQualifiedColumn());
 
         if (is_null($value)) {
-            throw new \OutOfRangeException("Cursor key {$id} does not exist or has a null value.");
+            throw new OutOfRangeException("Cursor key {$id} does not exist or has a null value.");
         }
 
         return $value;

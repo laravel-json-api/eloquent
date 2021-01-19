@@ -24,7 +24,7 @@ use LaravelJsonApi\Contracts\Pagination\Page;
 use LaravelJsonApi\Eloquent\Contracts\Paginator;
 use LaravelJsonApi\Eloquent\Pagination\Cursor\Cursor;
 use LaravelJsonApi\Eloquent\Pagination\Cursor\CursorBuilder;
-use LaravelJsonApi\Eloquent\Pagination\Cursor\CursorPage;
+use LaravelJsonApi\Eloquent\Pagination\CursorPage;
 
 class CursorPagination implements Paginator
 {
@@ -221,10 +221,11 @@ class CursorPagination implements Paginator
      */
     public function paginate($query, array $page): Page
     {
-        $paginator = $this->query($query)->paginate(
-            $this->cursor($page),
-            $this->columns ?: ['*']
-        );
+        $paginator = $this
+            ->query($query)
+            ->withDirection($this->direction)
+            ->withDefaultPerPage($this->defaultPerPage)
+            ->paginate($this->cursor($page), $this->columns ?: ['*']);
 
         return CursorPage::make($paginator)
             ->withBeforeParam($this->before)
@@ -242,16 +243,7 @@ class CursorPagination implements Paginator
      */
     private function query($query): CursorBuilder
     {
-        $builder = new CursorBuilder(
-            $query,
-            $this->cursorColumn,
-            $this->primaryKey,
-            $this->direction
-        );
-
-        $builder->withDefaultPerPage($this->defaultPerPage);
-
-        return $builder;
+        return new CursorBuilder($query, $this->cursorColumn, $this->primaryKey);
     }
 
     /**
