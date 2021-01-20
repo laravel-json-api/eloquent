@@ -132,6 +132,7 @@ class ModelHydrator implements ResourceBuilder
         }
 
         $this->model->getConnection()->transaction(function () use ($validatedData) {
+            $this->fillId($validatedData);
             $this->fillAttributes($validatedData);
             $deferred = $this->fillRelationships($validatedData);
             $this->persist();
@@ -139,6 +140,21 @@ class ModelHydrator implements ResourceBuilder
         });
 
         return $this->model;
+    }
+
+    /**
+     * Hydrate the JSON:API resource id, if provided.
+     *
+     * @param array $validatedData
+     * @return void
+     */
+    private function fillId(array $validatedData): void
+    {
+        $field = $this->schema->id();
+
+        if ($this->mustFill($field, $validatedData)) {
+            $field->fill($this->model, $validatedData[$field->name()]);
+        }
     }
 
     /**

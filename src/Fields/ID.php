@@ -19,11 +19,14 @@ declare(strict_types=1);
 
 namespace LaravelJsonApi\Eloquent\Fields;
 
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Http\Request;
 use LaravelJsonApi\Contracts\Schema\ID as IDContract;
 use LaravelJsonApi\Core\Schema\Concerns\MatchesIds;
 use LaravelJsonApi\Core\Schema\Concerns\Sortable;
+use LaravelJsonApi\Eloquent\Contracts\Fillable;
 
-class ID implements IDContract
+class ID implements IDContract, Fillable
 {
 
     use MatchesIds;
@@ -33,6 +36,11 @@ class ID implements IDContract
      * @var string|null
      */
     private ?string $column;
+
+    /**
+     * @var bool
+     */
+    private bool $clientIds = false;
 
     /**
      * Create an id field.
@@ -78,6 +86,57 @@ class ID implements IDContract
     public function isSparseField(): bool
     {
         return false;
+    }
+
+    /**
+     * Mark the ID as accepting client-generated ids.
+     *
+     * @param bool $bool
+     * @return $this
+     */
+    public function clientIds(bool $bool = true): self
+    {
+        $this->clientIds = $bool;
+
+        return $this;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function acceptsClientIds(): bool
+    {
+        return $this->clientIds;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function isReadOnly($request): bool
+    {
+        if ($this->acceptsClientIds()) {
+            return !$request->isMethod('POST');
+        }
+
+        return true;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function isNotReadOnly($request): bool
+    {
+        return !$this->isReadOnly($request);
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function fill(Model $model, $value): void
+    {
+        $column = $this->column() ?: $model->getRouteKeyName();
+
+        $model->{$column} = $value;
     }
 
 }
