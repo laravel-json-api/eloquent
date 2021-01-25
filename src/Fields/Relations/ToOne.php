@@ -1,6 +1,6 @@
 <?php
 /*
- * Copyright 2020 Cloud Creativity Limited
+ * Copyright 2021 Cloud Creativity Limited
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,6 @@ namespace LaravelJsonApi\Eloquent\Fields\Relations;
 use Illuminate\Database\Eloquent\Model;
 use LaravelJsonApi\Core\Document\ResourceIdentifier;
 use LaravelJsonApi\Core\Support\Str;
-use LogicException;
 
 abstract class ToOne extends Relation
 {

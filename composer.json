@@ -1,6 +1,6 @@
 {
     "name": "laravel-json-api/eloquent",
-    "description": "Serialize Eloquent models as JSON API resources.",
+    "description": "Serialize Eloquent models as JSON:API resources.",
     "keywords": [
         "jsonapi.org",
         "json-api",
@@ -27,7 +27,7 @@
         "ext-json": "*",
         "illuminate/database": "^8.0",
         "illuminate/support": "^8.0",
-        "laravel-json-api/core": "^1.0"
+        "laravel-json-api/core": "^1.0@alpha"
     },
     "require-dev": {
         "orchestra/testbench": "^6.9",
@@ -50,7 +50,7 @@
             "dev-develop": "1.x-dev"
         }
     },
-    "minimum-stability": "dev",
+    "minimum-stability": "stable",
     "prefer-stable": true,
     "config": {
         "sort-packages": true

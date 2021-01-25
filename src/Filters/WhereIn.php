@@ -1,6 +1,6 @@
 <?php
-/**
- * Copyright 2020 Cloud Creativity Limited
+/*
+ * Copyright 2021 Cloud Creativity Limited
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,6 @@ namespace LaravelJsonApi\Eloquent\Filters;
 use InvalidArgumentException;
 use LaravelJsonApi\Core\Support\Str;
 use LaravelJsonApi\Eloquent\Contracts\Filter;
-use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use LogicException;
 use function explode;
 use function is_string;
