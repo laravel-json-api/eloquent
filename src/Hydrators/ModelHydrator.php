@@ -33,7 +33,6 @@ use LaravelJsonApi\Eloquent\Fields\Relations\Relation;
 use LaravelJsonApi\Eloquent\Schema;
 use LogicException;
 use RuntimeException;
-use UnexpectedValueException;
 use function sprintf;
 
 class ModelHydrator implements ResourceBuilder

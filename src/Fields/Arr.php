@@ -21,9 +21,7 @@ namespace LaravelJsonApi\Eloquent\Fields;
 
 use Closure;
 use LaravelJsonApi\Core\Support\Arr as SupportArr;
-use LaravelJsonApi\Core\Support\Str as SupportStr;
 use function asort;
-use function collect;
 use function is_null;
 use function ksort;
 use function sort;

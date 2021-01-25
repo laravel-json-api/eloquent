@@ -22,7 +22,6 @@ namespace LaravelJsonApi\Eloquent\Filters;
 use InvalidArgumentException;
 use LaravelJsonApi\Core\Support\Str;
 use LaravelJsonApi\Eloquent\Contracts\Filter;
-use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use LogicException;
 use function explode;
 use function is_string;

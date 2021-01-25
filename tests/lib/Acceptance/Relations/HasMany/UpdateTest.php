@@ -20,7 +20,6 @@ declare(strict_types=1);
 namespace LaravelJsonApi\Eloquent\Tests\Acceptance\Relations\HasMany;
 
 use App\Models\Comment;
-use App\Models\Post;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 

@@ -21,7 +21,6 @@ namespace LaravelJsonApi\Eloquent\Fields\Relations;
 
 use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Support\Collection;
-use LaravelJsonApi\Contracts\Schema\Schema;
 use LaravelJsonApi\Core\Support\Str;
 
 abstract class ToMany extends Relation

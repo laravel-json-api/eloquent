@@ -20,7 +20,6 @@ declare(strict_types=1);
 namespace LaravelJsonApi\Eloquent\Fields;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Http\Request;
 use LaravelJsonApi\Contracts\Schema\ID as IDContract;
 use LaravelJsonApi\Core\Schema\Concerns\MatchesIds;
 use LaravelJsonApi\Core\Schema\Concerns\Sortable;
