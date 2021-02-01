@@ -20,13 +20,12 @@ declare(strict_types=1);
 namespace LaravelJsonApi\Eloquent\Fields;
 
 use Closure;
-use LaravelJsonApi\Core\Support\Arr as SupportArr;
+use LaravelJsonApi\Core\Support\Arr;
 use function asort;
 use function is_null;
 use function ksort;
-use function sort;
 
-class Arr extends Attribute
+class ArrayHash extends Attribute
 {
 
     /**
@@ -49,7 +48,7 @@ class Arr extends Attribute
      *
      * @param string $fieldName
      * @param string|null $column
-     * @return Arr
+     * @return ArrayHash
      */
     public static function make(string $fieldName, string $column = null): self
     {
@@ -87,7 +86,7 @@ class Arr extends Attribute
      */
     public function camelize(): self
     {
-        $this->keys = static fn($value) => SupportArr::camelize($value);
+        $this->keys = static fn($value) => Arr::camelize($value);
 
         return $this;
     }
@@ -97,7 +96,7 @@ class Arr extends Attribute
      */
     public function dasherize(): self
     {
-        $this->keys = static fn($value) => SupportArr::dasherize($value);
+        $this->keys = static fn($value) => Arr::dasherize($value);
 
         return $this;
     }
@@ -115,9 +114,23 @@ class Arr extends Attribute
      */
     public function underscore(): self
     {
-        $this->keys = static fn($value) => SupportArr::underscore($value);
+        $this->keys = static fn($value) => Arr::underscore($value);
 
         return $this;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function serialize(object $model)
+    {
+        $value = parent::serialize($model);
+
+        if ($value) {
+            $this->sortValue($value);
+        }
+
+        return empty($value) ? null : $value;
     }
 
     /**
@@ -132,9 +145,7 @@ class Arr extends Attribute
         }
 
         if ($value) {
-            SupportArr::isAssoc($value) ?
-                $this->sortJsonObject($value) :
-                $this->sortArrayList($value);
+            $this->sortValue($value);
         }
 
         return $value;
@@ -145,39 +156,24 @@ class Arr extends Attribute
      */
     protected function assertValue($value): void
     {
-        if ((!is_null($value) && !is_array($value))) {
+        if ((!is_null($value) && !is_array($value)) || (!empty($value) && !Arr::isAssoc($value))) {
             throw new \UnexpectedValueException(sprintf(
-                'Expecting the value of attribute %s to be an array list or associative array.',
+                'Expecting the value of attribute %s to be an associative array.',
                 $this->name()
             ));
         }
     }
 
     /**
-     * Sort an array that is a JSON object.
-     *
-     * @param array $value
+     * @param $value
      * @return void
      */
-    private function sortJsonObject(array &$value): void
+    private function sortValue(array &$value): void
     {
         if ($this->sorted) {
             asort($value);
         } else if ($this->sortKeys) {
             ksort($value);
-        }
-    }
-
-    /**
-     * Sort an array that is a JSON array list.
-     *
-     * @param array $value
-     * @return void
-     */
-    private function sortArrayList(array &$value): void
-    {
-        if ($this->sorted) {
-            sort($value);
         }
     }
 

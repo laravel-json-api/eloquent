@@ -21,16 +21,16 @@ namespace LaravelJsonApi\Eloquent\Tests\Integration\Fields;
 
 use App\Models\Role;
 use Illuminate\Http\Request;
-use LaravelJsonApi\Eloquent\Fields\Arr;
+use LaravelJsonApi\Eloquent\Fields\ArrayHash;
 use LaravelJsonApi\Eloquent\Tests\Integration\TestCase;
 
-class ArrTest extends TestCase
+class ArrayHashTest extends TestCase
 {
 
     public function test(): void
     {
         $request = $this->createMock(Request::class);
-        $attr = Arr::make('accessPermissions');
+        $attr = ArrayHash::make('accessPermissions');
 
         $this->assertSame('accessPermissions', $attr->name());
         $this->assertSame('access_permissions', $attr->column());
@@ -45,7 +45,7 @@ class ArrTest extends TestCase
 
     public function testColumn(): void
     {
-        $attr = Arr::make('permissions', 'access_permissions');
+        $attr = ArrayHash::make('permissions', 'access_permissions');
 
         $this->assertSame('permissions', $attr->name());
         $this->assertSame('access_permissions', $attr->column());
@@ -54,7 +54,7 @@ class ArrTest extends TestCase
 
     public function testNotSparseField(): void
     {
-        $attr = Arr::make('permissions')->notSparseField();
+        $attr = ArrayHash::make('permissions')->notSparseField();
 
         $this->assertFalse($attr->isSparseField());
     }
@@ -63,7 +63,7 @@ class ArrTest extends TestCase
     {
         $query = Role::query();
 
-        $attr = Arr::make('permissions')->sortable();
+        $attr = ArrayHash::make('permissions')->sortable();
 
         $this->assertTrue($attr->isSortable());
         $attr->sort($query, 'desc');
@@ -81,7 +81,6 @@ class ArrTest extends TestCase
     {
         return [
             [[]],
-            [['foo', 'bar']],
             [['foo' => 'bar', 'baz' => 'bat']],
             [null],
         ];
@@ -94,7 +93,7 @@ class ArrTest extends TestCase
     public function testFill($value): void
     {
         $model = new Role();
-        $attr = Arr::make('permissions');
+        $attr = ArrayHash::make('permissions');
 
         $attr->fill($model, $value);
         $this->assertSame($value, $model->permissions);
@@ -112,6 +111,7 @@ class ArrTest extends TestCase
             ['foo'],
             [''],
             [new \DateTime()],
+            [['foo', 'bar']],
         ];
     }
 
@@ -122,7 +122,7 @@ class ArrTest extends TestCase
     public function testFillWithInvalid($value): void
     {
         $model = new Role();
-        $attr = Arr::make('permissions');
+        $attr = ArrayHash::make('permissions');
 
         $this->expectException(\UnexpectedValueException::class);
         $attr->fill($model, $value);
@@ -131,61 +131,52 @@ class ArrTest extends TestCase
     public function testFillRespectsMassAssignment(): void
     {
         $model = new Role();
-        $attr = Arr::make('accessPermissions');
+        $attr = ArrayHash::make('accessPermissions');
 
-        $attr->fill($model, ['foo']);
+        $attr->fill($model, ['foo' => 'bar']);
         $this->assertArrayNotHasKey('access_permissions', $model->getAttributes());
     }
 
     public function testUnguarded(): void
     {
         $model = new Role();
-        $attr = Arr::make('accessPermissions')->unguarded();
+        $attr = ArrayHash::make('accessPermissions')->unguarded();
 
-        $attr->fill($model, ['foo']);
-        $this->assertSame(['foo'], $model->access_permissions);
+        $attr->fill($model, ['foo' => 'bar']);
+        $this->assertSame(['foo' => 'bar'], $model->access_permissions);
     }
 
     public function testDeserializeUsing(): void
     {
         $model = new Role();
-        $attr = Arr::make('permissions')->deserializeUsing(
+        $attr = ArrayHash::make('permissions')->deserializeUsing(
             fn($value) => collect($value)
                 ->map(fn($v) => strtoupper($v))
                 ->all()
         );
 
-        $attr->fill($model, ['foo', 'bar']);
-        $this->assertSame(['FOO', 'BAR'], $model->permissions);
+        $attr->fill($model, ['a' => 'foo', 'b' => 'bar']);
+        $this->assertSame(['a' => 'FOO', 'b' => 'BAR'], $model->permissions);
     }
 
     public function testFillUsing(): void
     {
         $role = new Role();
-        $attr = Arr::make('permissions')->fillUsing(function ($model, $column, $value) use ($role) {
+        $attr = ArrayHash::make('permissions')->fillUsing(function ($model, $column, $value) use ($role) {
             $this->assertSame($role, $model);
             $this->assertSame('permissions', $column);
-            $this->assertSame(['foo'], $value);
+            $this->assertSame(['foo' => 'bar'], $value);
             $model->permissions = ['foo', 'bar'];
         });
 
-        $attr->fill($role, ['foo']);
+        $attr->fill($role, ['foo' => 'bar']);
         $this->assertSame(['foo', 'bar'], $role->permissions);
     }
 
     public function testSorted(): void
     {
         $model = new Role();
-        $attr = Arr::make('permissions')->sorted();
-
-        $attr->fill($model, ['foo', 'bar']);
-        $this->assertSame(['bar', 'foo'], $model->permissions);
-    }
-
-    public function testSortedWithAssoc(): void
-    {
-        $model = new Role();
-        $attr = Arr::make('permissions')->sorted();
+        $attr = ArrayHash::make('permissions')->sorted();
 
         $attr->fill($model, ['bar' => 'foobar', 'foo' => 'bazbat']);
         $this->assertSame(['foo' => 'bazbat', 'bar' => 'foobar'], $model->permissions);
@@ -194,7 +185,7 @@ class ArrTest extends TestCase
     public function testSortedKeys(): void
     {
         $model = new Role();
-        $attr = Arr::make('permissions')->sortedKeys();
+        $attr = ArrayHash::make('permissions')->sortedKeys();
 
         $attr->fill($model, ['foo' => 'bar', 'baz' => 'bat']);
         $this->assertSame(['baz' => 'bat', 'foo' => 'bar'], $model->permissions);
@@ -203,7 +194,7 @@ class ArrTest extends TestCase
     public function testCamelize(): void
     {
         $model = new Role();
-        $attr = Arr::make('permissions')->camelize();
+        $attr = ArrayHash::make('permissions')->camelize();
 
         $attr->fill($model, [
             'foo_bar' => 'foobar',
@@ -219,7 +210,7 @@ class ArrTest extends TestCase
     public function testDasherize(): void
     {
         $model = new Role();
-        $attr = Arr::make('permissions')->dasherize();
+        $attr = ArrayHash::make('permissions')->dasherize();
 
         $attr->fill($model, [
             'foo_bar' => 'foobar',
@@ -235,7 +226,7 @@ class ArrTest extends TestCase
     public function testSnake(): void
     {
         $model = new Role();
-        $attr = Arr::make('permissions')->snake();
+        $attr = ArrayHash::make('permissions')->snake();
 
         $attr->fill($model, [
             'fooBar' => 'foobar',
@@ -251,7 +242,7 @@ class ArrTest extends TestCase
     public function testUnderscore(): void
     {
         $model = new Role();
-        $attr = Arr::make('permissions')->underscore();
+        $attr = ArrayHash::make('permissions')->underscore();
 
         $attr->fill($model, [
             'fooBar' => 'foobar',
@@ -271,7 +262,7 @@ class ArrTest extends TestCase
             ->method('wantsJson')
             ->willReturnOnConsecutiveCalls(true, false);
 
-        $attr = Arr::make('permissions')->readOnly(
+        $attr = ArrayHash::make('permissions')->readOnly(
             fn($request) => $request->wantsJson()
         );
 
@@ -287,7 +278,7 @@ class ArrTest extends TestCase
             ->with('POST')
             ->willReturnOnConsecutiveCalls(true, false);
 
-        $attr = Arr::make('permissions')->readOnlyOnCreate();
+        $attr = ArrayHash::make('permissions')->readOnlyOnCreate();
 
         $this->assertTrue($attr->isReadOnly($request));
         $this->assertFalse($attr->isReadOnly($request));
@@ -301,10 +292,88 @@ class ArrTest extends TestCase
             ->with('PATCH')
             ->willReturnOnConsecutiveCalls(true, false);
 
-        $attr = Arr::make('permissions')->readOnlyOnUpdate();
+        $attr = ArrayHash::make('permissions')->readOnlyOnUpdate();
 
         $this->assertTrue($attr->isReadOnly($request));
         $this->assertFalse($attr->isReadOnly($request));
+    }
+
+    /**
+     * @return array
+     */
+    public function serializeProvider(): array
+    {
+        return [
+            [null, null],
+            [[], null],
+            [['foo' => 'bar', 'baz' => 'bat'], ['foo' => 'bar', 'baz' => 'bat']],
+        ];
+    }
+
+    /**
+     * @param $value
+     * @param $expected
+     * @dataProvider serializeProvider
+     */
+    public function testSerialize($value, $expected): void
+    {
+        $model = new Role(['permissions' => $value]);
+
+        $attr = ArrayHash::make('permissions');
+
+        $this->assertSame($expected, $attr->serialize($model));
+    }
+
+    public function testSerializeUsing(): void
+    {
+        $model = new Role(['permissions' => ['foo' => 'bar']]);
+
+        $attr = ArrayHash::make('permissions')->serializeUsing(function ($value) {
+            $this->assertSame(['foo' => 'bar'], $value);
+            return ['baz' => 'bat'];
+        });
+
+        $this->assertSame(['baz' => 'bat'], $attr->serialize($model));
+    }
+
+    public function testSerializeSorted(): void
+    {
+        $model = new Role(['permissions' => ['a' => 'foo', 'b' => 'bar']]);
+
+        $attr = ArrayHash::make('permissions')->sorted();
+
+        $this->assertSame(['b' => 'bar', 'a' => 'foo'], $attr->serialize($model));
+    }
+
+    public function testSerializeSortedKeys(): void
+    {
+        $model = new Role(['permissions' => ['foo' => 'a', 'bar' => 'b']]);
+
+        $attr = ArrayHash::make('permissions')->sortedKeys();
+
+        $this->assertSame(['bar' => 'b', 'foo' => 'a'], $attr->serialize($model));
+    }
+
+    public function testHidden(): void
+    {
+        $request = $this->createMock(Request::class);
+        $request->expects($this->never())->method($this->anything());
+
+        $attr = ArrayHash::make('permissions')->hidden();
+
+        $this->assertTrue($attr->isHidden($request));
+    }
+
+    public function testHiddenCallback(): void
+    {
+        $mock = $this->createMock(Request::class);
+        $mock->expects($this->once())->method('isMethod')->with('POST')->willReturn(true);
+
+        $attr = ArrayHash::make('permissions')->hidden(
+            fn($request) => $request->isMethod('POST')
+        );
+
+        $this->assertTrue($attr->isHidden($mock));
     }
 
 }
