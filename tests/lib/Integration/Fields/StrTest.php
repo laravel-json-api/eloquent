@@ -33,11 +33,15 @@ class StrTest extends TestCase
         $attr = Str::make('displayName');
 
         $this->assertSame('displayName', $attr->name());
+        $this->assertSame('displayName', $attr->serializedFieldName());
         $this->assertSame('display_name', $attr->column());
         $this->assertTrue($attr->isSparseField());
         $this->assertSame(['display_name'], $attr->columnsForField());
         $this->assertFalse($attr->isSortable());
         $this->assertFalse($attr->isReadOnly($request));
+        $this->assertTrue($attr->isNotReadOnly($request));
+        $this->assertFalse($attr->isHidden($request));
+        $this->assertTrue($attr->isNotHidden($request));
     }
 
     public function testColumn(): void
@@ -207,6 +211,49 @@ class StrTest extends TestCase
 
         $this->assertTrue($attr->isReadOnly($request));
         $this->assertFalse($attr->isReadOnly($request));
+    }
+
+    public function testSerialize(): void
+    {
+        $post = new Post();
+        $attr = Str::make('title');
+
+        $this->assertNull($attr->serialize($post));
+        $post->title = 'Hello World';
+        $this->assertSame('Hello World', $attr->serialize($post));
+    }
+
+    public function testSerializeUsing(): void
+    {
+        $post = new Post(['title' => 'Hello World']);
+
+        $attr = Str::make('title')->serializeUsing(
+            fn($value) => strtoupper($value)
+        );
+
+        $this->assertSame('HELLO WORLD', $attr->serialize($post));
+    }
+
+    public function testHidden(): void
+    {
+        $request = $this->createMock(Request::class);
+        $request->expects($this->never())->method($this->anything());
+
+        $attr = Str::make('title')->hidden();
+
+        $this->assertTrue($attr->isHidden($request));
+    }
+
+    public function testHiddenCallback(): void
+    {
+        $mock = $this->createMock(Request::class);
+        $mock->expects($this->once())->method('isMethod')->with('POST')->willReturn(true);
+
+        $attr = Str::make('title')->hidden(
+            fn($request) => $request->isMethod('POST')
+        );
+
+        $this->assertTrue($attr->isHidden($mock));
     }
 
 }

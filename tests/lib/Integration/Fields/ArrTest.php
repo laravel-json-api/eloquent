@@ -38,6 +38,9 @@ class ArrTest extends TestCase
         $this->assertSame(['access_permissions'], $attr->columnsForField());
         $this->assertFalse($attr->isSortable());
         $this->assertFalse($attr->isReadOnly($request));
+        $this->assertTrue($attr->isNotReadOnly($request));
+        $this->assertFalse($attr->isHidden($request));
+        $this->assertTrue($attr->isNotHidden($request));
     }
 
     public function testColumn(): void
