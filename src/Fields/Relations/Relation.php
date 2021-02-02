@@ -20,6 +20,7 @@ declare(strict_types=1);
 namespace LaravelJsonApi\Eloquent\Fields\Relations;
 
 use Closure;
+use InvalidArgumentException;
 use LaravelJsonApi\Contracts\Resources\JsonApiRelation;
 use LaravelJsonApi\Contracts\Resources\Serializer\Relation as SerializableContract;
 use LaravelJsonApi\Contracts\Schema\Relation as RelationContract;
@@ -64,6 +65,13 @@ abstract class Relation implements RelationContract, SchemaAwareContract, Serial
      * @var string|null
      */
     private ?string $inverse = null;
+
+    /**
+     * The name of the field as it appears in a URI.
+     *
+     * @var string|null
+     */
+    private ?string $uriName = null;
 
     /**
      * @var Closure|null
@@ -145,6 +153,46 @@ abstract class Relation implements RelationContract, SchemaAwareContract, Serial
     }
 
     /**
+     * @inheritDoc
+     */
+    public function uriName(): string
+    {
+        if ($this->uriName) {
+            return $this->uriName;
+        }
+
+        return $this->uriName = $this->guessUriName();
+    }
+
+    /**
+     * Use the field-name as-is for relationship URLs.
+     *
+     * @return $this
+     */
+    public function retainFieldName(): self
+    {
+        $this->uriName = $this->name();
+
+        return $this;
+    }
+
+    /**
+     * Use the provided string as the URI fragment for the field name.
+     *
+     * @param string $uri
+     * @return $this
+     */
+    public function withUriFieldName(string $uri): self
+    {
+        if (!empty($uri)) {
+            $this->uriName = $uri;
+            return $this;
+        }
+
+        throw new InvalidArgumentException('Expecting a non-empty string URI fragment.');
+    }
+
+    /**
      * Get the schema for the inverse resource type.
      *
      * @return Schema
@@ -196,6 +244,8 @@ abstract class Relation implements RelationContract, SchemaAwareContract, Serial
             $this->relationName(),
         );
 
+        $relation->withUriFieldName($this->uriName());
+
         if ($this->serializer) {
             ($this->serializer)($relation);
         }
@@ -227,5 +277,15 @@ abstract class Relation implements RelationContract, SchemaAwareContract, Serial
     private function guessRelationName(): string
     {
         return Str::camel($this->name());
+    }
+
+    /**
+     * Guess the field name as it appears in a URI.
+     *
+     * @return string
+     */
+    private function guessUriName(): string
+    {
+        return Str::dasherize($this->name());
     }
 }

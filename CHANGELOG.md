@@ -14,6 +14,9 @@ on serializing resources using the Eloquent schema.
 was required because now that the fields are also serializing values, the handling of empty values
 is different depending on whether it is a list (empty array) or a hash (empty array converted
 to `null`).
+- Can now set the URI field name for a relationship on the schema's relationship field, using the
+  `withUriFieldName()` method. Alternatively, the `retainFieldName()` method can be used to retain
+  the field name as-is.
 
 ## [1.0.0-alpha.1] - 2021-01-25
 
