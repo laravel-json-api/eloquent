@@ -182,21 +182,24 @@ class ArrayHashTest extends TestCase
         $this->assertSame(['foo' => 'bazbat', 'bar' => 'foobar'], $model->permissions);
     }
 
-    public function testSortedKeys(): void
+    public function testSortKeys(): void
     {
         $model = new Role();
-        $attr = ArrayHash::make('permissions')->sortedKeys();
+        $attr = ArrayHash::make('permissions')->sortKeys();
 
         $attr->fill($model, ['foo' => 'bar', 'baz' => 'bat']);
         $this->assertSame(['baz' => 'bat', 'foo' => 'bar'], $model->permissions);
     }
 
-    public function testCamelize(): void
+    public function testUnderscoreToCamel(): void
     {
         $model = new Role();
-        $attr = ArrayHash::make('permissions')->camelize();
 
-        $attr->fill($model, [
+        $attr = ArrayHash::make('permissions')
+            ->underscoreFields()
+            ->camelizeKeys();
+
+        $attr->fill($model, $json = [
             'foo_bar' => 'foobar',
             'baz_bat' => 'bazbat',
         ]);
@@ -205,14 +208,19 @@ class ArrayHashTest extends TestCase
             'fooBar' => 'foobar',
             'bazBat' => 'bazbat',
         ], $model->permissions);
+
+        $this->assertSame($json, $attr->serialize($model)->jsonSerialize());
     }
 
-    public function testDasherize(): void
+    public function testUnderscoreToDash(): void
     {
         $model = new Role();
-        $attr = ArrayHash::make('permissions')->dasherize();
 
-        $attr->fill($model, [
+        $attr = ArrayHash::make('permissions')
+            ->underscoreFields()
+            ->dasherizeKeys();
+
+        $attr->fill($model, $json = [
             'foo_bar' => 'foobar',
             'baz_bat' => 'bazbat',
         ]);
@@ -221,14 +229,124 @@ class ArrayHashTest extends TestCase
             'foo-bar' => 'foobar',
             'baz-bat' => 'bazbat',
         ], $model->permissions);
+
+        $this->assertSame($json, $attr->serialize($model)->jsonSerialize());
     }
 
-    public function testSnake(): void
+    public function testSnakeToCamel(): void
     {
         $model = new Role();
-        $attr = ArrayHash::make('permissions')->snake();
 
-        $attr->fill($model, [
+        $attr = ArrayHash::make('permissions')
+            ->snakeFields()
+            ->camelizeKeys();
+
+        $attr->fill($model, $json = [
+            'foo_bar' => 'foobar',
+            'baz_bat' => 'bazbat',
+        ]);
+
+        $this->assertSame([
+            'fooBar' => 'foobar',
+            'bazBat' => 'bazbat',
+        ], $model->permissions);
+
+        $this->assertSame($json, $attr->serialize($model)->jsonSerialize());
+    }
+
+    public function testSnakeToDash(): void
+    {
+        $model = new Role();
+
+        $attr = ArrayHash::make('permissions')
+            ->snakeFields()
+            ->dasherizeKeys();
+
+        $attr->fill($model, $json = [
+            'foo_bar' => 'foobar',
+            'baz_bat' => 'bazbat',
+        ]);
+
+        $this->assertSame([
+            'foo-bar' => 'foobar',
+            'baz-bat' => 'bazbat',
+        ], $model->permissions);
+
+        $this->assertSame($json, $attr->serialize($model)->jsonSerialize());
+    }
+
+    public function testDashToCamel(): void
+    {
+        $model = new Role();
+
+        $attr = ArrayHash::make('permissions')
+            ->dasherizeFields()
+            ->camelizeKeys();
+
+        $attr->fill($model, $json = [
+            'foo-bar' => 'foobar',
+            'baz-bat' => 'bazbat',
+        ]);
+
+        $this->assertSame([
+            'fooBar' => 'foobar',
+            'bazBat' => 'bazbat',
+        ], $model->permissions);
+
+        $this->assertSame($json, $attr->serialize($model)->jsonSerialize());
+    }
+
+    public function testDashToUnderscore(): void
+    {
+        $model = new Role();
+
+        $attr = ArrayHash::make('permissions')
+            ->dasherizeFields()
+            ->underscoreKeys();
+
+        $attr->fill($model, $json = [
+            'foo-bar' => 'foobar',
+            'baz-bat' => 'bazbat',
+        ]);
+
+        $this->assertSame([
+            'foo_bar' => 'foobar',
+            'baz_bat' => 'bazbat',
+        ], $model->permissions);
+
+        $this->assertSame($json, $attr->serialize($model)->jsonSerialize());
+    }
+
+    public function testDashToSnake(): void
+    {
+        $model = new Role();
+
+        $attr = ArrayHash::make('permissions')
+            ->dasherizeFields()
+            ->snakeKeys();
+
+        $attr->fill($model, $json = [
+            'foo-bar' => 'foobar',
+            'baz-bat' => 'bazbat',
+        ]);
+
+        $this->assertSame([
+            'foo_bar' => 'foobar',
+            'baz_bat' => 'bazbat',
+        ], $model->permissions);
+
+        $this->assertSame($json, $attr->serialize($model)->jsonSerialize());
+    }
+
+    public function testCamelToUnderscore(): void
+    {
+        $model = new Role();
+
+        $attr = ArrayHash::make('permissions')
+            ->camelizeFields()
+            ->underscoreKeys();
+
+        $attr->fill($model, $json = [
             'fooBar' => 'foobar',
             'bazBat' => 'bazbat',
         ]);
@@ -237,14 +355,19 @@ class ArrayHashTest extends TestCase
             'foo_bar' => 'foobar',
             'baz_bat' => 'bazbat',
         ], $model->permissions);
+
+        $this->assertSame($json, $attr->serialize($model)->jsonSerialize());
     }
 
-    public function testUnderscore(): void
+    public function testCamelToSnake(): void
     {
         $model = new Role();
-        $attr = ArrayHash::make('permissions')->underscore();
 
-        $attr->fill($model, [
+        $attr = ArrayHash::make('permissions')
+            ->camelizeFields()
+            ->snakeKeys();
+
+        $attr->fill($model, $json = [
             'fooBar' => 'foobar',
             'bazBat' => 'bazbat',
         ]);
@@ -253,6 +376,29 @@ class ArrayHashTest extends TestCase
             'foo_bar' => 'foobar',
             'baz_bat' => 'bazbat',
         ], $model->permissions);
+
+        $this->assertSame($json, $attr->serialize($model)->jsonSerialize());
+    }
+
+    public function testCamelToDash(): void
+    {
+        $model = new Role();
+
+        $attr = ArrayHash::make('permissions')
+            ->camelizeFields()
+            ->dasherizeKeys();
+
+        $attr->fill($model, $json = [
+            'fooBar' => 'foobar',
+            'bazBat' => 'bazbat',
+        ]);
+
+        $this->assertSame([
+            'foo-bar' => 'foobar',
+            'baz-bat' => 'bazbat',
+        ], $model->permissions);
+
+        $this->assertSame($json, $attr->serialize($model)->jsonSerialize());
     }
 
     public function testReadOnly(): void
@@ -321,7 +467,7 @@ class ArrayHashTest extends TestCase
 
         $attr = ArrayHash::make('permissions');
 
-        $this->assertSame($expected, $attr->serialize($model));
+        $this->assertSame($expected, $attr->serialize($model)->jsonSerialize());
     }
 
     public function testSerializeUsing(): void
@@ -333,7 +479,10 @@ class ArrayHashTest extends TestCase
             return ['baz' => 'bat'];
         });
 
-        $this->assertSame(['baz' => 'bat'], $attr->serialize($model));
+        $this->assertSame(
+            ['baz' => 'bat'],
+            $attr->serialize($model)->jsonSerialize()
+        );
     }
 
     public function testSerializeSorted(): void
@@ -342,16 +491,22 @@ class ArrayHashTest extends TestCase
 
         $attr = ArrayHash::make('permissions')->sorted();
 
-        $this->assertSame(['b' => 'bar', 'a' => 'foo'], $attr->serialize($model));
+        $this->assertSame(
+            ['b' => 'bar', 'a' => 'foo'],
+            $attr->serialize($model)->jsonSerialize()
+        );
     }
 
     public function testSerializeSortedKeys(): void
     {
         $model = new Role(['permissions' => ['foo' => 'a', 'bar' => 'b']]);
 
-        $attr = ArrayHash::make('permissions')->sortedKeys();
+        $attr = ArrayHash::make('permissions')->sortKeys();
 
-        $this->assertSame(['bar' => 'b', 'foo' => 'a'], $attr->serialize($model));
+        $this->assertSame(
+            ['bar' => 'b', 'foo' => 'a'],
+            $attr->serialize($model)->jsonSerialize()
+        );
     }
 
     public function testHidden(): void

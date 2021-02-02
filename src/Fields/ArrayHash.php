@@ -20,10 +20,9 @@ declare(strict_types=1);
 namespace LaravelJsonApi\Eloquent\Fields;
 
 use Closure;
+use LaravelJsonApi\Core\Json\Hash;
 use LaravelJsonApi\Core\Support\Arr;
-use function asort;
 use function is_null;
-use function ksort;
 
 class ArrayHash extends Attribute
 {
@@ -34,14 +33,28 @@ class ArrayHash extends Attribute
     private ?Closure $keys = null;
 
     /**
-     * @var bool
+     * @var int|null
      */
-    private bool $sorted = false;
+    private ?int $sortValues = null;
 
     /**
-     * @var bool
+     * @var int|null
      */
-    private bool $sortKeys = false;
+    private ?int $sortKeys = null;
+
+    /**
+     * The JSON:API field case.
+     *
+     * @var string|null
+     */
+    private ?string $fieldCase = null;
+
+    /**
+     * The database key-case.
+     *
+     * @var string|null
+     */
+    private ?string $keyCase = null;
 
     /**
      * Create an array attribute.
@@ -58,11 +71,13 @@ class ArrayHash extends Attribute
     /**
      * Sort values when deserializing the array.
      *
+     * @param int $flags
      * @return $this
      */
-    public function sorted(): self
+    public function sorted(int $flags = SORT_REGULAR): self
     {
-        $this->sorted = true;
+        $this->sortKeys = null;
+        $this->sortValues = $flags;
 
         return $this;
     }
@@ -70,51 +85,109 @@ class ArrayHash extends Attribute
     /**
      * Sort values by their keys when deserializing the array.
      *
+     * @param int $flags
      * @return $this
      */
-    public function sortedKeys(): self
+    public function sortKeys(int $flags = SORT_REGULAR): self
     {
-        $this->sortKeys = true;
+        $this->sortKeys = $flags;
+        $this->sortValues = null;
 
         return $this;
     }
 
     /**
-     * Camel-case array keys when deserializing the array.
+     * Use camel-case fields when serializing to JSON.
      *
      * @return $this
      */
-    public function camelize(): self
+    public function camelizeFields(): self
     {
-        $this->keys = static fn($value) => Arr::camelize($value);
+        $this->fieldCase = 'camelize';
 
         return $this;
     }
 
     /**
+     * Use camel-case fields when storing values in the database.
+     *
      * @return $this
      */
-    public function dasherize(): self
+    public function camelizeKeys(): self
     {
-        $this->keys = static fn($value) => Arr::dasherize($value);
+        $this->keyCase = 'camelize';
 
         return $this;
     }
 
     /**
+     * Use snake-case fields when serializing to JSON.
+     *
      * @return $this
      */
-    public function snake(): self
+    public function snakeFields(): self
     {
-        return $this->underscore();
+        $this->fieldCase = 'snake';
+
+        return $this;
     }
 
     /**
+     * Use snake-case fields when storing values in the database.
+     *
      * @return $this
      */
-    public function underscore(): self
+    public function snakeKeys(): self
     {
-        $this->keys = static fn($value) => Arr::underscore($value);
+        $this->keyCase = 'snake';
+
+        return $this;
+    }
+
+    /**
+     * Use underscore fields when serializing to JSON.
+     *
+     * @return $this
+     */
+    public function underscoreFields(): self
+    {
+        $this->fieldCase = 'underscore';
+
+        return $this;
+    }
+
+    /**
+     * Use underscore keys when storing values in the database.
+     *
+     * @return $this
+     */
+    public function underscoreKeys(): self
+    {
+        $this->keyCase = 'underscore';
+
+        return $this;
+    }
+
+    /**
+     * Use dash-case fields when serializing to JSON.
+     *
+     * @return $this
+     */
+    public function dasherizeFields(): self
+    {
+        $this->fieldCase = 'dasherize';
+
+        return $this;
+    }
+
+    /**
+     * Use dash-case keys when storing values in the database.
+     *
+     * @return $this
+     */
+    public function dasherizeKeys(): self
+    {
+        $this->keyCase = 'dasherize';
 
         return $this;
     }
@@ -126,11 +199,10 @@ class ArrayHash extends Attribute
     {
         $value = parent::serialize($model);
 
-        if ($value) {
-            $this->sortValue($value);
-        }
-
-        return empty($value) ? null : $value;
+        return Hash::cast($value)
+            ->maybeSorted($this->sortValues)
+            ->maybeSortKeys($this->sortKeys)
+            ->useCase($this->fieldCase);
     }
 
     /**
@@ -144,11 +216,15 @@ class ArrayHash extends Attribute
             $value = ($this->keys)($value);
         }
 
-        if ($value) {
-            $this->sortValue($value);
+        if (is_null($value)) {
+            return null;
         }
 
-        return $value;
+        return Hash::cast($value)
+            ->maybeSorted($this->sortValues)
+            ->maybeSortKeys($this->sortKeys)
+            ->useCase($this->keyCase)
+            ->all();
     }
 
     /**
@@ -161,19 +237,6 @@ class ArrayHash extends Attribute
                 'Expecting the value of attribute %s to be an associative array.',
                 $this->name()
             ));
-        }
-    }
-
-    /**
-     * @param $value
-     * @return void
-     */
-    private function sortValue(array &$value): void
-    {
-        if ($this->sorted) {
-            asort($value);
-        } else if ($this->sortKeys) {
-            ksort($value);
         }
     }
 
