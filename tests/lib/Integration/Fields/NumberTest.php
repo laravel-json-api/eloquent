@@ -33,11 +33,15 @@ class NumberTest extends TestCase
         $attr = Number::make('failureCount');
 
         $this->assertSame('failureCount', $attr->name());
+        $this->assertSame('failureCount', $attr->serializedFieldName());
         $this->assertSame('failure_count', $attr->column());
         $this->assertTrue($attr->isSparseField());
         $this->assertSame(['failure_count'], $attr->columnsForField());
         $this->assertFalse($attr->isSortable());
         $this->assertFalse($attr->isReadOnly($request));
+        $this->assertTrue($attr->isNotReadOnly($request));
+        $this->assertFalse($attr->isHidden($request));
+        $this->assertTrue($attr->isNotHidden($request));
     }
 
     public function testColumn(): void
@@ -210,4 +214,47 @@ class NumberTest extends TestCase
         $this->assertFalse($attr->isReadOnly($request));
     }
 
+    public function testSerialize(): void
+    {
+        $post = new Post();
+        $attr = Number::make('views');
+
+        $this->assertNull($attr->serialize($post));
+        $post->views = 101;
+        $this->assertSame(101, $attr->serialize($post));
+    }
+
+    public function testSerializeUsing(): void
+    {
+        $post = new Post();
+        $post->views = 100;
+
+        $attr = Number::make('views')->serializeUsing(
+            fn($value) => $value * 2
+        );
+
+        $this->assertSame(200, $attr->serialize($post));
+    }
+
+    public function testHidden(): void
+    {
+        $request = $this->createMock(Request::class);
+        $request->expects($this->never())->method($this->anything());
+
+        $attr = Number::make('views')->hidden();
+
+        $this->assertTrue($attr->isHidden($request));
+    }
+
+    public function testHiddenCallback(): void
+    {
+        $mock = $this->createMock(Request::class);
+        $mock->expects($this->once())->method('isMethod')->with('POST')->willReturn(true);
+
+        $attr = Number::make('views')->hidden(
+            fn($request) => $request->isMethod('POST')
+        );
+
+        $this->assertTrue($attr->isHidden($mock));
+    }
 }

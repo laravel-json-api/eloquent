@@ -19,22 +19,28 @@ declare(strict_types=1);
 
 namespace LaravelJsonApi\Eloquent\Fields\Relations;
 
+use Closure;
+use LaravelJsonApi\Contracts\Resources\JsonApiRelation;
+use LaravelJsonApi\Contracts\Resources\Serializer\Relation as SerializableContract;
 use LaravelJsonApi\Contracts\Schema\Relation as RelationContract;
 use LaravelJsonApi\Contracts\Schema\SchemaAware as SchemaAwareContract;
+use LaravelJsonApi\Core\Resources\Relation as ResourceRelation;
 use LaravelJsonApi\Core\Schema\Concerns\EagerLoadable;
 use LaravelJsonApi\Core\Schema\Concerns\Filterable;
 use LaravelJsonApi\Core\Schema\Concerns\SparseField;
 use LaravelJsonApi\Core\Schema\SchemaAware;
 use LaravelJsonApi\Core\Support\Str;
+use LaravelJsonApi\Eloquent\Fields\Concerns\Hideable;
 use LaravelJsonApi\Eloquent\Schema;
 use LogicException;
 use function sprintf;
 
-abstract class Relation implements RelationContract, SchemaAwareContract
+abstract class Relation implements RelationContract, SchemaAwareContract, SerializableContract
 {
 
     use EagerLoadable;
     use Filterable;
+    use Hideable;
     use SchemaAware;
     use SparseField;
 
@@ -58,6 +64,11 @@ abstract class Relation implements RelationContract, SchemaAwareContract
      * @var string|null
      */
     private ?string $inverse = null;
+
+    /**
+     * @var Closure|null
+     */
+    private ?Closure $serializer = null;
 
     /**
      * Guess the inverse resource type.
@@ -84,6 +95,14 @@ abstract class Relation implements RelationContract, SchemaAwareContract
     public function name(): string
     {
         return $this->name;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function serializedFieldName(): string
+    {
+        return $this->name();
     }
 
     /**
@@ -152,6 +171,36 @@ abstract class Relation implements RelationContract, SchemaAwareContract
     public function toMany(): bool
     {
         return !$this->toOne();
+    }
+
+    /**
+     * @param Closure $serializer
+     * @return $this
+     */
+    public function serializeUsing(Closure $serializer): self
+    {
+        $this->serializer = $serializer;
+
+        return $this;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function serialize(object $model, string $baseUri): JsonApiRelation
+    {
+        $relation = new ResourceRelation(
+            $model,
+            $baseUri,
+            $this->name(),
+            $this->relationName(),
+        );
+
+        if ($this->serializer) {
+            ($this->serializer)($relation);
+        }
+
+        return $relation;
     }
 
     /**

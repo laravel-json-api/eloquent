@@ -38,6 +38,7 @@ class MapTest extends TestCase
         ]);
 
         $this->assertSame('options', $map->name());
+        $this->assertSame('options', $map->serializedFieldName());
         $this->assertFalse($map->isSortable());
         $this->assertTrue($map->isSparseField());
         $this->assertSame(['option_bar', 'option_foo'], $map->columnsForField());
@@ -158,6 +159,43 @@ class MapTest extends TestCase
 
         $this->assertTrue($attr->isReadOnly($request));
         $this->assertFalse($attr->isReadOnly($request));
+    }
+
+    public function testSerialize(): void
+    {
+        $model = new Post();
+
+        $map = Map::make('options', [
+            Str::make('foo', 'option_foo'),
+            Number::make('bar', 'option_bar'),
+        ]);
+
+        $this->assertSame(['bar' => null, 'foo' => null], $map->serialize($model));
+
+        $model->forceFill(['option_foo' => 'foobar', 'option_bar' => 'bazbat']);
+
+        $this->assertSame(['bar' => 'bazbat', 'foo' => 'foobar'], $map->serialize($model));
+    }
+
+    public function testHidden(): void
+    {
+        $request = $this->createMock(Request::class);
+        $request->expects($this->never())->method($this->anything());
+
+        $map = Map::make('options', [Str::make('foo')])->hidden();
+
+        $this->assertTrue($map->isHidden($request));
+    }
+
+    public function testHiddenCallback(): void
+    {
+        $mock = $this->createMock(Request::class);
+        $mock->expects($this->once())->method('isMethod')->with('POST')->willReturn(true);
+
+        $map = Map::make('options', [Str::make('foo')])
+            ->hidden(fn($request) => $request->isMethod('POST'));
+
+        $this->assertTrue($map->isHidden($mock));
     }
 
 }

@@ -34,11 +34,15 @@ class BooleanTest extends TestCase
         $attr = Boolean::make('isActive');
 
         $this->assertSame('isActive', $attr->name());
+        $this->assertSame('isActive', $attr->serializedFieldName());
         $this->assertSame('is_active', $attr->column());
         $this->assertTrue($attr->isSparseField());
         $this->assertSame(['is_active'], $attr->columnsForField());
         $this->assertFalse($attr->isSortable());
         $this->assertFalse($attr->isReadOnly($request));
+        $this->assertTrue($attr->isNotReadOnly($request));
+        $this->assertFalse($attr->isHidden($request));
+        $this->assertTrue($attr->isNotHidden($request));
     }
 
     public function testColumn(): void
@@ -209,6 +213,65 @@ class BooleanTest extends TestCase
 
         $this->assertTrue($attr->isReadOnly($request));
         $this->assertFalse($attr->isReadOnly($request));
+    }
+
+    /**
+     * @return array
+     */
+    public function serializeProvider(): array
+    {
+        return [
+            'null' => [null],
+            'true' => [true],
+            'false' => [false],
+        ];
+    }
+
+    /**
+     * @param $value
+     * @dataProvider serializeProvider
+     */
+    public function testSerialize($value): void
+    {
+        $model = new User(['admin' => $value]);
+        $attr = Boolean::make('admin');
+
+        $this->assertSame($value, $attr->serialize($model));
+    }
+
+    public function testSerializeUsing(): void
+    {
+        $model = new User(['admin' => true]);
+        $attr = Boolean::make('admin');
+
+        $attr->serializeUsing(function ($value) {
+            $this->assertTrue($value);
+            return false;
+        });
+
+        $this->assertFalse($attr->serialize($model));
+    }
+
+    public function testHidden(): void
+    {
+        $request = $this->createMock(Request::class);
+        $request->expects($this->never())->method($this->anything());
+
+        $attr = Boolean::make('admin')->hidden();
+
+        $this->assertTrue($attr->isHidden($request));
+    }
+
+    public function testHiddenCallback(): void
+    {
+        $mock = $this->createMock(Request::class);
+        $mock->expects($this->once())->method('isMethod')->with('POST')->willReturn(true);
+
+        $attr = Boolean::make('admin')->hidden(
+            fn($request) => $request->isMethod('POST')
+        );
+
+        $this->assertTrue($attr->isHidden($mock));
     }
 
 }

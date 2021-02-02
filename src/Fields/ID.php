@@ -82,6 +82,14 @@ class ID implements IDContract, Fillable
     /**
      * @inheritDoc
      */
+    public function key(): ?string
+    {
+        return $this->column();
+    }
+
+    /**
+     * @inheritDoc
+     */
     public function isSparseField(): bool
     {
         return false;
