@@ -242,9 +242,8 @@ abstract class Relation implements RelationContract, SchemaAwareContract, Serial
             $baseUri,
             $this->name(),
             $this->relationName(),
+            $this->uriName()
         );
-
-        $relation->withUriFieldName($this->uriName());
 
         if ($this->serializer) {
             ($this->serializer)($relation);
