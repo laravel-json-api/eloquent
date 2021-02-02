@@ -19,22 +19,29 @@ declare(strict_types=1);
 
 namespace LaravelJsonApi\Eloquent\Fields\Relations;
 
+use Closure;
+use InvalidArgumentException;
+use LaravelJsonApi\Contracts\Resources\JsonApiRelation;
+use LaravelJsonApi\Contracts\Resources\Serializer\Relation as SerializableContract;
 use LaravelJsonApi\Contracts\Schema\Relation as RelationContract;
 use LaravelJsonApi\Contracts\Schema\SchemaAware as SchemaAwareContract;
+use LaravelJsonApi\Core\Resources\Relation as ResourceRelation;
 use LaravelJsonApi\Core\Schema\Concerns\EagerLoadable;
 use LaravelJsonApi\Core\Schema\Concerns\Filterable;
 use LaravelJsonApi\Core\Schema\Concerns\SparseField;
 use LaravelJsonApi\Core\Schema\SchemaAware;
 use LaravelJsonApi\Core\Support\Str;
+use LaravelJsonApi\Eloquent\Fields\Concerns\Hideable;
 use LaravelJsonApi\Eloquent\Schema;
 use LogicException;
 use function sprintf;
 
-abstract class Relation implements RelationContract, SchemaAwareContract
+abstract class Relation implements RelationContract, SchemaAwareContract, SerializableContract
 {
 
     use EagerLoadable;
     use Filterable;
+    use Hideable;
     use SchemaAware;
     use SparseField;
 
@@ -58,6 +65,18 @@ abstract class Relation implements RelationContract, SchemaAwareContract
      * @var string|null
      */
     private ?string $inverse = null;
+
+    /**
+     * The name of the field as it appears in a URI.
+     *
+     * @var string|null
+     */
+    private ?string $uriName = null;
+
+    /**
+     * @var Closure|null
+     */
+    private ?Closure $serializer = null;
 
     /**
      * Guess the inverse resource type.
@@ -84,6 +103,14 @@ abstract class Relation implements RelationContract, SchemaAwareContract
     public function name(): string
     {
         return $this->name;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function serializedFieldName(): string
+    {
+        return $this->name();
     }
 
     /**
@@ -126,6 +153,46 @@ abstract class Relation implements RelationContract, SchemaAwareContract
     }
 
     /**
+     * @inheritDoc
+     */
+    public function uriName(): string
+    {
+        if ($this->uriName) {
+            return $this->uriName;
+        }
+
+        return $this->uriName = $this->guessUriName();
+    }
+
+    /**
+     * Use the field-name as-is for relationship URLs.
+     *
+     * @return $this
+     */
+    public function retainFieldName(): self
+    {
+        $this->uriName = $this->name();
+
+        return $this;
+    }
+
+    /**
+     * Use the provided string as the URI fragment for the field name.
+     *
+     * @param string $uri
+     * @return $this
+     */
+    public function withUriFieldName(string $uri): self
+    {
+        if (!empty($uri)) {
+            $this->uriName = $uri;
+            return $this;
+        }
+
+        throw new InvalidArgumentException('Expecting a non-empty string URI fragment.');
+    }
+
+    /**
      * Get the schema for the inverse resource type.
      *
      * @return Schema
@@ -155,6 +222,37 @@ abstract class Relation implements RelationContract, SchemaAwareContract
     }
 
     /**
+     * @param Closure $serializer
+     * @return $this
+     */
+    public function serializeUsing(Closure $serializer): self
+    {
+        $this->serializer = $serializer;
+
+        return $this;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function serialize(object $model, string $baseUri): JsonApiRelation
+    {
+        $relation = new ResourceRelation(
+            $model,
+            $baseUri,
+            $this->name(),
+            $this->relationName(),
+            $this->uriName()
+        );
+
+        if ($this->serializer) {
+            ($this->serializer)($relation);
+        }
+
+        return $relation;
+    }
+
+    /**
      * @param string $type
      * @return void
      */
@@ -178,5 +276,15 @@ abstract class Relation implements RelationContract, SchemaAwareContract
     private function guessRelationName(): string
     {
         return Str::camel($this->name());
+    }
+
+    /**
+     * Guess the field name as it appears in a URI.
+     *
+     * @return string
+     */
+    private function guessUriName(): string
+    {
+        return Str::dasherize($this->name());
     }
 }

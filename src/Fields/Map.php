@@ -21,16 +21,19 @@ namespace LaravelJsonApi\Eloquent\Fields;
 
 use Illuminate\Database\Eloquent\Model;
 use InvalidArgumentException;
+use LaravelJsonApi\Contracts\Resources\Serializer\Attribute as SerializableContract;
 use LaravelJsonApi\Contracts\Schema\Attribute as AttributeContract;
 use LaravelJsonApi\Core\Schema\Concerns\SparseField;
 use LaravelJsonApi\Eloquent\Contracts\Fillable;
 use LaravelJsonApi\Eloquent\Contracts\Selectable;
+use LaravelJsonApi\Eloquent\Fields\Concerns\Hideable;
 use LaravelJsonApi\Eloquent\Fields\Concerns\ReadOnly;
 use LogicException;
 
-class Map implements AttributeContract, Selectable, Fillable
+class Map implements AttributeContract, Selectable, Fillable, SerializableContract
 {
 
+    use Hideable;
     use ReadOnly;
     use SparseField;
 
@@ -138,6 +141,34 @@ class Map implements AttributeContract, Selectable, Fillable
 
         throw new LogicException('Expecting value for a map attribute to be an array or null.');
     }
+
+    /**
+     * @inheritDoc
+     */
+    public function serializedFieldName(): string
+    {
+        return $this->name();
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function serialize(object $model)
+    {
+        $values = [];
+
+        /** We intentionally use a single loop for serialization efficiency. */
+        foreach ($this->map as $attr) {
+            if ($attr instanceof SerializableContract) {
+                $values[$attr->serializedFieldName()] = $attr->serialize($model);
+            }
+        }
+
+        ksort($values);
+
+        return $values;
+    }
+
 
     /**
      * Set all values to null.

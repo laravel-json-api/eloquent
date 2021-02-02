@@ -29,12 +29,14 @@ use LaravelJsonApi\Core\Support\Str;
 use LaravelJsonApi\Eloquent\Contracts\Fillable;
 use LaravelJsonApi\Eloquent\Contracts\Selectable;
 use LaravelJsonApi\Eloquent\Contracts\Sortable as SortableContract;
+use LaravelJsonApi\Contracts\Resources\Serializer\Attribute as SerializableContract;
 
-abstract class Attribute implements AttributeContract, Fillable, Selectable, SortableContract
+abstract class Attribute implements AttributeContract, Fillable, Selectable, SortableContract, SerializableContract
 {
 
-    use Sortable;
+    use Concerns\Hideable;
     use Concerns\ReadOnly;
+    use Sortable;
     use SparseField;
 
     /**
@@ -51,6 +53,11 @@ abstract class Attribute implements AttributeContract, Fillable, Selectable, Sor
      * @var Closure|null
      */
     private ?Closure $deserializer = null;
+
+    /**
+     * @var Closure|null
+     */
+    private ?Closure $serializer = null;
 
     /**
      * @var Closure|null
@@ -92,6 +99,14 @@ abstract class Attribute implements AttributeContract, Fillable, Selectable, Sor
     public function name(): string
     {
         return $this->name;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function serializedFieldName(): string
+    {
+        return $this->name();
     }
 
     /**
@@ -149,6 +164,17 @@ abstract class Attribute implements AttributeContract, Fillable, Selectable, Sor
     }
 
     /**
+     * @param Closure $serializer
+     * @return $this
+     */
+    public function serializeUsing(Closure $serializer): self
+    {
+        $this->serializer = $serializer;
+
+        return $this;
+    }
+
+    /**
      * @inheritDoc
      */
     public function fill(Model $model, $value): void
@@ -177,6 +203,20 @@ abstract class Attribute implements AttributeContract, Fillable, Selectable, Sor
             $query->getModel()->qualifyColumn($this->column()),
             $direction
         );
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function serialize(object $model)
+    {
+        $value = $model->{$this->column()};
+
+        if ($this->serializer) {
+            return ($this->serializer)($value);
+        }
+
+        return $value;
     }
 
     /**

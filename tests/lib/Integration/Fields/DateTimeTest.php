@@ -19,6 +19,7 @@ declare(strict_types=1);
 
 namespace LaravelJsonApi\Eloquent\Tests\Integration\Fields;
 
+use App\Models\Car;
 use App\Models\Post;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -44,11 +45,15 @@ class DateTimeTest extends TestCase
         $attr = DateTime::make('publishedAt');
 
         $this->assertSame('publishedAt', $attr->name());
+        $this->assertSame('publishedAt', $attr->serializedFieldName());
         $this->assertSame('published_at', $attr->column());
         $this->assertTrue($attr->isSparseField());
         $this->assertSame(['published_at'], $attr->columnsForField());
         $this->assertFalse($attr->isSortable());
         $this->assertFalse($attr->isReadOnly($request));
+        $this->assertTrue($attr->isNotReadOnly($request));
+        $this->assertFalse($attr->isHidden($request));
+        $this->assertTrue($attr->isNotHidden($request));
     }
 
     public function testColumn(): void
@@ -257,4 +262,50 @@ class DateTimeTest extends TestCase
         $this->assertFalse($attr->isReadOnly($request));
     }
 
+    public function testSerialize(): void
+    {
+        $model = new Post();
+        $attr = DateTime::make('publishedAt');
+
+        $this->assertNull($attr->serialize($model));
+
+        $model->published_at = '2020-02-01 15:55:00';
+
+        $this->assertEquals(new Carbon('2020-02-01 15:55:00'), $attr->serialize($model));
+    }
+
+    public function testSerializeUsing(): void
+    {
+        $model = new Post(['published_at' => '2020-02-01 15:55:00']);
+        $attr = DateTime::make('publishedAt');
+
+        $attr->serializeUsing(function ($value) {
+            $this->assertEquals(new Carbon('2020-02-01 15:55:00'), $value);
+            return $value->copy()->startOfDay();
+        });
+
+        $this->assertEquals(new Carbon('2020-02-01 00:00:00'), $attr->serialize($model));
+    }
+
+    public function testHidden(): void
+    {
+        $request = $this->createMock(Request::class);
+        $request->expects($this->never())->method($this->anything());
+
+        $attr = DateTime::make('publishedAt')->hidden();
+
+        $this->assertTrue($attr->isHidden($request));
+    }
+
+    public function testHiddenCallback(): void
+    {
+        $mock = $this->createMock(Request::class);
+        $mock->expects($this->once())->method('isMethod')->with('POST')->willReturn(true);
+
+        $attr = DateTime::make('publishedAt')->hidden(
+            fn($request) => $request->isMethod('POST')
+        );
+
+        $this->assertTrue($attr->isHidden($mock));
+    }
 }

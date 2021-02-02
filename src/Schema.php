@@ -22,7 +22,6 @@ namespace LaravelJsonApi\Eloquent;
 use Illuminate\Database\Eloquent\Model;
 use LaravelJsonApi\Contracts\Store\Repository as RepositoryContract;
 use LaravelJsonApi\Core\Schema\Schema as BaseSchema;
-use LaravelJsonApi\Eloquent\Fields\ID;
 use LaravelJsonApi\Eloquent\Fields\Relations\ToMany;
 use LaravelJsonApi\Eloquent\Fields\Relations\ToOne;
 use LogicException;
@@ -96,6 +95,14 @@ abstract class Schema extends BaseSchema
     }
 
     /**
+     * @return string|null
+     */
+    public function idKeyName(): ?string
+    {
+        return $this->idColumn();
+    }
+
+    /**
      * @return string
      */
     public function idColumn(): string
@@ -104,10 +111,8 @@ abstract class Schema extends BaseSchema
             return $this->idColumn;
         }
 
-        $id = $this->id();
-
-        if ($id instanceof ID && $col = $id->column()) {
-            return $this->idColumn = $col;
+        if ($key = $this->id()->key()) {
+            return $this->idColumn = $key;
         }
 
         return $this->idColumn = $this->newInstance()->getRouteKeyName();
