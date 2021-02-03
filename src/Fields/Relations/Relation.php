@@ -28,6 +28,7 @@ use LaravelJsonApi\Contracts\Schema\SchemaAware as SchemaAwareContract;
 use LaravelJsonApi\Core\Resources\Relation as ResourceRelation;
 use LaravelJsonApi\Core\Schema\Concerns\EagerLoadable;
 use LaravelJsonApi\Core\Schema\Concerns\Filterable;
+use LaravelJsonApi\Core\Schema\Concerns\RequiredForValidation;
 use LaravelJsonApi\Core\Schema\Concerns\SparseField;
 use LaravelJsonApi\Core\Schema\SchemaAware;
 use LaravelJsonApi\Core\Support\Str;
@@ -42,6 +43,7 @@ abstract class Relation implements RelationContract, SchemaAwareContract, Serial
     use EagerLoadable;
     use Filterable;
     use Hideable;
+    use RequiredForValidation;
     use SchemaAware;
     use SparseField;
 

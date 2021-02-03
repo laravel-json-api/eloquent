@@ -43,6 +43,18 @@ class BelongsTo extends ToOne implements FillableToOne
     }
 
     /**
+     * BelongsTo constructor.
+     *
+     * @param string $fieldName
+     * @param string|null $relation
+     */
+    public function __construct(string $fieldName, string $relation = null)
+    {
+        parent::__construct($fieldName, $relation);
+        $this->mustValidate();
+    }
+
+    /**
      * @inheritDoc
      */
     public function mustExist(): bool

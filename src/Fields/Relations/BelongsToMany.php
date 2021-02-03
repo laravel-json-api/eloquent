@@ -74,10 +74,14 @@ class BelongsToMany extends ToMany implements FillableToMany
      */
     public function filters(): iterable
     {
-        yield from parent::filters();
+        foreach (parent::filters() as $filter) {
+            yield $filter;
+        }
 
         if (is_object($this->pivot) && method_exists($this->pivot, 'filters')) {
-            yield from $this->pivot->filters();
+            foreach ($this->pivot->filters() as $filter) {
+                yield $filter;
+            }
         }
     }
 
