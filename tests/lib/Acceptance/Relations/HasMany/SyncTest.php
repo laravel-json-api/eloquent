@@ -21,6 +21,7 @@ namespace LaravelJsonApi\Eloquent\Tests\Acceptance\Relations\HasMany;
 
 use App\Models\Comment;
 use App\Models\User;
+use App\Schemas\CommentSchema;
 use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 
 class SyncTest extends TestCase
@@ -109,6 +110,48 @@ class SyncTest extends TestCase
             ->sync($ids);
 
         $this->assertCount(3, $actual);
+        $this->assertTrue($actual->every(fn(Comment $comment) => $comment->relationLoaded('commentable')));
+    }
+
+    public function testWithDefaultEagerLoading(): void
+    {
+        $this->createSchemaWithDefaultEagerLoading(CommentSchema::class, 'user');
+
+        $user = User::factory()->create();
+        $comments = Comment::factory()->count(3)->create();
+
+        $ids = $comments->map(fn(Comment $comment) => [
+            'type' => 'comments',
+            'id' => (string) $comment->getRouteKey(),
+        ])->all();
+
+        $actual = $this->repository
+            ->modifyToMany($user, 'comments')
+            ->sync($ids);
+
+        $this->assertCount(3, $actual);
+        $this->assertTrue($actual->every(fn(Comment $comment) => $comment->relationLoaded('user')));
+    }
+
+    public function testWithDefaultEagerLoadingAndIncludePaths(): void
+    {
+        $this->createSchemaWithDefaultEagerLoading(CommentSchema::class, 'user');
+
+        $user = User::factory()->create();
+        $comments = Comment::factory()->count(3)->create();
+
+        $ids = $comments->map(fn(Comment $comment) => [
+            'type' => 'comments',
+            'id' => (string) $comment->getRouteKey(),
+        ])->all();
+
+        $actual = $this->repository
+            ->modifyToMany($user, 'comments')
+            ->with('commentable')
+            ->sync($ids);
+
+        $this->assertCount(3, $actual);
+        $this->assertTrue($actual->every(fn(Comment $comment) => $comment->relationLoaded('user')));
         $this->assertTrue($actual->every(fn(Comment $comment) => $comment->relationLoaded('commentable')));
     }
 

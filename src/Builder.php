@@ -222,20 +222,12 @@ class Builder
      */
     public function with($includePaths): self
     {
-        if (is_null($includePaths)) {
-            $this->parameters->withoutIncludePaths();
-            return $this;
-        }
-
         $includePaths = IncludePaths::cast($includePaths);
 
-        if ($includePaths->isNotEmpty()) {
-            $this->schema->loader()
-                ->using($this->query)
-                ->with($includePaths);
-
-            $this->eagerLoading = true;
-        }
+        $this->eagerLoading = $this->schema
+            ->loader()
+            ->using($this->query)
+            ->with($includePaths);
 
         $this->parameters->setIncludePaths($includePaths);
 

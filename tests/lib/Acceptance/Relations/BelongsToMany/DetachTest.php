@@ -21,6 +21,7 @@ namespace LaravelJsonApi\Eloquent\Tests\Acceptance\Relations\BelongsToMany;
 
 use App\Models\Role;
 use App\Models\User;
+use App\Schemas\RoleSchema;
 use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 
 class DetachTest extends TestCase
@@ -85,6 +86,29 @@ class DetachTest extends TestCase
         $actual = $this->repository
             ->modifyToMany($user, 'roles')
             ->with('users')
+            ->detach($ids);
+
+        $this->assertRoles($roles, $actual);
+        $this->assertTrue($actual->every(fn(Role $role) => $role->relationLoaded('users')));
+    }
+
+    public function testWithDefaultEagerLoading(): void
+    {
+        $this->createSchemaWithDefaultEagerLoading(RoleSchema::class, 'users');
+
+        $user = User::factory()
+            ->has(Role::factory()->count(3))
+            ->create();
+
+        $roles = clone $user->roles;
+
+        $ids = $roles->map(fn(Role $role) => [
+            'type' => 'roles',
+            'id' => (string) $role->getRouteKey(),
+        ])->all();
+
+        $actual = $this->repository
+            ->modifyToMany($user, 'roles')
             ->detach($ids);
 
         $this->assertRoles($roles, $actual);

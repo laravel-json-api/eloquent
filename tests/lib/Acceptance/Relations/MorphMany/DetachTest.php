@@ -21,6 +21,7 @@ namespace LaravelJsonApi\Eloquent\Tests\Acceptance\Relations\MorphMany;
 
 use App\Models\Comment;
 use App\Models\Video;
+use App\Schemas\CommentSchema;
 use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 
 class DetachTest extends TestCase
@@ -87,6 +88,29 @@ class DetachTest extends TestCase
         $actual = $this->repository
             ->modifyToMany($video, 'comments')
             ->with('user')
+            ->detach($ids);
+
+        $this->assertComments($comments, $actual);
+        $this->assertTrue($actual->every(fn(Comment $comment) => $comment->relationLoaded('user')));
+    }
+
+    public function testWithDefaultEagerLoading(): void
+    {
+        $this->createSchemaWithDefaultEagerLoading(CommentSchema::class, 'user');
+
+        $video = Video::factory()
+            ->has(Comment::factory()->count(3))
+            ->create();
+
+        $comments = clone $video->comments;
+
+        $ids = $comments->map(fn(Comment $comment) => [
+            'type' => 'comments',
+            'id' => (string) $comment->getRouteKey(),
+        ])->all();
+
+        $actual = $this->repository
+            ->modifyToMany($video, 'comments')
             ->detach($ids);
 
         $this->assertComments($comments, $actual);

@@ -21,6 +21,7 @@ namespace LaravelJsonApi\Eloquent\Tests\Acceptance\Relations\BelongsToMany;
 
 use App\Models\Role;
 use App\Models\User;
+use App\Schemas\RoleSchema;
 
 class QueryTest extends TestCase
 {
@@ -52,6 +53,22 @@ class QueryTest extends TestCase
         $actual = $this->repository
             ->queryToMany($user, 'roles')
             ->with('users')
+            ->cursor();
+
+        $this->assertRoles($user->roles()->get(), $actual);
+        $this->assertTrue($actual->every(fn(Role $role) => $role->relationLoaded('users')));
+    }
+
+    public function testWithDefaultEagerLoading(): void
+    {
+        $this->createSchemaWithDefaultEagerLoading(RoleSchema::class, 'users');
+
+        $user = User::factory()
+            ->has(Role::factory()->count(3))
+            ->create();
+
+        $actual = $this->repository
+            ->queryToMany($user, 'roles')
             ->cursor();
 
         $this->assertRoles($user->roles()->get(), $actual);

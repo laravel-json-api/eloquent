@@ -19,10 +19,13 @@ declare(strict_types=1);
 
 namespace LaravelJsonApi\Eloquent\Tests\Acceptance;
 
+use App\Schemas\UserSchema;
+use Illuminate\Support\Arr;
 use LaravelJsonApi\Contracts\Schema\Container as SchemaContainerContract;
 use LaravelJsonApi\Core\Schema\Container as SchemaContainer;
 use Orchestra\Testbench\TestCase as BaseTestCase;
 use App\Schemas;
+use PHPUnit\Framework\MockObject\MockObject;
 
 class TestCase extends BaseTestCase
 {
@@ -58,5 +61,23 @@ class TestCase extends BaseTestCase
     protected function schemas(): SchemaContainerContract
     {
         return $this->app->make(SchemaContainerContract::class);
+    }
+
+    /**
+     * @param string $class
+     * @param string|string[] $paths
+     * @return void
+     */
+    protected function createSchemaWithDefaultEagerLoading(string $class, $paths): void
+    {
+        $mock = $this
+            ->getMockBuilder($class)
+            ->setConstructorArgs(['schemas' => $this->schemas()])
+            ->onlyMethods(['with'])
+            ->getMock();
+
+        $mock->method('with')->willReturn(Arr::wrap($paths));
+
+        $this->app->bind($class, static fn() => $mock);
     }
 }

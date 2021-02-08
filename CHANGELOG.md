@@ -12,6 +12,11 @@ All notable changes to this project will be documented in this file. This projec
   validated, whereas all other fields are not. This is a sensible default, as the `BelongsTo/MorphTo` identifiers are
   stored on the model so are likely to be required for validation. The defaults can be overidden on the fields using
   the `mustValidate()` or `notValidated()` methods.
+- Eager loading now supports schemas having default eager load paths. This is set via the `$with` property on the
+  schema, which is returned by the public `with()` method.
+
+### Changed
+- Moved the existing `EagerLoader`, `EagerLoadMorphs` and `EagerLoadPath` to the `EagerLoading` namespace.
 
 ### Fixed
 

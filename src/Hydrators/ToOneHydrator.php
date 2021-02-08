@@ -99,13 +99,18 @@ class ToOneHydrator implements ToOneBuilder
     }
 
     /**
+     * Prepare the related model.
+     *
+     * We always do eager loading, in case any default eager load paths
+     * have been set on the schema.
+     *
      * @param Model|null $related
      * @return Model|null
      */
     private function prepareResult(?Model $related): ?Model
     {
-        if (is_null($related) || is_null($this->includePaths)) {
-            return $related;
+        if (is_null($related)) {
+            return null;
         }
 
         if ($this->relation instanceof MorphTo) {

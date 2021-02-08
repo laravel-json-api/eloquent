@@ -48,7 +48,7 @@ class CommentSchema extends Schema
         return [
             ID::make(),
             DateTime::make('createdAt')->readOnly(),
-            MorphTo::make('commentable'),
+            MorphTo::make('commentable')->types('posts', 'videos'),
             Str::make('content'),
             DateTime::make('updatedAt')->readOnly(),
             BelongsTo::make('user'),

@@ -21,6 +21,7 @@ namespace LaravelJsonApi\Eloquent\Tests\Acceptance\Relations\HasMany;
 
 use App\Models\Comment;
 use App\Models\User;
+use App\Schemas\CommentSchema;
 
 class QueryTest extends TestCase
 {
@@ -54,6 +55,48 @@ class QueryTest extends TestCase
 
         $this->assertComments($user->comments()->get(), $actual);
         $this->assertTrue($actual->every(fn(Comment $comment) => $comment->relationLoaded('commentable')));
+    }
+
+    public function testDefaultEagerLoading(): void
+    {
+        $this->createSchemaWithDefaultEagerLoading(CommentSchema::class, 'user');
+
+        $user = User::factory()
+            ->has(Comment::factory()->count(3))
+            ->create();
+
+        $actual = $this->repository
+            ->queryToMany($user, 'comments')
+            ->cursor();
+
+        $this->assertComments($user->comments()->get(), $actual);
+        $this->assertTrue($actual->every(
+            fn(Comment $comment) => $comment->relationLoaded('user') && $user->is($comment->user)
+        ));
+    }
+
+    public function testDefaultEagerLoadingAndIncludePaths(): void
+    {
+        $this->createSchemaWithDefaultEagerLoading(CommentSchema::class, 'user');
+
+        $user = User::factory()
+            ->has(Comment::factory()->count(3))
+            ->create();
+
+        $actual = $this->repository
+            ->queryToMany($user, 'comments')
+            ->with('commentable')
+            ->cursor();
+
+        $this->assertComments($user->comments()->get(), $actual);
+
+        $this->assertTrue($actual->every(
+            fn(Comment $comment) => $comment->relationLoaded('user')
+        ));
+
+        $this->assertTrue($actual->every(
+            fn(Comment $comment) => $comment->relationLoaded('commentable')
+        ));
     }
 
     public function testWithFilter(): void

@@ -21,6 +21,7 @@ namespace LaravelJsonApi\Eloquent\Tests\Acceptance\Relations\MorphMany;
 
 use App\Models\Comment;
 use App\Models\Video;
+use App\Schemas\CommentSchema;
 use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 
 class SyncTest extends TestCase
@@ -109,6 +110,26 @@ class SyncTest extends TestCase
         $actual = $this->repository
             ->modifyToMany($video, 'comments')
             ->with('user')
+            ->sync($ids);
+
+        $this->assertCount(3, $actual);
+        $this->assertTrue($actual->every(fn(Comment $comment) => $comment->relationLoaded('user')));
+    }
+
+    public function testWithDefaultEagerLoading(): void
+    {
+        $this->createSchemaWithDefaultEagerLoading(CommentSchema::class, 'user');
+
+        $video = Video::factory()->create();
+        $comments = Comment::factory()->count(3)->create();
+
+        $ids = $comments->map(fn(Comment $comment) => [
+            'type' => 'comments',
+            'id' => (string) $comment->getRouteKey(),
+        ])->all();
+
+        $actual = $this->repository
+            ->modifyToMany($video, 'comments')
             ->sync($ids);
 
         $this->assertCount(3, $actual);

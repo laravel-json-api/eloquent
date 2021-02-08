@@ -22,6 +22,7 @@ namespace LaravelJsonApi\Eloquent\Tests\Acceptance\Relations\HasOneThrough;
 use App\Models\Car;
 use App\Models\CarOwner;
 use App\Models\Mechanic;
+use App\Schemas\CarOwnerSchema;
 use LaravelJsonApi\Eloquent\Repository;
 use LaravelJsonApi\Eloquent\Tests\Acceptance\TestCase;
 
@@ -68,6 +69,24 @@ class Test extends TestCase
         $actual = $this->repository
             ->queryToOne($mechanic, 'carOwner')
             ->with('car')
+            ->first();
+
+        $this->assertTrue($owner->is($actual));
+        $this->assertTrue($actual->relationLoaded('car'));
+    }
+
+    public function testWithDefaultEagerLoading(): void
+    {
+        $this->createSchemaWithDefaultEagerLoading(CarOwnerSchema::class, 'car');
+
+        $mechanic = Mechanic::factory()->create();
+
+        $owner = CarOwner::factory()->for(
+            Car::factory(['mechanic_id' => $mechanic])
+        )->create();
+
+        $actual = $this->repository
+            ->queryToOne($mechanic, 'carOwner')
             ->first();
 
         $this->assertTrue($owner->is($actual));

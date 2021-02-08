@@ -21,6 +21,7 @@ namespace LaravelJsonApi\Eloquent\Tests\Acceptance\Relations\MorphToMany\TagVide
 
 use App\Models\Tag;
 use App\Models\Video;
+use App\Schemas\VideoSchema;
 use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 
 class SyncTest extends TestCase
@@ -109,6 +110,26 @@ class SyncTest extends TestCase
         $actual = $this->repository
             ->modifyToMany($tag, 'videos')
             ->with('comments')
+            ->sync($ids);
+
+        $this->assertCount(3, $actual);
+        $this->assertTrue($actual->every(fn(Video $video) => $video->relationLoaded('comments')));
+    }
+
+    public function testWithDefaultEagerLoading(): void
+    {
+        $this->createSchemaWithDefaultEagerLoading(VideoSchema::class, 'comments');
+
+        $tag = Tag::factory()->create();
+        $videos = Video::factory()->count(3)->create();
+
+        $ids = $videos->map(fn(Video $video) => [
+            'type' => 'videos',
+            'id' => (string) $video->getRouteKey(),
+        ])->all();
+
+        $actual = $this->repository
+            ->modifyToMany($tag, 'videos')
             ->sync($ids);
 
         $this->assertCount(3, $actual);

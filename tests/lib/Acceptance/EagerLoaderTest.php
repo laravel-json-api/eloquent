@@ -21,6 +21,7 @@ namespace LaravelJsonApi\Eloquent\Tests\Acceptance;
 
 use App\Models\Post;
 use App\Models\User;
+use App\Schemas\PostSchema;
 
 class EagerLoaderTest extends TestCase
 {
@@ -39,7 +40,18 @@ class EagerLoaderTest extends TestCase
             'posts' => [
                 'posts',
                 'author.country,comments.user.country,image.imageable',
-                ['user.country', 'comments.user.country', 'image.imageable'],
+                // return values are sorted
+                ['comments.user.country', 'image.imageable', 'user.country'],
+            ],
+            'tags' => [
+                'tags',
+                'posts',
+                ['posts'],
+            ],
+            'user' => [
+                'users',
+                'country.posts.image',
+                ['country.posts.image'],
             ],
         ];
     }
@@ -85,5 +97,111 @@ class EagerLoaderTest extends TestCase
                 User::class => ['country'],
             ],
         ], $actual);
+    }
+
+    /**
+     * @return array
+     */
+    public function defaultEagerLoadProvider(): array
+    {
+        return [
+            'posts:no include paths' => [
+                'posts',
+                null,
+                ['user']
+            ],
+            'posts: with include paths' => [
+                'posts',
+                'author.country,comments.user.country,image.imageable',
+                [
+                    // sorted
+                    'comments.user.country',
+                    'image.imageable',
+                    'user.country',
+                ],
+            ],
+            'tags' => [
+                'tags',
+                'posts',
+                ['posts.user'],
+            ],
+            'user' => [
+                'users',
+                'country.posts.image',
+                ['country.posts.image', 'country.posts.user'],
+            ],
+        ];
+    }
+
+    /**
+     * @param string $type
+     * @param $includePaths
+     * @param array $expected
+     * @dataProvider defaultEagerLoadProvider
+     */
+    public function testWithDefaultEagerLoad(string $type, $includePaths, array $expected): void
+    {
+        $this->createSchemaWithDefaultEagerLoading(PostSchema::class, 'user');
+
+        $loader = $this
+            ->schemas()
+            ->schemaFor($type)
+            ->loader();
+
+        $this->assertSame($expected, $loader->toRelations($includePaths));
+    }
+
+    /**
+     * @return array
+     */
+    public function morphToDefaultEagerLoadProvider(): array
+    {
+        return [
+            [
+                'imageable',
+                [
+                    'imageable' => [
+                        Post::class => ['user'],
+                    ],
+                ],
+            ],
+            [
+                'imageable.country',
+                [
+                    'imageable' => [
+                        Post::class => ['user'],
+                        User::class => ['country'],
+                    ],
+                ],
+            ],
+            [
+                'imageable.author.country,imageable.country',
+                [
+                    'imageable' => [
+                        Post::class => ['user.country'],
+                        User::class => ['country'],
+                    ],
+                ],
+            ],
+        ];
+    }
+
+    /**
+     * @param $includePaths
+     * @param array $expected
+     * @dataProvider morphToDefaultEagerLoadProvider
+     */
+    public function testMorphToWithDefaultEagerLoad($includePaths, array $expected): void
+    {
+        $this->createSchemaWithDefaultEagerLoading(PostSchema::class, 'user');
+
+        $loader = $this
+            ->schemas()
+            ->schemaFor('images')
+            ->loader();
+
+        $actual = $loader->toMorphs($includePaths);
+
+        $this->assertSame($expected, $actual);
     }
 }

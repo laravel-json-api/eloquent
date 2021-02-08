@@ -103,11 +103,14 @@ class ModelHydrator implements ResourceBuilder
 
         $model = $this->hydrate($validatedData);
 
-        if ($this->includePaths) {
-            $this->schema->loader()
-                ->forModel($model)
-                ->loadMissing($this->includePaths);
-        }
+        /**
+         * Always do eager loading, as we may have default eager
+         * load paths.
+         */
+        $this->schema
+            ->loader()
+            ->forModel($model)
+            ->loadMissing($this->includePaths);
 
         return $model;
     }

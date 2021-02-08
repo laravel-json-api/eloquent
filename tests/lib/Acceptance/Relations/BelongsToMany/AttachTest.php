@@ -21,6 +21,7 @@ namespace LaravelJsonApi\Eloquent\Tests\Acceptance\Relations\BelongsToMany;
 
 use App\Models\Role;
 use App\Models\User;
+use App\Schemas\RoleSchema;
 use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 
 class AttachTest extends TestCase
@@ -93,6 +94,25 @@ class AttachTest extends TestCase
         $this->assertTrue($actual->every(fn(Role $role) => $role->relationLoaded('users')));
     }
 
+    public function testWithDefaultEagerLoading(): void
+    {
+        $this->createSchemaWithDefaultEagerLoading(RoleSchema::class, 'users');
+
+        $user = User::factory()->create();
+        $roles = Role::factory()->count(2)->create();
+
+        $ids = $roles->map(fn(Role $role) => [
+            'type' => 'roles',
+            'id' => (string) $role->getRouteKey(),
+        ])->all();
+
+        $actual = $this->repository
+            ->modifyToMany($user, 'roles')
+            ->attach($ids);
+
+        $this->assertRoles($roles, $actual);
+        $this->assertTrue($actual->every(fn(Role $role) => $role->relationLoaded('users')));
+    }
 
     /**
      * The spec says:

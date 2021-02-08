@@ -17,13 +17,14 @@
 
 declare(strict_types=1);
 
-namespace LaravelJsonApi\Eloquent;
+namespace LaravelJsonApi\Eloquent\EagerLoading;
 
 use IteratorAggregate;
 use LaravelJsonApi\Contracts\Schema\Container;
 use LaravelJsonApi\Core\Query\RelationshipPath;
 use LaravelJsonApi\Eloquent\Fields\Relations\MorphTo;
 use LaravelJsonApi\Eloquent\Fields\Relations\Relation;
+use LaravelJsonApi\Eloquent\Schema;
 use LogicException;
 use function implode;
 use function iterator_to_array;

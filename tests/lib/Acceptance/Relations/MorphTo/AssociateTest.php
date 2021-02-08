@@ -22,6 +22,7 @@ namespace LaravelJsonApi\Eloquent\Tests\Acceptance\Relations\MorphTo;
 use App\Models\Image;
 use App\Models\Post;
 use App\Models\User;
+use App\Schemas\PostSchema;
 
 class AssociateTest extends TestCase
 {
@@ -100,6 +101,23 @@ class AssociateTest extends TestCase
         $post = Post::factory()->create();
 
         $actual = $this->repository->modifyToOne($image, 'imageable')->with('author')->associate([
+            'type' => 'posts',
+            'id' => (string) $post->getRouteKey(),
+        ]);
+
+        $this->assertTrue($post->is($actual));
+        $this->assertTrue($actual->relationLoaded('user'));
+        $this->assertTrue($post->user->is($actual->getRelation('user')));
+    }
+
+    public function testWithDefaultEagerLoading(): void
+    {
+        $this->createSchemaWithDefaultEagerLoading(PostSchema::class, 'user');
+
+        $image = Image::factory()->create();
+        $post = Post::factory()->create();
+
+        $actual = $this->repository->modifyToOne($image, 'imageable')->associate([
             'type' => 'posts',
             'id' => (string) $post->getRouteKey(),
         ]);
