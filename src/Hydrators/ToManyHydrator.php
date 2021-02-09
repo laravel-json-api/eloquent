@@ -128,7 +128,10 @@ class ToManyHydrator implements ToManyBuilder
      */
     private function prepareResult(EloquentCollection $related): EloquentCollection
     {
-        if ($this->includePaths && $related->isNotEmpty()) {
+        /**
+         * Always do eager loading, in case we have default include paths.
+         */
+        if ($related->isNotEmpty()) {
             $this->relation->schema()->loader()->forModels($related)->loadMissing(
                 $this->includePaths
             );

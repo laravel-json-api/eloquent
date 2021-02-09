@@ -61,10 +61,8 @@ class CursorPaginationTest extends TestCase
         $this->videos = $this
             ->getMockBuilder(VideoSchema::class)
             ->onlyMethods(['pagination', 'defaultPagination'])
-            ->disableOriginalConstructor()
+            ->setConstructorArgs(['schemas' => $this->schemas()])
             ->getMock();
-
-        $this->videos->withSchemas($this->schemas());
 
         $this->videos->method('pagination')->willReturn($this->paginator);
 

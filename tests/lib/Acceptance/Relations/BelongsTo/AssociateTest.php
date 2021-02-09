@@ -19,8 +19,10 @@ declare(strict_types=1);
 
 namespace LaravelJsonApi\Eloquent\Tests\Acceptance\Relations\BelongsTo;
 
+use App\Models\Country;
 use App\Models\Phone;
 use App\Models\User;
+use App\Schemas\UserSchema;
 
 class AssociateTest extends TestCase
 {
@@ -96,6 +98,41 @@ class AssociateTest extends TestCase
         $this->assertTrue($user->is($actual));
         $this->assertTrue($actual->relationLoaded('phone'));
         $this->assertTrue($phone->is($actual->getRelation('phone')));
+    }
+
+    public function testWithDefaultEagerLoading(): void
+    {
+        $this->createSchemaWithDefaultEagerLoading(UserSchema::class, 'country');
+
+        $user = User::factory()->for($country = Country::factory()->create())->create();
+        $phone = Phone::factory()->create(['user_id' => null]);
+
+        $actual = $this->repository->modifyToOne($phone, 'user')->associate([
+            'type' => 'users',
+            'id' => (string) $user->getRouteKey(),
+        ]);
+
+        $this->assertTrue($user->is($actual));
+        $this->assertTrue($actual->relationLoaded('country'));
+        $this->assertTrue($country->is($actual->country));
+        $this->assertFalse($actual->relationLoaded('phone'));
+    }
+
+    public function testWithDefaultEagerLoadingAndIncludePaths(): void
+    {
+        $this->createSchemaWithDefaultEagerLoading(UserSchema::class, 'country');
+
+        $user = User::factory()->create();
+        $phone = Phone::factory()->create(['user_id' => null]);
+
+        $actual = $this->repository->modifyToOne($phone, 'user')->with('phone')->associate([
+            'type' => 'users',
+            'id' => (string) $user->getRouteKey(),
+        ]);
+
+        $this->assertTrue($user->is($actual));
+        $this->assertTrue($actual->relationLoaded('country'));
+        $this->assertTrue($actual->relationLoaded('phone'));
     }
 
 }

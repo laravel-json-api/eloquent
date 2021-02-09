@@ -21,6 +21,7 @@ namespace LaravelJsonApi\Eloquent\Tests\Acceptance\Relations\HasOne;
 
 use App\Models\Phone;
 use App\Models\User;
+use App\Schemas\PhoneSchema;
 
 class QueryTest extends TestCase
 {
@@ -47,6 +48,22 @@ class QueryTest extends TestCase
         $actual = $this->repository
             ->queryToOne($phone->user, 'phone')
             ->with('user')
+            ->first();
+
+        $this->assertTrue($phone->is($actual));
+        $this->assertTrue($actual->relationLoaded('user'));
+    }
+
+    public function testWithDefaultEagerLoading(): void
+    {
+        $this->createSchemaWithDefaultEagerLoading(PhoneSchema::class, 'user');
+
+        $phone = Phone::factory()
+            ->for(User::factory())
+            ->create();
+
+        $actual = $this->repository
+            ->queryToOne($phone->user, 'phone')
             ->first();
 
         $this->assertTrue($phone->is($actual));

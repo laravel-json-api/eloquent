@@ -404,6 +404,28 @@ class ArrayHashTest extends TestCase
     public function testReadOnly(): void
     {
         $request = $this->createMock(Request::class);
+        $request->expects($this->never())->method($this->anything());
+
+        $attr = ArrayHash::make('permissions')->readOnly();
+
+        $this->assertTrue($attr->isReadOnly($request));
+        $this->assertFalse($attr->isNotReadOnly($request));
+    }
+
+    public function testReadOnlyFalse(): void
+    {
+        $request = $this->createMock(Request::class);
+        $request->expects($this->never())->method($this->anything());
+
+        $attr = ArrayHash::make('permissions')->readOnly(false);
+
+        $this->assertFalse($attr->isReadOnly($request));
+        $this->assertTrue($attr->isNotReadOnly($request));
+    }
+
+    public function testReadOnlyWithCallback(): void
+    {
+        $request = $this->createMock(Request::class);
         $request->expects($this->exactly(2))
             ->method('wantsJson')
             ->willReturnOnConsecutiveCalls(true, false);

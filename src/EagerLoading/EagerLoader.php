@@ -17,9 +17,8 @@
 
 declare(strict_types=1);
 
-namespace LaravelJsonApi\Eloquent;
+namespace LaravelJsonApi\Eloquent\EagerLoading;
 
-use Generator;
 use Illuminate\Database\Eloquent\Builder as EloquentBuilder;
 use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Database\Eloquent\Model;
@@ -30,8 +29,8 @@ use LaravelJsonApi\Contracts\Schema\Container;
 use LaravelJsonApi\Core\Query\IncludePaths;
 use LaravelJsonApi\Core\Query\RelationshipPath;
 use LaravelJsonApi\Eloquent\Fields\Relations\MorphTo;
+use LaravelJsonApi\Eloquent\Schema;
 use LogicException;
-use function iterator_to_array;
 
 class EagerLoader
 {
@@ -126,25 +125,27 @@ class EagerLoader
 
     /**
      * @param $includePaths
-     * @return EloquentBuilder
+     * @return bool
+     *      whether any eager load paths were applied.
      */
-    public function with($includePaths)
+    public function with($includePaths): bool
     {
-        if ($this->query) {
-            $this->query->with(
-                $this->toRelations($includePaths)
-            );
-
-            foreach ($this->toMorphs($includePaths) as $name => $map) {
-                $this->query->with($name, static function(EloquentMorphTo $morphTo) use ($map) {
-                    $morphTo->morphWith($map);
-                });
-            }
-
-            return $this->query;
+        if (!$this->query) {
+            throw new LogicException('No query to load relations on.');
         }
 
-        throw new LogicException('No query to load relations on.');
+        $paths = $this->toRelations($includePaths);
+        $morphs = $this->toMorphs($includePaths);
+
+        $this->query->with($paths);
+
+        foreach ($morphs as $name => $map) {
+            $this->query->with($name, static function(EloquentMorphTo $morphTo) use ($map) {
+                $morphTo->morphWith($map);
+            });
+        }
+
+        return !empty($paths) || !empty($morphs);
     }
 
     /**
@@ -187,7 +188,10 @@ class EagerLoader
      */
     public function toRelations($includePaths): array
     {
-        return iterator_to_array($this->cursor($includePaths));
+        $paths = new EagerLoadIterator($this->schemas, $this->schema, $includePaths);
+        $paths->skipMissingFields($this->skipMissingFields);
+
+        return $paths->all();
     }
 
     /**
@@ -204,36 +208,41 @@ class EagerLoader
     }
 
     /**
-     * @param mixed $includePaths
-     * @return Generator
-     */
-    private function cursor($includePaths): Generator
-    {
-        foreach (IncludePaths::cast($includePaths) as $path) {
-            $path = new EagerLoadPath($this->schemas, $this->schema, $path);
-            $path->skipMissingFields($this->skipMissingFields);
-
-            if ($relationPath = $path->toString()) {
-                yield $relationPath;
-            }
-        }
-    }
-
-    /**
      * Does the relationship path need to be treated as a morph map?
      *
-     * We create morph maps for any path where the first item in the
-     * path is a morph-to relation, and there is more than one
-     * relation in the path.
+     * We create morph maps for any path where the first item in the path
+     * is a morph-to relation, and:
+     *
+     * 1. there is more than one relation in the path and it is an include
+     * path; OR
+     * 2. at least one of the inverse resource types has default eager load
+     * paths.
      *
      * @param RelationshipPath $path
      * @return bool
      */
     private function isMorph(RelationshipPath $path): bool
     {
-        if (1 < $path->count()) {
-            $relation = $this->schema->relationship($path->first());
-            return ($relation instanceof MorphTo && $relation->isIncludePath());
+        if (!$this->schema->isRelationship($path->first())) {
+            return false;
+        }
+
+        $relation = $this->schema->relationship($path->first());
+
+        if (!$relation instanceof MorphTo) {
+            return false;
+        }
+
+        if (1 < $path->count() && $relation->isIncludePath()) {
+            return true;
+        }
+
+        foreach ($relation->inverseTypes() as $type) {
+            $schema = $this->schemas->schemaFor($type);
+
+            if ($schema instanceof Schema && !empty($schema->with())) {
+                return true;
+            }
         }
 
         return false;

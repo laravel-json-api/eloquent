@@ -21,6 +21,7 @@ namespace LaravelJsonApi\Eloquent\Tests\Acceptance\Relations\HasOne;
 
 use App\Models\Phone;
 use App\Models\User;
+use App\Schemas\PhoneSchema;
 
 class AssociateTest extends TestCase
 {
@@ -103,4 +104,20 @@ class AssociateTest extends TestCase
         $this->assertTrue($user->is($actual->getRelation('user')));
     }
 
+    public function testWithDefaultEagerLoading(): void
+    {
+        $this->createSchemaWithDefaultEagerLoading(PhoneSchema::class, 'user');
+
+        $user = User::factory()->create();
+        $phone = Phone::factory()->create(['user_id' => null]);
+
+        $actual = $this->repository->modifyToOne($user, 'phone')->associate([
+            'type' => 'phones',
+            'id' => (string) $phone->getRouteKey(),
+        ]);
+
+        $this->assertTrue($phone->is($actual));
+        $this->assertTrue($actual->relationLoaded('user'));
+        $this->assertTrue($user->is($actual->getRelation('user')));
+    }
 }

@@ -22,6 +22,7 @@ namespace LaravelJsonApi\Eloquent;
 use Illuminate\Database\Eloquent\Model;
 use LaravelJsonApi\Contracts\Store\Repository as RepositoryContract;
 use LaravelJsonApi\Core\Schema\Schema as BaseSchema;
+use LaravelJsonApi\Eloquent\EagerLoading\EagerLoader;
 use LaravelJsonApi\Eloquent\Fields\Relations\ToMany;
 use LaravelJsonApi\Eloquent\Fields\Relations\ToOne;
 use LogicException;
@@ -163,7 +164,17 @@ abstract class Schema extends BaseSchema
      */
     public function loader(): EagerLoader
     {
-        return new EagerLoader($this->schemas(), $this);
+        return new EagerLoader($this->schemas, $this);
+    }
+
+    /**
+     * The relationships that should always be eager loaded.
+     *
+     * @return array
+     */
+    public function with(): array
+    {
+        return $this->with;
     }
 
     /**

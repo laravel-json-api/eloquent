@@ -22,6 +22,7 @@ namespace LaravelJsonApi\Eloquent\Tests\Acceptance\Relations\MorphMany;
 use App\Models\Comment;
 use App\Models\User;
 use App\Models\Video;
+use App\Schemas\CommentSchema;
 use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 
 class AttachTest extends TestCase
@@ -84,6 +85,25 @@ class AttachTest extends TestCase
         $this->assertTrue($actual->every(fn(Comment $comment) => $comment->relationLoaded('user')));
     }
 
+    public function testWithDefaultEagerLoading(): void
+    {
+        $this->createSchemaWithDefaultEagerLoading(CommentSchema::class, 'commentable');
+
+        $video = Video::factory()->create();
+        $comments = Comment::factory()->count(2)->create();
+
+        $ids = $comments->map(fn(Comment $comment) => [
+            'type' => 'comments',
+            'id' => (string) $comment->getRouteKey(),
+        ])->all();
+
+        $actual = $this->repository
+            ->modifyToMany($video, 'comments')
+            ->attach($ids);
+
+        $this->assertComments($comments, $actual);
+        $this->assertTrue($actual->every(fn(Comment $comment) => $comment->relationLoaded('commentable')));
+    }
 
     /**
      * The spec says:

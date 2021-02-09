@@ -22,6 +22,7 @@ namespace LaravelJsonApi\Eloquent\Tests\Acceptance\Relations\HasManyThrough;
 use App\Models\Country;
 use App\Models\Post;
 use App\Models\User;
+use App\Schemas\PostSchema;
 use LaravelJsonApi\Eloquent\Repository;
 use LaravelJsonApi\Eloquent\Tests\Acceptance\TestCase;
 
@@ -77,6 +78,44 @@ class Test extends TestCase
 
         $this->assertPosts($expected1->merge($expected2), $actual);
         $this->assertTrue($actual->every(fn(Post $post) => $post->relationLoaded('user')));
+    }
+
+    public function testWithDefaultEagerLoading(): void
+    {
+        $this->createSchemaWithDefaultEagerLoading(PostSchema::class, 'user');
+
+        $country = Country::factory()->create();
+        $users = User::factory()->count(2)->create(['country_id' => $country]);
+
+        $expected1 = Post::factory()->count(2)->create(['user_id' => $users[0]]);
+        $expected2 = Post::factory()->count(3)->create(['user_id' => $users[1]]);
+
+        $actual = $this->repository
+            ->queryToMany($country, 'posts')
+            ->cursor();
+
+        $this->assertPosts($expected1->merge($expected2), $actual);
+        $this->assertTrue($actual->every(fn(Post $post) => $post->relationLoaded('user')));
+    }
+
+    public function testWithDefaultEagerLoadingAndIncludePaths(): void
+    {
+        $this->createSchemaWithDefaultEagerLoading(PostSchema::class, 'user');
+
+        $country = Country::factory()->create();
+        $users = User::factory()->count(2)->create(['country_id' => $country]);
+
+        $expected1 = Post::factory()->count(2)->create(['user_id' => $users[0]]);
+        $expected2 = Post::factory()->count(3)->create(['user_id' => $users[1]]);
+
+        $actual = $this->repository
+            ->queryToMany($country, 'posts')
+            ->with('tags')
+            ->cursor();
+
+        $this->assertPosts($expected1->merge($expected2), $actual);
+        $this->assertTrue($actual->every(fn(Post $post) => $post->relationLoaded('user')));
+        $this->assertTrue($actual->every(fn(Post $post) => $post->relationLoaded('tags')));
     }
 
     public function testWithFilter(): void

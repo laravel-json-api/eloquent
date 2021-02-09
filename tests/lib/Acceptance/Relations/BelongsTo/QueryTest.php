@@ -19,8 +19,10 @@ declare(strict_types=1);
 
 namespace LaravelJsonApi\Eloquent\Tests\Acceptance\Relations\BelongsTo;
 
+use App\Models\Country;
 use App\Models\Phone;
 use App\Models\User;
+use App\Schemas\UserSchema;
 
 class QueryTest extends TestCase
 {
@@ -48,6 +50,41 @@ class QueryTest extends TestCase
             ->first();
 
         $this->assertTrue($user->is($actual));
+        $this->assertTrue($actual->relationLoaded('phone'));
+    }
+
+    public function testWithDefaultEagerLoading(): void
+    {
+        $this->createSchemaWithDefaultEagerLoading(UserSchema::class, 'country');
+
+        /** @var User $user */
+        $user = User::factory()->for($country = Country::factory()->create())->create();
+        $phone = Phone::factory()->create(['user_id' => $user]);
+
+        $actual = $this->repository
+            ->queryToOne($phone, 'user')
+            ->first();
+
+        $this->assertTrue($user->is($actual));
+        $this->assertTrue($actual->relationLoaded('country'));
+        $this->assertFalse($actual->relationLoaded('phone'));
+    }
+
+    public function testWithDefaultEagerLoadingAndIncludePaths(): void
+    {
+        $this->createSchemaWithDefaultEagerLoading(UserSchema::class, 'country');
+
+        /** @var User $user */
+        $user = User::factory()->for($country = Country::factory()->create())->create();
+        $phone = Phone::factory()->create(['user_id' => $user]);
+
+        $actual = $this->repository
+            ->queryToOne($phone, 'user')
+            ->with('phone')
+            ->first();
+
+        $this->assertTrue($user->is($actual));
+        $this->assertTrue($actual->relationLoaded('country'));
         $this->assertTrue($actual->relationLoaded('phone'));
     }
 

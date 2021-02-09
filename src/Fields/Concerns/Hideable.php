@@ -21,6 +21,7 @@ namespace LaravelJsonApi\Eloquent\Fields\Concerns;
 
 use Closure;
 use Illuminate\Http\Request;
+use InvalidArgumentException;
 
 trait Hideable
 {
@@ -33,12 +34,16 @@ trait Hideable
     /**
      * Mark the field as hidden.
      *
-     * @param Closure|null $callback
+     * @param Closure|bool $callback
      * @return $this
      */
-    public function hidden(Closure $callback = null): self
+    public function hidden($callback = true): self
     {
-        $this->hidden = $callback ?: true;
+        if (!is_bool($callback) && !$callback instanceof Closure) {
+            throw new InvalidArgumentException('Expecting a boolean or closure.');
+        }
+
+        $this->hidden = $callback;
 
         return $this;
     }

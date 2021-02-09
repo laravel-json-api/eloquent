@@ -21,6 +21,7 @@ namespace LaravelJsonApi\Eloquent\Tests\Acceptance\Relations\MorphOne;
 
 use App\Models\Image;
 use App\Models\Post;
+use App\Schemas\ImageSchema;
 
 class AssociateTest extends TestCase
 {
@@ -107,6 +108,23 @@ class AssociateTest extends TestCase
         $image = Image::factory()->create(['imageable_id' => null, 'imageable_type' => null]);
 
         $actual = $this->repository->modifyToOne($post, 'image')->with('imageable')->associate([
+            'type' => 'images',
+            'id' => (string) $image->getRouteKey(),
+        ]);
+
+        $this->assertTrue($image->is($actual));
+        $this->assertTrue($actual->relationLoaded('imageable'));
+        $this->assertTrue($post->is($actual->getRelation('imageable')));
+    }
+
+    public function testWithDefaultEagerLoading(): void
+    {
+        $this->createSchemaWithDefaultEagerLoading(ImageSchema::class, 'imageable');
+
+        $post = Post::factory()->create();
+        $image = Image::factory()->create(['imageable_id' => null, 'imageable_type' => null]);
+
+        $actual = $this->repository->modifyToOne($post, 'image')->associate([
             'type' => 'images',
             'id' => (string) $image->getRouteKey(),
         ]);

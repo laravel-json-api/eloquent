@@ -22,6 +22,7 @@ namespace LaravelJsonApi\Eloquent\Tests\Acceptance\Relations\MorphToMany\VideoTa
 use App\Models\Tag;
 use App\Models\User;
 use App\Models\Video;
+use App\Schemas\TagSchema;
 use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 
 class AttachTest extends TestCase
@@ -96,6 +97,25 @@ class AttachTest extends TestCase
         $this->assertTrue($actual->every(fn(Tag $tag) => $tag->relationLoaded('posts')));
     }
 
+    public function testWithDefaultEagerLoading(): void
+    {
+        $this->createSchemaWithDefaultEagerLoading(TagSchema::class, 'posts');
+
+        $video = Video::factory()->create();
+        $tags = Tag::factory()->count(2)->create();
+
+        $ids = $tags->map(fn(Tag $tag) => [
+            'type' => 'tags',
+            'id' => (string) $tag->getRouteKey(),
+        ])->all();
+
+        $actual = $this->repository
+            ->modifyToMany($video, 'tags')
+            ->attach($ids);
+
+        $this->assertTags($tags, $actual);
+        $this->assertTrue($actual->every(fn(Tag $tag) => $tag->relationLoaded('posts')));
+    }
 
     /**
      * The spec says:

@@ -21,6 +21,7 @@ namespace LaravelJsonApi\Eloquent\Fields\Concerns;
 
 use Closure;
 use Illuminate\Http\Request;
+use InvalidArgumentException;
 
 trait ReadOnly
 {
@@ -35,12 +36,16 @@ trait ReadOnly
     /**
      * Mark the field as read-only.
      *
-     * @param Closure|null $callback
+     * @param Closure|bool $callback
      * @return $this
      */
-    public function readOnly(Closure $callback = null): self
+    public function readOnly($callback = true): self
     {
-        $this->readOnly = $callback ?: true;
+        if (!is_bool($callback) && !$callback instanceof Closure) {
+            throw new InvalidArgumentException('Expecting a boolean or closure.');
+        }
+
+        $this->readOnly = $callback;
 
         return $this;
     }

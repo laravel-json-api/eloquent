@@ -175,6 +175,17 @@ class BooleanTest extends TestCase
     public function testReadOnly(): void
     {
         $request = $this->createMock(Request::class);
+        $request->expects($this->never())->method($this->anything());
+
+        $attr = Boolean::make('admin')->readOnly();
+
+        $this->assertTrue($attr->isReadOnly($request));
+        $this->assertFalse($attr->isNotReadOnly($request));
+    }
+
+    public function testReadOnlyWithClosure(): void
+    {
+        $request = $this->createMock(Request::class);
         $request->expects($this->exactly(2))
             ->method('wantsJson')
             ->willReturnOnConsecutiveCalls(true, false);

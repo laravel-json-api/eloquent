@@ -20,7 +20,9 @@ declare(strict_types=1);
 namespace LaravelJsonApi\Eloquent\Tests\Acceptance\Relations\HasMany;
 
 use App\Models\Comment;
+use App\Models\Post;
 use App\Models\User;
+use App\Schemas\CommentSchema;
 use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 
 class AttachTest extends TestCase
@@ -82,6 +84,61 @@ class AttachTest extends TestCase
         $this->assertTrue($actual->every(fn(Comment $comment) => $comment->relationLoaded('user')));
     }
 
+    public function testWithDefaultEagerLoading(): void
+    {
+        $this->createSchemaWithDefaultEagerLoading(CommentSchema::class, 'commentable');
+
+        $user = User::factory()->create();
+        $comments = Comment::factory()
+            ->count(2)
+            ->for($post = Post::factory()->create(), 'commentable')
+            ->create();
+
+        $ids = $comments->map(fn(Comment $comment) => [
+            'type' => 'comments',
+            'id' => (string) $comment->getRouteKey(),
+        ])->all();
+
+        $actual = $this->repository
+            ->modifyToMany($user, 'comments')
+            ->attach($ids);
+
+        $this->assertComments($comments, $actual);
+        $this->assertTrue($actual->every(
+            fn(Comment $comment) => $comment->relationLoaded('commentable') && $post->is($comment->commentable)
+        ));
+    }
+
+    public function testWithDefaultEagerLoadingAndIncludePaths(): void
+    {
+        $this->createSchemaWithDefaultEagerLoading(CommentSchema::class, 'commentable');
+
+        $user = User::factory()->create();
+        $comments = Comment::factory()
+            ->count(2)
+            ->for($post = Post::factory()->create(), 'commentable')
+            ->create();
+
+        $ids = $comments->map(fn(Comment $comment) => [
+            'type' => 'comments',
+            'id' => (string) $comment->getRouteKey(),
+        ])->all();
+
+        $actual = $this->repository
+            ->modifyToMany($user, 'comments')
+            ->with('user')
+            ->attach($ids);
+
+        $this->assertComments($comments, $actual);
+
+        $this->assertTrue($actual->every(
+            fn(Comment $comment) => $comment->relationLoaded('commentable') && $post->is($comment->commentable)
+        ));
+
+        $this->assertTrue($actual->every(
+            fn(Comment $comment) => $comment->relationLoaded('user') && $user->is($comment->user)
+        ));
+    }
 
     /**
      * The spec says:

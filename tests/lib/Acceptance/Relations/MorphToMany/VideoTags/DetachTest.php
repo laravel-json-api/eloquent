@@ -21,6 +21,7 @@ namespace LaravelJsonApi\Eloquent\Tests\Acceptance\Relations\MorphToMany\VideoTa
 
 use App\Models\Tag;
 use App\Models\Video;
+use App\Schemas\TagSchema;
 use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 
 class DetachTest extends TestCase
@@ -87,6 +88,29 @@ class DetachTest extends TestCase
         $actual = $this->repository
             ->modifyToMany($video, 'tags')
             ->with('posts')
+            ->detach($ids);
+
+        $this->assertTags($roles, $actual);
+        $this->assertTrue($actual->every(fn(Tag $tag) => $tag->relationLoaded('posts')));
+    }
+
+    public function testWithDefaultEagerLoading(): void
+    {
+        $this->createSchemaWithDefaultEagerLoading(TagSchema::class, 'posts');
+
+        $video = Video::factory()
+            ->has(Tag::factory()->count(3))
+            ->create();
+
+        $roles = clone $video->tags;
+
+        $ids = $roles->map(fn(Tag $tag) => [
+            'type' => 'tags',
+            'id' => (string) $tag->getRouteKey(),
+        ])->all();
+
+        $actual = $this->repository
+            ->modifyToMany($video, 'tags')
             ->detach($ids);
 
         $this->assertTags($roles, $actual);
