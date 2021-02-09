@@ -22,6 +22,7 @@ namespace LaravelJsonApi\Eloquent\Fields;
 use Closure;
 use Illuminate\Database\Eloquent\Model;
 use InvalidArgumentException;
+use LaravelJsonApi\Contracts\Resources\Serializer\Attribute as SerializableContract;
 use LaravelJsonApi\Contracts\Schema\Attribute as AttributeContract;
 use LaravelJsonApi\Core\Schema\Concerns\Sortable;
 use LaravelJsonApi\Core\Schema\Concerns\SparseField;
@@ -29,7 +30,6 @@ use LaravelJsonApi\Core\Support\Str;
 use LaravelJsonApi\Eloquent\Contracts\Fillable;
 use LaravelJsonApi\Eloquent\Contracts\Selectable;
 use LaravelJsonApi\Eloquent\Contracts\Sortable as SortableContract;
-use LaravelJsonApi\Contracts\Resources\Serializer\Attribute as SerializableContract;
 
 abstract class Attribute implements AttributeContract, Fillable, Selectable, SortableContract, SerializableContract
 {
