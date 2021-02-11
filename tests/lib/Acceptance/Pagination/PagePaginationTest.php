@@ -164,6 +164,24 @@ class PagePaginationTest extends TestCase
     }
 
     /**
+     * Same as previous test but the filter does not match any models.
+     */
+    public function testDefaultPaginationWithSingularFilterThatDoesNotMatch(): void
+    {
+        $this->posts->method('defaultPagination')->willReturn(['number' => 1]);
+
+        $post = Post::factory()->make();
+
+        $actual = $this->posts
+            ->repository()
+            ->queryAll()
+            ->filter(['slug' => $post->slug])
+            ->firstOrPaginate(null);
+
+        $this->assertNull($actual);
+    }
+
+    /**
      * If the client uses a singular filter, but provides page parameters,
      * they should get a page - not a zero-to-one response.
      */
