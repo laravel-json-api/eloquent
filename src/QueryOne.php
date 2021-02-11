@@ -84,7 +84,7 @@ class QueryOne implements QueryOneBuilderContract
      */
     public function first(): ?object
     {
-        if ($this->model && empty($this->filters)) {
+        if ($this->model && empty($this->queryParameters->filter())) {
             $this->schema->loader()
                 ->forModel($this->model)
                 ->loadMissing($this->queryParameters->includePaths());
