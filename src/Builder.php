@@ -27,6 +27,7 @@ use Illuminate\Support\LazyCollection;
 use Illuminate\Support\Traits\ForwardsCalls;
 use InvalidArgumentException;
 use LaravelJsonApi\Contracts\Pagination\Page;
+use LaravelJsonApi\Contracts\Query\QueryParameters as QueryParametersContract;
 use LaravelJsonApi\Contracts\Schema\Relation as SchemaRelation;
 use LaravelJsonApi\Core\Query\IncludePaths;
 use LaravelJsonApi\Core\Query\QueryParameters;
@@ -120,6 +121,21 @@ class Builder
         }
 
         return $result;
+    }
+
+    /**
+     * Apply the provide query parameters.
+     *
+     * @param QueryParametersContract $query
+     * @return $this
+     */
+    public function withQueryParameters(QueryParametersContract $query): self
+    {
+        $this->filter($query->filter())
+            ->sort($query->sortFields())
+            ->with($query->includePaths());
+
+        return $this;
     }
 
     /**
@@ -379,10 +395,14 @@ class Builder
      */
     private function filters(): iterable
     {
-        yield from $this->schema->filters();
+        foreach ($this->schema->filters() as $filter) {
+            yield $filter;
+        }
 
         if ($this->relation) {
-            yield from $this->relation->filters();
+            foreach ($this->relation->filters() as $filter) {
+                yield $filter;
+            }
         }
     }
 

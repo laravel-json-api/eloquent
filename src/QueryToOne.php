@@ -25,17 +25,17 @@ use Illuminate\Database\Eloquent\Relations\HasOne as EloquentHasOne;
 use Illuminate\Database\Eloquent\Relations\HasOneThrough as EloquentHasOneThrough;
 use Illuminate\Database\Eloquent\Relations\MorphOne as EloquentMorphOne;
 use Illuminate\Database\Eloquent\Relations\Relation as EloquentRelation;
-use LaravelJsonApi\Contracts\Query\QueryParameters;
-use LaravelJsonApi\Contracts\Query\QueryParameters as QueryParametersContract;
 use LaravelJsonApi\Contracts\Store\QueryOneBuilder;
 use LaravelJsonApi\Contracts\Store\QueryOneBuilder as QueryOneBuilderContract;
-use LaravelJsonApi\Core\Query\IncludePaths;
+use LaravelJsonApi\Core\Query\QueryParameters;
 use LaravelJsonApi\Eloquent\Fields\Relations\ToOne;
 use LogicException;
 use function sprintf;
 
 class QueryToOne implements QueryOneBuilder
 {
+
+    use HasQueryParameters;
 
     /**
      * @var Model
@@ -48,16 +48,6 @@ class QueryToOne implements QueryOneBuilder
     private ToOne $relation;
 
     /**
-     * @var array|null
-     */
-    private ?array $filters = null;
-
-    /**
-     * @var IncludePaths|null
-     */
-    private ?IncludePaths $includePaths = null;
-
-    /**
      * QueryToOne constructor.
      *
      * @param Model $model
@@ -67,16 +57,7 @@ class QueryToOne implements QueryOneBuilder
     {
         $this->model = $model;
         $this->relation = $relation;
-    }
-
-    /**
-     * @inheritDoc
-     */
-    public function using(QueryParametersContract $query): QueryOneBuilderContract
-    {
-        return $this
-            ->filter($query->filter())
-            ->with($query->includePaths());
+        $this->queryParameters = new QueryParameters();
     }
 
     /**
@@ -84,17 +65,7 @@ class QueryToOne implements QueryOneBuilder
      */
     public function filter(?array $filters): QueryOneBuilderContract
     {
-        $this->filters = $filters;
-
-        return $this;
-    }
-
-    /**
-     * @inheritDoc
-     */
-    public function with($includePaths): QueryOneBuilderContract
-    {
-        $this->includePaths = IncludePaths::nullable($includePaths);
+        $this->queryParameters->setFilters($filters);
 
         return $this;
     }
@@ -104,11 +75,11 @@ class QueryToOne implements QueryOneBuilder
      */
     public function first(): ?object
     {
-        if ($this->model->relationLoaded($this->relation->name()) && empty($this->filters)) {
+        if ($this->model->relationLoaded($this->relation->name()) && empty($this->queryParameters->filter())) {
             return $this->related();
         }
 
-        return $this->prepareQuery()->first();
+        return $this->query()->first();
     }
 
     /**
@@ -116,21 +87,15 @@ class QueryToOne implements QueryOneBuilder
      */
     public function query(): Builder
     {
-        return new Builder(
+        $query = new Builder(
             $this->relation->schema(),
             $this->getRelation(),
             $this->relation
         );
-    }
 
-    /**
-     * @return Builder
-     */
-    private function prepareQuery(): Builder
-    {
-        return $this->query()
-            ->filter($this->filters)
-            ->with($this->includePaths);
+        $query->withQueryParameters($this->queryParameters);
+
+        return $query;
     }
 
     /**
@@ -175,7 +140,7 @@ class QueryToOne implements QueryOneBuilder
             $this->relation->schema()
                 ->loader()
                 ->forModel($related)
-                ->loadMissing($this->includePaths);
+                ->loadMissing($this->queryParameters->includePaths());
 
             return $related;
         }

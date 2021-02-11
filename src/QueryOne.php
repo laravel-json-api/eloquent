@@ -20,12 +20,13 @@ declare(strict_types=1);
 namespace LaravelJsonApi\Eloquent;
 
 use Illuminate\Database\Eloquent\Model;
-use LaravelJsonApi\Contracts\Query\QueryParameters as QueryParametersContract;
 use LaravelJsonApi\Contracts\Store\QueryOneBuilder as QueryOneBuilderContract;
-use LaravelJsonApi\Core\Query\IncludePaths;
+use LaravelJsonApi\Core\Query\QueryParameters;
 
 class QueryOne implements QueryOneBuilderContract
 {
+
+    use HasQueryParameters;
 
     /**
      * @var Schema
@@ -48,16 +49,6 @@ class QueryOne implements QueryOneBuilderContract
     private string $resourceId;
 
     /**
-     * @var array|null
-     */
-    private ?array $filters = null;
-
-    /**
-     * @var IncludePaths|null
-     */
-    private ?IncludePaths $includePaths = null;
-
-    /**
      * QueryOne constructor.
      *
      * @param Schema $schema
@@ -75,16 +66,7 @@ class QueryOne implements QueryOneBuilderContract
         $this->query = $query;
         $this->model = $model;
         $this->resourceId = $resourceId;
-    }
-
-    /**
-     * @inheritDoc
-     */
-    public function using(QueryParametersContract $query): QueryOneBuilderContract
-    {
-        return $this
-            ->filter($query->filter())
-            ->with($query->includePaths());
+        $this->queryParameters = new QueryParameters();
     }
 
     /**
@@ -92,17 +74,7 @@ class QueryOne implements QueryOneBuilderContract
      */
     public function filter(?array $filters): QueryOneBuilderContract
     {
-        $this->filters = $filters;
-
-        return $this;
-    }
-
-    /**
-     * @inheritDoc
-     */
-    public function with($includePaths): QueryOneBuilderContract
-    {
-        $this->includePaths = IncludePaths::nullable($includePaths);
+        $this->queryParameters->setFilters($filters);
 
         return $this;
     }
@@ -115,15 +87,15 @@ class QueryOne implements QueryOneBuilderContract
         if ($this->model && empty($this->filters)) {
             $this->schema->loader()
                 ->forModel($this->model)
-                ->loadMissing($this->includePaths);
+                ->loadMissing($this->queryParameters->includePaths());
 
             return $this->model;
         }
 
         return $this->query
             ->whereResourceId($this->resourceId)
-            ->filter($this->filters)
-            ->with($this->includePaths)
+            ->filter($this->queryParameters->filter())
+            ->with($this->queryParameters->includePaths())
             ->first();
     }
 

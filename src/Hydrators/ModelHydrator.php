@@ -20,16 +20,15 @@ declare(strict_types=1);
 namespace LaravelJsonApi\Eloquent\Hydrators;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Http\Request;
-use LaravelJsonApi\Contracts\Query\QueryParameters as QueryParametersContract;
 use LaravelJsonApi\Contracts\Schema\Attribute;
 use LaravelJsonApi\Contracts\Schema\Field;
 use LaravelJsonApi\Contracts\Store\ResourceBuilder;
-use LaravelJsonApi\Core\Query\IncludePaths;
+use LaravelJsonApi\Core\Query\QueryParameters;
 use LaravelJsonApi\Eloquent\Contracts\Fillable;
 use LaravelJsonApi\Eloquent\Contracts\FillableToMany;
 use LaravelJsonApi\Eloquent\Contracts\FillableToOne;
 use LaravelJsonApi\Eloquent\Fields\Relations\Relation;
+use LaravelJsonApi\Eloquent\HasQueryParameters;
 use LaravelJsonApi\Eloquent\Schema;
 use LogicException;
 use RuntimeException;
@@ -37,6 +36,8 @@ use function sprintf;
 
 class ModelHydrator implements ResourceBuilder
 {
+
+    use HasQueryParameters;
 
     /**
      * @var Schema
@@ -49,17 +50,7 @@ class ModelHydrator implements ResourceBuilder
     private Model $model;
 
     /**
-     * @var Request|mixed|null
-     */
-    private $request;
-
-    /**
-     * @var IncludePaths|null
-     */
-    private ?IncludePaths $includePaths = null;
-
-    /**
-     * Hydrator constructor.
+     * ModelHydrator constructor.
      *
      * @param Schema $schema
      * @param Model $model
@@ -68,28 +59,7 @@ class ModelHydrator implements ResourceBuilder
     {
         $this->schema = $schema;
         $this->model = $model;
-    }
-
-    /**
-     * @inheritDoc
-     */
-    public function using(QueryParametersContract $query): ResourceBuilder
-    {
-        if ($query instanceof Request) {
-            $this->request = $query;
-        }
-
-        return $this->with($query->includePaths());
-    }
-
-    /**
-     * @inheritDoc
-     */
-    public function with($includePaths): ResourceBuilder
-    {
-        $this->includePaths = IncludePaths::cast($includePaths);
-
-        return $this;
+        $this->queryParameters = new QueryParameters();
     }
 
     /**
@@ -97,20 +67,15 @@ class ModelHydrator implements ResourceBuilder
      */
     public function store(array $validatedData): object
     {
-        if (!$this->request) {
-            $this->request = \request();
-        }
-
         $model = $this->hydrate($validatedData);
 
         /**
          * Always do eager loading, as we may have default eager
          * load paths.
          */
-        $this->schema
-            ->loader()
-            ->forModel($model)
-            ->loadMissing($this->includePaths);
+        $this->schema->loader()->forModel($model)->loadMissing(
+            $this->queryParameters->includePaths()
+        );
 
         return $model;
     }
@@ -176,17 +141,32 @@ class ModelHydrator implements ResourceBuilder
     }
 
     /**
+     * Should a value be filled into the supplied field?
+     *
+     * Fields are only fillable if they implement the Eloquent fillable
+     * interface. When that is true, if a request has been set on the
+     * hydrator, the field is checked for whether it is read only.
+     *
+     * If no request has been set, we assume we are operating
+     * outside the context of a HTTP request; i.e. that the developer
+     * is passing through data intentionally. In these circumstances,
+     * we don't need to check if the field is read only.
+     *
      * @param Field $field
      * @param array $validatedData
      * @return bool
      */
     private function mustFill(Field $field, array $validatedData): bool
     {
-        if ($field instanceof Fillable) {
-            return $field->isNotReadOnly($this->request) && array_key_exists($field->name(), $validatedData);
+        if (!$field instanceof Fillable) {
+            return false;
         }
 
-        return false;
+        if ($field->isReadOnly($this->request)) {
+            return false;
+        }
+
+        return array_key_exists($field->name(), $validatedData);
     }
 
     /**

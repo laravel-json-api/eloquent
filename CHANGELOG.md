@@ -3,6 +3,26 @@
 All notable changes to this project will be documented in this file. This project adheres to
 [Semantic Versioning](http://semver.org/) and [this changelog format](http://keepachangelog.com/).
 
+## Unreleased
+
+### Changed
+
+- **BREAKING** The query builder classes have been updated for changes to the interfaces they implement. This adds
+  the `withRequest()` method and renames `using()` to `withQuery()`.
+- [#2](https://github.com/laravel-json-api/eloquent/issues/2) **BREAKING** The `Fillable` contract now type-hints the
+  request class in its read-only method signatures, and allows it to be `null`. The `ReadOnly` trait has been updated,
+  so this is unlikely to affect field classes if the trait has been used.
+- **BREAKING** If no request class is provided to the `ModelHydrator` class via its new  `withRequest()` method, it is
+  now assumed the hydration is occurring outside of a HTTP request. I.e. that the developer is manually triggering the
+  hydration. Without the HTTP request, fields will not be checked for their read-only state and will be filled if the
+  provided data has a value for the field. Implementing libraries must ensure that `withRequest()` is called when
+  filling values provided by a HTTP client.
+
+### Fixed
+
+- The `Builder::filters()` method now correctly yields both the schema's filter and the filters from a relationship, if
+  one is set. Previously the filters were not yielded correctly if there was a relationship.
+
 ## [1.0.0-alpha.3] - 2021-02-09
 
 ### Added

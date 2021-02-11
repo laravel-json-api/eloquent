@@ -57,7 +57,7 @@ trait ReadOnly
      */
     public function readOnlyOnCreate(): self
     {
-        $this->readOnly(static fn($request) => $request->isMethod('POST'));
+        $this->readOnly(static fn($request) => $request && $request->isMethod('POST'));
 
         return $this;
     }
@@ -69,20 +69,17 @@ trait ReadOnly
      */
     public function readOnlyOnUpdate(): self
     {
-        $this->readOnly(static fn($request) => $request->isMethod('PATCH'));
+        $this->readOnly(static fn($request) => $request && $request->isMethod('PATCH'));
 
         return $this;
     }
 
     /**
-     * Is the field read-only?
-     *
-     * @param Request $request
-     * @return bool
+     * @inheritDoc
      */
-    public function isReadOnly($request): bool
+    public function isReadOnly(?Request $request): bool
     {
-        if (is_callable($this->readOnly)) {
+        if ($this->readOnly instanceof Closure) {
             return true === ($this->readOnly)($request);
         }
 
@@ -90,12 +87,9 @@ trait ReadOnly
     }
 
     /**
-     * Is the field not read-only?
-     *
-     * @param Request $request
-     * @return bool
+     * @inheritDoc
      */
-    public function isNotReadOnly($request): bool
+    public function isNotReadOnly(?Request $request): bool
     {
         return !$this->isReadOnly($request);
     }

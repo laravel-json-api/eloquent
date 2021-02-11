@@ -20,15 +20,16 @@ declare(strict_types=1);
 namespace LaravelJsonApi\Eloquent;
 
 use Illuminate\Database\Eloquent\Model;
-use LaravelJsonApi\Contracts\Query\QueryParameters;
 use LaravelJsonApi\Contracts\Schema\Filter;
 use LaravelJsonApi\Contracts\Store\QueryOneBuilder;
-use LaravelJsonApi\Core\Query\IncludePaths;
+use LaravelJsonApi\Core\Query\QueryParameters;
 use LaravelJsonApi\Eloquent\Fields\Relations\MorphTo;
 use function is_null;
 
 class QueryMorphTo implements QueryOneBuilder
 {
+
+    use HasQueryParameters;
 
     /**
      * @var Model
@@ -41,16 +42,6 @@ class QueryMorphTo implements QueryOneBuilder
     private MorphTo $relation;
 
     /**
-     * @var array|null
-     */
-    private ?array $filters = null;
-
-    /**
-     * @var IncludePaths|null
-     */
-    private ?IncludePaths $includePaths = null;
-
-    /**
      * QueryMorphOne constructor.
      *
      * @param Model $model
@@ -60,16 +51,7 @@ class QueryMorphTo implements QueryOneBuilder
     {
         $this->model = $model;
         $this->relation = $relation;
-    }
-
-    /**
-     * @inheritDoc
-     */
-    public function using(QueryParameters $query): QueryOneBuilder
-    {
-        return $this
-            ->filter($query->filter())
-            ->with($query->includePaths());
+        $this->queryParameters = new QueryParameters();
     }
 
     /**
@@ -77,17 +59,7 @@ class QueryMorphTo implements QueryOneBuilder
      */
     public function filter(?array $filters): QueryOneBuilder
     {
-        $this->filters = $filters;
-
-        return $this;
-    }
-
-    /**
-     * @inheritDoc
-     */
-    public function with($includePaths): QueryOneBuilder
-    {
-        $this->includePaths = IncludePaths::nullable($includePaths);
+        $this->queryParameters->setFilters($filters);
 
         return $this;
     }
@@ -99,12 +71,13 @@ class QueryMorphTo implements QueryOneBuilder
     {
         /** @var Model|null $related */
         $related = $related = $this->model->{$this->relation->relationName()};
+        $filters = $this->queryParameters->filter();
 
         /**
          * If there are no filters, we can just return the related
          * model - loading any missing relations.
          */
-        if (is_null($related) || empty($this->filters)) {
+        if (is_null($related) || empty($filters)) {
             return $this->prepareResult($related);
         }
 
@@ -119,7 +92,7 @@ class QueryMorphTo implements QueryOneBuilder
          * then we know the related model cannot match the filters. So
          * in this scenario, we return `null`.
          */
-        if (collect($this->filters)->keys()->diff($expected)->isNotEmpty()) {
+        if (collect($filters)->keys()->diff($expected)->isNotEmpty()) {
             return null;
         }
 
@@ -129,7 +102,7 @@ class QueryMorphTo implements QueryOneBuilder
          */
         $result = (new Builder($schema, $related))
             ->whereKey($related->getKey())
-            ->filter($this->filters)
+            ->filter($filters)
             ->first();
 
         return $this->prepareResult($result);
@@ -149,7 +122,7 @@ class QueryMorphTo implements QueryOneBuilder
                 ->loader()
                 ->skipMissingFields()
                 ->forModel($related)
-                ->loadMissing($this->includePaths);
+                ->loadMissing($this->queryParameters->includePaths());
         }
 
         return $related;
