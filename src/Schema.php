@@ -19,7 +19,10 @@ declare(strict_types=1);
 
 namespace LaravelJsonApi\Eloquent;
 
+use Illuminate\Database\Eloquent\Builder as EloquentBuilder;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\Relation as EloquentRelation;
+use Illuminate\Http\Request;
 use LaravelJsonApi\Contracts\Store\Repository as RepositoryContract;
 use LaravelJsonApi\Core\Schema\Schema as BaseSchema;
 use LaravelJsonApi\Eloquent\EagerLoading\EagerLoader;
@@ -88,11 +91,45 @@ abstract class Schema extends BaseSchema
     }
 
     /**
+     * Get a new JSON:API query builder.
+     *
      * @return Builder
      */
     public function newQuery(): Builder
     {
         return new Builder($this, $this->newInstance()->newQuery());
+    }
+
+    /**
+     * Build an index query for this resource.
+     *
+     * Allows the developer to implement resource specific filtering
+     * when querying all resources (an "index" query). This is required
+     * for authorization implementation - i.e. to remove certain resources
+     * that the user is not allowed to access.
+     *
+     * The request will be `null` if querying the resource outside of a HTTP
+     * request - for example, queued broadcasting.
+     *
+     * @param Request|null $request
+     * @param EloquentBuilder $query
+     * @return EloquentBuilder
+     */
+    public function indexQuery(?Request $request, EloquentBuilder $query): EloquentBuilder
+    {
+        return $query;
+    }
+
+    /**
+     * Build a "relatable" query for this resource.
+     *
+     * @param Request|null $request
+     * @param EloquentRelation $query
+     * @return EloquentRelation
+     */
+    public function relatableQuery(?Request $request, EloquentRelation $query): EloquentRelation
+    {
+        return $query;
     }
 
     /**

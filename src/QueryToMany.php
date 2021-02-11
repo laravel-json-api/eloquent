@@ -28,11 +28,8 @@ use Illuminate\Database\Eloquent\Relations\Relation as EloquentRelation;
 use Illuminate\Support\Collection;
 use Illuminate\Support\LazyCollection;
 use LaravelJsonApi\Contracts\Pagination\Page;
-use LaravelJsonApi\Contracts\Query\QueryParameters as QueryParametersContract;
 use LaravelJsonApi\Contracts\Store\QueryManyBuilder;
-use LaravelJsonApi\Core\Query\IncludePaths;
 use LaravelJsonApi\Core\Query\QueryParameters;
-use LaravelJsonApi\Core\Query\SortFields;
 use LaravelJsonApi\Eloquent\Fields\Relations\ToMany;
 use LogicException;
 use function get_class;
@@ -131,15 +128,17 @@ class QueryToMany implements QueryManyBuilder
      */
     public function query(): Builder
     {
+        $schema = $this->relation->schema();
+
         $query = new Builder(
-            $this->relation->schema(),
-            $this->getRelation(),
+            $schema,
+            $schema->relatableQuery($this->request, $this->getRelation()),
             $this->relation
         );
 
-        $query->withQueryParameters($this->queryParameters);
-
-        return $query;
+        return $query->withQueryParameters(
+            $this->queryParameters
+        );
     }
 
     /**

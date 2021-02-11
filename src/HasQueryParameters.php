@@ -23,7 +23,6 @@ use Illuminate\Http\Request;
 use LaravelJsonApi\Contracts\Query\QueryParameters as QueryParametersContract;
 use LaravelJsonApi\Contracts\Store\Builder as BuilderContract;
 use LaravelJsonApi\Core\Query\QueryParameters;
-use LogicException;
 
 trait HasQueryParameters
 {
@@ -69,15 +68,4 @@ trait HasQueryParameters
         return $this;
     }
 
-    /**
-     * @return Request
-     */
-    private function request(): Request
-    {
-        if ($this->request) {
-            return $this->request;
-        }
-
-        throw new LogicException('No HTTP request set: ensure `withRequest()` is called.');
-    }
 }

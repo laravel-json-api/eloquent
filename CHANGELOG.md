@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file. This projec
 
 ## Unreleased
 
+### Added
+
+- The Eloquent schema now has `indexQuery` and `relatableQuery` methods. These allow filtering for authorization
+  purposes when a list of resources is being retrieved. For instance, it could filter those queries so that only models
+  belonging to the authenticated user are returned.
+
 ### Changed
 
 - **BREAKING** The query builder classes have been updated for changes to the interfaces they implement. This adds

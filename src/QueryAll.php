@@ -71,7 +71,14 @@ class QueryAll implements QueryAllBuilder
      */
     public function query(): Builder
     {
-        return $this->schema->newQuery()->withQueryParameters(
+        $base = $this->schema->newInstance()->newQuery();
+
+        $query = new Builder(
+            $this->schema,
+            $this->schema->indexQuery($this->request, $base)
+        );
+
+        return $query->withQueryParameters(
             $this->queryParameters
         );
     }
