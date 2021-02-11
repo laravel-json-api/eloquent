@@ -100,7 +100,7 @@ class QueryMorphTo implements QueryOneBuilder
          * Otherwise we need to re-query this specific model to see if
          * it matches our filters or not.
          */
-        $result = (new Builder($schema, $related))
+        $result = (new JsonApiBuilder($schema, $related))
             ->whereKey($related->getKey())
             ->filter($filters)
             ->first();

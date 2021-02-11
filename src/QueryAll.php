@@ -67,13 +67,13 @@ class QueryAll implements QueryAllBuilder
     }
 
     /**
-     * @return Builder
+     * @return JsonApiBuilder
      */
-    public function query(): Builder
+    public function query(): JsonApiBuilder
     {
         $base = $this->schema->newInstance()->newQuery();
 
-        $query = new Builder(
+        $query = new JsonApiBuilder(
             $this->schema,
             $this->schema->indexQuery($this->request, $base)
         );

@@ -23,6 +23,8 @@ All notable changes to this project will be documented in this file. This projec
   hydration. Without the HTTP request, fields will not be checked for their read-only state and will be filled if the
   provided data has a value for the field. Implementing libraries must ensure that `withRequest()` is called when
   filling values provided by a HTTP client.
+- **BREAKING** Renamed the `Builder` class to `JsonApiBuilder`. This change was made as it was confusing what
+  a `Builder` referred to, because Laravel uses this class name for Eloquent builders.
 
 ### Fixed
 

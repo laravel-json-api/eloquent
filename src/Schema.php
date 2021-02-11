@@ -19,9 +19,9 @@ declare(strict_types=1);
 
 namespace LaravelJsonApi\Eloquent;
 
-use Illuminate\Database\Eloquent\Builder as EloquentBuilder;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\Relation as EloquentRelation;
+use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Http\Request;
 use LaravelJsonApi\Contracts\Store\Repository as RepositoryContract;
 use LaravelJsonApi\Core\Schema\Schema as BaseSchema;
@@ -65,9 +65,9 @@ abstract class Schema extends BaseSchema
     }
 
     /**
-     * @return Builder
+     * @return JsonApiBuilder
      */
-    public static function query(): Builder
+    public static function query(): JsonApiBuilder
     {
         return app(static::class)->newQuery();
     }
@@ -93,11 +93,11 @@ abstract class Schema extends BaseSchema
     /**
      * Get a new JSON:API query builder.
      *
-     * @return Builder
+     * @return JsonApiBuilder
      */
-    public function newQuery(): Builder
+    public function newQuery(): JsonApiBuilder
     {
-        return new Builder($this, $this->newInstance()->newQuery());
+        return new JsonApiBuilder($this, $this->newInstance()->newQuery());
     }
 
     /**
@@ -112,10 +112,10 @@ abstract class Schema extends BaseSchema
      * request - for example, queued broadcasting.
      *
      * @param Request|null $request
-     * @param EloquentBuilder $query
-     * @return EloquentBuilder
+     * @param Builder $query
+     * @return Builder
      */
-    public function indexQuery(?Request $request, EloquentBuilder $query): EloquentBuilder
+    public function indexQuery(?Request $request, Builder $query): Builder
     {
         return $query;
     }
@@ -124,10 +124,10 @@ abstract class Schema extends BaseSchema
      * Build a "relatable" query for this resource.
      *
      * @param Request|null $request
-     * @param EloquentRelation $query
-     * @return EloquentRelation
+     * @param Relation $query
+     * @return Relation
      */
-    public function relatableQuery(?Request $request, EloquentRelation $query): EloquentRelation
+    public function relatableQuery(?Request $request, Relation $query): Relation
     {
         return $query;
     }

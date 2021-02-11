@@ -34,9 +34,9 @@ class QueryOne implements QueryOneBuilderContract
     private Schema $schema;
 
     /**
-     * @var Builder
+     * @var JsonApiBuilder
      */
-    private Builder $query;
+    private JsonApiBuilder $query;
 
     /**
      * @var Model|null
@@ -52,13 +52,13 @@ class QueryOne implements QueryOneBuilderContract
      * QueryOne constructor.
      *
      * @param Schema $schema
-     * @param Builder $query
+     * @param JsonApiBuilder $query
      * @param Model|null $model
      * @param string $resourceId
      */
     public function __construct(
         Schema $schema,
-        Builder $query,
+        JsonApiBuilder $query,
         ?Model $model,
         string $resourceId
     ) {

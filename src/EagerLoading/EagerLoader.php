@@ -19,11 +19,11 @@ declare(strict_types=1);
 
 namespace LaravelJsonApi\Eloquent\EagerLoading;
 
-use Illuminate\Database\Eloquent\Builder as EloquentBuilder;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\MorphTo as EloquentMorphTo;
-use Illuminate\Database\Eloquent\Relations\Relation as EloquentRelation;
+use Illuminate\Database\Eloquent\Relations\Relation;
 use InvalidArgumentException;
 use LaravelJsonApi\Contracts\Schema\Container;
 use LaravelJsonApi\Core\Query\IncludePaths;
@@ -56,7 +56,7 @@ class EagerLoader
     private ?EloquentCollection $models = null;
 
     /**
-     * @var EloquentBuilder|EloquentRelation|null
+     * @var Builder|Relation|null
      */
     private $query;
 
@@ -110,12 +110,12 @@ class EagerLoader
     }
 
     /**
-     * @param EloquentBuilder|EloquentRelation $query
+     * @param Builder|Relation $query
      * @return $this
      */
     public function using($query): self
     {
-        if ($query instanceof EloquentBuilder || $query instanceof EloquentRelation) {
+        if ($query instanceof Builder || $query instanceof Relation) {
             $this->query = $query;
             return $this;
         }

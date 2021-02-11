@@ -134,11 +134,11 @@ class Repository implements
     }
 
     /**
-     * @return Builder
+     * @return JsonApiBuilder
      */
-    public function query(): Builder
+    public function query(): JsonApiBuilder
     {
-        return new Builder($this->schema, $this->model->newQuery());
+        return new JsonApiBuilder($this->schema, $this->model->newQuery());
     }
 
     /**

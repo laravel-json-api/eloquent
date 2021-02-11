@@ -83,11 +83,11 @@ class QueryToOne implements QueryOneBuilder
     }
 
     /**
-     * @return Builder
+     * @return JsonApiBuilder
      */
-    public function query(): Builder
+    public function query(): JsonApiBuilder
     {
-        $query = new Builder(
+        $query = new JsonApiBuilder(
             $this->relation->schema(),
             $this->getRelation(),
             $this->relation
