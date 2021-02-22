@@ -146,7 +146,8 @@ class QueryToMany implements QueryManyBuilder
      */
     private function getRelation(): EloquentRelation
     {
-        $relation = $this->model->{$this->relation->name()}();
+        $name = $this->relation->relationName();
+        $relation = $this->model->{$name}();
 
         if ($relation instanceof EloquentHasMany ||
             $relation instanceof EloquentBelongsToMany ||
@@ -159,7 +160,7 @@ class QueryToMany implements QueryManyBuilder
         if ($relation instanceof EloquentRelation) {
             throw new LogicException(sprintf(
                 'Eloquent relation %s on model %s returned a %s relation, which is not a to-many relation.',
-                $this->relation->name(),
+                $name,
                 get_class($this->model),
                 get_class($relation)
             ));
@@ -167,7 +168,7 @@ class QueryToMany implements QueryManyBuilder
 
         throw new LogicException(sprintf(
             'Expecting method %s on model %s to return an Eloquent relation.',
-            $this->relation->name(),
+            $name,
             get_class($this->model)
         ));
     }

@@ -30,6 +30,9 @@ All notable changes to this project will be documented in this file. This projec
 
 - The `Builder::filters()` method now correctly yields both the schema's filter and the filters from a relationship, if
   one is set. Previously the filters were not yielded correctly if there was a relationship.
+- the `QueryToOne` and `QueryToMany` builders now correctly use the model's relation name instead of the JSON:API field
+  name when retrieving the relationship object from the model. Previously this would have failed with an error if the
+  model relationship name was not the same as the JSON:API field name.
 
 ## [1.0.0-alpha.3] - 2021-02-09
 
