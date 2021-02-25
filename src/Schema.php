@@ -201,7 +201,7 @@ abstract class Schema extends BaseSchema
      */
     public function loader(): EagerLoader
     {
-        return new EagerLoader($this->schemas, $this);
+        return new EagerLoader($this->server->schemas(), $this);
     }
 
     /**

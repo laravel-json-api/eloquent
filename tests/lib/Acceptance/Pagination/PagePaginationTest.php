@@ -63,13 +63,13 @@ class PagePaginationTest extends TestCase
         $this->posts = $this
             ->getMockBuilder(PostSchema::class)
             ->onlyMethods(['pagination', 'defaultPagination'])
-            ->setConstructorArgs(['schemas' => $this->schemas()])
+            ->setConstructorArgs(['server' => $this->server()])
             ->getMock();
 
         $this->videos = $this
             ->getMockBuilder(VideoSchema::class)
             ->onlyMethods(['pagination', 'defaultPagination'])
-            ->setConstructorArgs(['schemas' => $this->schemas()])
+            ->setConstructorArgs(['server' => $this->server()])
             ->getMock();
 
         $this->posts->method('pagination')->willReturn($this->paginator);
