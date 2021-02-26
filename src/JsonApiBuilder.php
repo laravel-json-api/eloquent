@@ -184,6 +184,10 @@ class JsonApiBuilder
             ));
         }
 
+        if (true === $this->schema->isSingular($filters)) {
+            $this->singular = true;
+        }
+
         $this->parameters->setFilters($filters);
 
         return $this;

@@ -23,6 +23,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use LaravelJsonApi\Contracts\Store\Repository as RepositoryContract;
 use LaravelJsonApi\Core\Schema\Schema as BaseSchema;
 use LaravelJsonApi\Eloquent\EagerLoading\EagerLoader;
@@ -227,6 +228,23 @@ abstract class Schema extends BaseSchema
     public function defaultPagination(): ?array
     {
         return $this->defaultPagination;
+    }
+
+    /**
+     * Will the set of filters result in zero-to-one resource?
+     *
+     * While individual filters can be marked as singular, there may be instances
+     * where the combination of filters should result in a singular response
+     * (zero-to-one resource instead of zero-to-many). Developers can use this
+     * hook to add complex logic for working out if a set of filters should
+     * return a singular resource.
+     *
+     * @param array $filters
+     * @return bool
+     */
+    public function isSingular(array $filters): bool
+    {
+        return false;
     }
 
 }
