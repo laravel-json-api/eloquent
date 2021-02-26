@@ -23,6 +23,7 @@ use Closure;
 use InvalidArgumentException;
 use LaravelJsonApi\Contracts\Resources\JsonApiRelation;
 use LaravelJsonApi\Contracts\Resources\Serializer\Relation as SerializableContract;
+use LaravelJsonApi\Contracts\Schema\PolymorphicRelation;
 use LaravelJsonApi\Contracts\Schema\Relation as RelationContract;
 use LaravelJsonApi\Contracts\Schema\SchemaAware as SchemaAwareContract;
 use LaravelJsonApi\Core\Resources\Relation as ResourceRelation;
@@ -168,6 +169,18 @@ abstract class Relation implements RelationContract, SchemaAwareContract, Serial
         }
 
         return $this->inverse = $this->guessInverse();
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function allInverse(): array
+    {
+        if ($this instanceof PolymorphicRelation) {
+            return $this->inverseTypes();
+        }
+
+        return [$this->inverse()];
     }
 
     /**
