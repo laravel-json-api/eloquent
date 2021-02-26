@@ -135,11 +135,27 @@ abstract class Relation implements RelationContract, SchemaAwareContract, Serial
      * @param string $resourceType
      * @return $this
      */
-    public function inverseType(string $resourceType): self
+    public function type(string $resourceType): self
     {
+        if (empty($resourceType)) {
+            throw new InvalidArgumentException('Expecting a non-empty string.');
+        }
+
         $this->inverse = $resourceType;
 
         return $this;
+    }
+
+    /**
+     * Set the inverse resource type.
+     *
+     * @param string $resourceType
+     * @return $this
+     * @deprecated 1.0-stable use `type()` instead.
+     */
+    public function inverseType(string $resourceType): self
+    {
+        return $this->type($resourceType);
     }
 
     /**

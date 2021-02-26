@@ -25,6 +25,7 @@ All notable changes to this project will be documented in this file. This projec
   filling values provided by a HTTP client.
 - **BREAKING** Renamed the `Builder` class to `JsonApiBuilder`. This change was made as it was confusing what
   a `Builder` referred to, because Laravel uses this class name for Eloquent builders.
+- The `Relation::type()` method should now be used to set the inverse resource type on a relationship field.
 
 ### Fixed
 
@@ -33,6 +34,11 @@ All notable changes to this project will be documented in this file. This projec
 - the `QueryToOne` and `QueryToMany` builders now correctly use the model's relation name instead of the JSON:API field
   name when retrieving the relationship object from the model. Previously this would have failed with an error if the
   model relationship name was not the same as the JSON:API field name.
+
+### Deprecated
+
+- The `Relation::inverseType()` method is deprecated and will be removed in `1.0-stable`. Use `Relation::type()`
+  instead.
 
 ## [1.0.0-alpha.3] - 2021-02-09
 
