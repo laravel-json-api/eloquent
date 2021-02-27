@@ -22,11 +22,13 @@ namespace LaravelJsonApi\Eloquent;
 use Illuminate\Support\Collection;
 use Illuminate\Support\LazyCollection;
 use LaravelJsonApi\Contracts\Pagination\Page;
-use LaravelJsonApi\Contracts\Query\QueryParameters as QueryParametersContract;
 use LaravelJsonApi\Contracts\Store\QueryAllBuilder;
+use LaravelJsonApi\Core\Query\QueryParameters;
 
 class QueryAll implements QueryAllBuilder
 {
+
+    use HasQueryParameters;
 
     /**
      * @var Schema
@@ -34,31 +36,14 @@ class QueryAll implements QueryAllBuilder
     private Schema $schema;
 
     /**
-     * @var Builder
-     */
-    private Builder $query;
-
-    /**
      * QueryAll constructor.
      *
      * @param Schema $schema
-     * @param Builder $query
      */
-    public function __construct(Schema $schema, Builder $query)
+    public function __construct(Schema $schema)
     {
         $this->schema = $schema;
-        $this->query = $query;
-    }
-
-    /**
-     * @inheritDoc
-     */
-    public function using(QueryParametersContract $query): self
-    {
-        return $this
-            ->with($query->includePaths())
-            ->filter($query->filter())
-            ->sort($query->sortFields());
+        $this->queryParameters = new QueryParameters();
     }
 
     /**
@@ -66,7 +51,7 @@ class QueryAll implements QueryAllBuilder
      */
     public function filter(?array $filters): self
     {
-        $this->query->filter($filters);
+        $this->queryParameters->setFilters($filters);
 
         return $this;
     }
@@ -76,19 +61,26 @@ class QueryAll implements QueryAllBuilder
      */
     public function sort($fields): self
     {
-        $this->query->sort($fields);
+        $this->queryParameters->setSortFields($fields);
 
         return $this;
     }
 
     /**
-     * @inheritDoc
+     * @return JsonApiBuilder
      */
-    public function with($includePaths): self
+    public function query(): JsonApiBuilder
     {
-        $this->query->with($includePaths);
+        $base = $this->schema->newInstance()->newQuery();
 
-        return $this;
+        $query = new JsonApiBuilder(
+            $this->schema,
+            $this->schema->indexQuery($this->request, $base)
+        );
+
+        return $query->withQueryParameters(
+            $this->queryParameters
+        );
     }
 
     /**
@@ -96,7 +88,7 @@ class QueryAll implements QueryAllBuilder
      */
     public function first(): ?object
     {
-        return $this->query->first();
+        return $this->query()->first();
     }
 
     /**
@@ -104,11 +96,13 @@ class QueryAll implements QueryAllBuilder
      */
     public function firstOrMany()
     {
-        if ($this->query->isSingular()) {
-            return $this->first();
+        $query = $this->query();
+
+        if ($query->isSingular()) {
+            return $query->first();
         }
 
-        return $this->cursor();
+        return $query->cursor();
     }
 
     /**
@@ -116,7 +110,7 @@ class QueryAll implements QueryAllBuilder
      */
     public function get(): Collection
     {
-        return $this->query->get();
+        return $this->query()->get();
     }
 
     /**
@@ -124,7 +118,7 @@ class QueryAll implements QueryAllBuilder
      */
     public function cursor(): LazyCollection
     {
-        return $this->query->cursor();
+        return $this->query()->cursor();
     }
 
     /**
@@ -132,7 +126,7 @@ class QueryAll implements QueryAllBuilder
      */
     public function paginate(array $page): Page
     {
-        return $this->query->paginate($page);
+        return $this->query()->paginate($page);
     }
 
     /**
@@ -140,15 +134,17 @@ class QueryAll implements QueryAllBuilder
      */
     public function getOrPaginate(?array $page): iterable
     {
+        $query = $this->query();
+
         if (is_null($page)) {
             $page = $this->schema->defaultPagination();
         }
 
         if (is_null($page)) {
-            return $this->get();
+            return $query->get();
         }
 
-        return $this->paginate($page);
+        return $query->paginate($page);
     }
 
     /**
@@ -156,22 +152,28 @@ class QueryAll implements QueryAllBuilder
      */
     public function firstOrPaginate(?array $page)
     {
+        $query = $this->query();
+
         /**
-         * If page is `null`, then we need to use the schema's default
-         * pagination - UNLESS a singular filter has been used.
-         * That's because if we add default pagination when a singular
-         * filter has been used, they'll get a page when they're
-         * expecting zero-to-one resource.
+         * If page is `null` and a singular filter has been used,
+         * we return the first matching record as the client is expecting
+         * a zero-to-one response.
+         *
+         * If a singular filter has been used but the page parameter
+         * is not null, then the client has explicitly asked for a page so
+         * we want to return a page regardless of the fact that a singular
+         * filter has been used.
          */
-        if (is_null($page) && $this->query->isNotSingular()) {
-            $page = $this->schema->defaultPagination();
+        if (is_null($page) && $query->isSingular()) {
+            return $query->first();
         }
+
+        $page = $page ?? $this->schema->defaultPagination();
 
         if (is_null($page)) {
-            return $this->firstOrMany();
+            return $query->cursor();
         }
 
-        return $this->paginate($page);
+        return $query->paginate($page);
     }
-
 }

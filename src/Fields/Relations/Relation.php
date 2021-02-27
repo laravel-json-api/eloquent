@@ -23,14 +23,15 @@ use Closure;
 use InvalidArgumentException;
 use LaravelJsonApi\Contracts\Resources\JsonApiRelation;
 use LaravelJsonApi\Contracts\Resources\Serializer\Relation as SerializableContract;
+use LaravelJsonApi\Contracts\Schema\PolymorphicRelation;
 use LaravelJsonApi\Contracts\Schema\Relation as RelationContract;
 use LaravelJsonApi\Contracts\Schema\SchemaAware as SchemaAwareContract;
 use LaravelJsonApi\Core\Resources\Relation as ResourceRelation;
 use LaravelJsonApi\Core\Schema\Concerns\EagerLoadable;
 use LaravelJsonApi\Core\Schema\Concerns\Filterable;
 use LaravelJsonApi\Core\Schema\Concerns\RequiredForValidation;
+use LaravelJsonApi\Core\Schema\Concerns\SchemaAware;
 use LaravelJsonApi\Core\Schema\Concerns\SparseField;
-use LaravelJsonApi\Core\Schema\SchemaAware;
 use LaravelJsonApi\Core\Support\Str;
 use LaravelJsonApi\Eloquent\Fields\Concerns\Hideable;
 use LaravelJsonApi\Eloquent\Schema;
@@ -135,11 +136,27 @@ abstract class Relation implements RelationContract, SchemaAwareContract, Serial
      * @param string $resourceType
      * @return $this
      */
-    public function inverseType(string $resourceType): self
+    public function type(string $resourceType): self
     {
+        if (empty($resourceType)) {
+            throw new InvalidArgumentException('Expecting a non-empty string.');
+        }
+
         $this->inverse = $resourceType;
 
         return $this;
+    }
+
+    /**
+     * Set the inverse resource type.
+     *
+     * @param string $resourceType
+     * @return $this
+     * @deprecated 1.0-stable use `type()` instead.
+     */
+    public function inverseType(string $resourceType): self
+    {
+        return $this->type($resourceType);
     }
 
     /**
@@ -152,6 +169,18 @@ abstract class Relation implements RelationContract, SchemaAwareContract, Serial
         }
 
         return $this->inverse = $this->guessInverse();
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function allInverse(): array
+    {
+        if ($this instanceof PolymorphicRelation) {
+            return $this->inverseTypes();
+        }
+
+        return [$this->inverse()];
     }
 
     /**

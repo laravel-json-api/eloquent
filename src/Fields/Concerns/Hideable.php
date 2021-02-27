@@ -49,12 +49,9 @@ trait Hideable
     }
 
     /**
-     * Is the field hidden?
-     *
-     * @param Request|null $request
-     * @return bool
+     * @inheritDoc
      */
-    public function isHidden($request): bool
+    public function isHidden(?Request $request): bool
     {
         if (is_callable($this->hidden)) {
             return true === ($this->hidden)($request);
@@ -64,12 +61,9 @@ trait Hideable
     }
 
     /**
-     * Is the field not hidden?
-     *
-     * @param Request|null $request
-     * @return bool
+     * @inheritDoc
      */
-    public function isNotHidden($request): bool
+    public function isNotHidden(?Request $request): bool
     {
         return !$this->isHidden($request);
     }

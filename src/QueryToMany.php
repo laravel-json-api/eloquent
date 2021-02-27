@@ -28,10 +28,8 @@ use Illuminate\Database\Eloquent\Relations\Relation as EloquentRelation;
 use Illuminate\Support\Collection;
 use Illuminate\Support\LazyCollection;
 use LaravelJsonApi\Contracts\Pagination\Page;
-use LaravelJsonApi\Contracts\Query\QueryParameters;
 use LaravelJsonApi\Contracts\Store\QueryManyBuilder;
-use LaravelJsonApi\Core\Query\IncludePaths;
-use LaravelJsonApi\Core\Query\SortFields;
+use LaravelJsonApi\Core\Query\QueryParameters;
 use LaravelJsonApi\Eloquent\Fields\Relations\ToMany;
 use LogicException;
 use function get_class;
@@ -39,6 +37,8 @@ use function sprintf;
 
 class QueryToMany implements QueryManyBuilder
 {
+
+    use HasQueryParameters;
 
     /**
      * @var Model
@@ -51,21 +51,6 @@ class QueryToMany implements QueryManyBuilder
     private ToMany $relation;
 
     /**
-     * @var array|null
-     */
-    private ?array $filters = null;
-
-    /**
-     * @var SortFields|null
-     */
-    private ?SortFields $sort = null;
-
-    /**
-     * @var IncludePaths|null
-     */
-    private ?IncludePaths $includePaths = null;
-
-    /**
      * QueryToMany constructor.
      *
      * @param Model $model
@@ -75,17 +60,7 @@ class QueryToMany implements QueryManyBuilder
     {
         $this->model = $model;
         $this->relation = $relation;
-    }
-
-    /**
-     * @inheritDoc
-     */
-    public function using(QueryParameters $query): QueryManyBuilder
-    {
-        return $this
-            ->with($query->includePaths())
-            ->filter($query->filter())
-            ->sort($query->sortFields());
+        $this->queryParameters = new QueryParameters();
     }
 
     /**
@@ -93,7 +68,7 @@ class QueryToMany implements QueryManyBuilder
      */
     public function filter(?array $filters): QueryManyBuilder
     {
-        $this->filters = $filters;
+        $this->queryParameters->setFilters($filters);
 
         return $this;
     }
@@ -103,17 +78,7 @@ class QueryToMany implements QueryManyBuilder
      */
     public function sort($fields): QueryManyBuilder
     {
-        $this->sort = SortFields::nullable($fields);
-
-        return $this;
-    }
-
-    /**
-     * @inheritDoc
-     */
-    public function with($includePaths): QueryManyBuilder
-    {
-        $this->includePaths = IncludePaths::nullable($includePaths);
+        $this->queryParameters->setSortFields($fields);
 
         return $this;
     }
@@ -123,7 +88,7 @@ class QueryToMany implements QueryManyBuilder
      */
     public function get(): Collection
     {
-        return $this->prepareQuery()->get();
+        return $this->query()->get();
     }
 
     /**
@@ -131,7 +96,7 @@ class QueryToMany implements QueryManyBuilder
      */
     public function cursor(): LazyCollection
     {
-        return $this->prepareQuery()->cursor();
+        return $this->query()->cursor();
     }
 
     /**
@@ -139,7 +104,7 @@ class QueryToMany implements QueryManyBuilder
      */
     public function paginate(array $page): Page
     {
-        return $this->prepareQuery()->paginate($page);
+        return $this->query()->paginate($page);
     }
 
     /**
@@ -159,26 +124,21 @@ class QueryToMany implements QueryManyBuilder
     }
 
     /**
-     * @return Builder
+     * @return JsonApiBuilder
      */
-    public function query(): Builder
+    public function query(): JsonApiBuilder
     {
-        return new Builder(
-            $this->relation->schema(),
-            $this->getRelation(),
+        $schema = $this->relation->schema();
+
+        $query = new JsonApiBuilder(
+            $schema,
+            $schema->relatableQuery($this->request, $this->getRelation()),
             $this->relation
         );
-    }
 
-    /**
-     * @return Builder
-     */
-    private function prepareQuery(): Builder
-    {
-        return $this->query()
-            ->with($this->includePaths)
-            ->filter($this->filters)
-            ->sort($this->sort);
+        return $query->withQueryParameters(
+            $this->queryParameters
+        );
     }
 
     /**
@@ -186,7 +146,8 @@ class QueryToMany implements QueryManyBuilder
      */
     private function getRelation(): EloquentRelation
     {
-        $relation = $this->model->{$this->relation->name()}();
+        $name = $this->relation->relationName();
+        $relation = $this->model->{$name}();
 
         if ($relation instanceof EloquentHasMany ||
             $relation instanceof EloquentBelongsToMany ||
@@ -199,7 +160,7 @@ class QueryToMany implements QueryManyBuilder
         if ($relation instanceof EloquentRelation) {
             throw new LogicException(sprintf(
                 'Eloquent relation %s on model %s returned a %s relation, which is not a to-many relation.',
-                $this->relation->name(),
+                $name,
                 get_class($this->model),
                 get_class($relation)
             ));
@@ -207,7 +168,7 @@ class QueryToMany implements QueryManyBuilder
 
         throw new LogicException(sprintf(
             'Expecting method %s on model %s to return an Eloquent relation.',
-            $this->relation->name(),
+            $name,
             get_class($this->model)
         ));
     }

@@ -20,12 +20,13 @@ declare(strict_types=1);
 namespace LaravelJsonApi\Eloquent;
 
 use Illuminate\Database\Eloquent\Model;
-use LaravelJsonApi\Contracts\Query\QueryParameters as QueryParametersContract;
 use LaravelJsonApi\Contracts\Store\QueryOneBuilder as QueryOneBuilderContract;
-use LaravelJsonApi\Core\Query\IncludePaths;
+use LaravelJsonApi\Core\Query\QueryParameters;
 
 class QueryOne implements QueryOneBuilderContract
 {
+
+    use HasQueryParameters;
 
     /**
      * @var Schema
@@ -33,9 +34,9 @@ class QueryOne implements QueryOneBuilderContract
     private Schema $schema;
 
     /**
-     * @var Builder
+     * @var JsonApiBuilder
      */
-    private Builder $query;
+    private JsonApiBuilder $query;
 
     /**
      * @var Model|null
@@ -48,26 +49,16 @@ class QueryOne implements QueryOneBuilderContract
     private string $resourceId;
 
     /**
-     * @var array|null
-     */
-    private ?array $filters = null;
-
-    /**
-     * @var IncludePaths|null
-     */
-    private ?IncludePaths $includePaths = null;
-
-    /**
      * QueryOne constructor.
      *
      * @param Schema $schema
-     * @param Builder $query
+     * @param JsonApiBuilder $query
      * @param Model|null $model
      * @param string $resourceId
      */
     public function __construct(
         Schema $schema,
-        Builder $query,
+        JsonApiBuilder $query,
         ?Model $model,
         string $resourceId
     ) {
@@ -75,16 +66,7 @@ class QueryOne implements QueryOneBuilderContract
         $this->query = $query;
         $this->model = $model;
         $this->resourceId = $resourceId;
-    }
-
-    /**
-     * @inheritDoc
-     */
-    public function using(QueryParametersContract $query): QueryOneBuilderContract
-    {
-        return $this
-            ->filter($query->filter())
-            ->with($query->includePaths());
+        $this->queryParameters = new QueryParameters();
     }
 
     /**
@@ -92,17 +74,7 @@ class QueryOne implements QueryOneBuilderContract
      */
     public function filter(?array $filters): QueryOneBuilderContract
     {
-        $this->filters = $filters;
-
-        return $this;
-    }
-
-    /**
-     * @inheritDoc
-     */
-    public function with($includePaths): QueryOneBuilderContract
-    {
-        $this->includePaths = IncludePaths::nullable($includePaths);
+        $this->queryParameters->setFilters($filters);
 
         return $this;
     }
@@ -112,18 +84,18 @@ class QueryOne implements QueryOneBuilderContract
      */
     public function first(): ?object
     {
-        if ($this->model && empty($this->filters)) {
+        if ($this->model && empty($this->queryParameters->filter())) {
             $this->schema->loader()
                 ->forModel($this->model)
-                ->loadMissing($this->includePaths);
+                ->loadMissing($this->queryParameters->includePaths());
 
             return $this->model;
         }
 
         return $this->query
             ->whereResourceId($this->resourceId)
-            ->filter($this->filters)
-            ->with($this->includePaths)
+            ->filter($this->queryParameters->filter())
+            ->with($this->queryParameters->includePaths())
             ->first();
     }
 

@@ -21,16 +21,18 @@ namespace LaravelJsonApi\Eloquent\Hydrators;
 
 use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Database\Eloquent\Model;
-use LaravelJsonApi\Contracts\Query\QueryParameters;
 use LaravelJsonApi\Contracts\Store\ToManyBuilder;
-use LaravelJsonApi\Core\Query\IncludePaths;
+use LaravelJsonApi\Core\Query\QueryParameters;
 use LaravelJsonApi\Core\Support\Str;
 use LaravelJsonApi\Eloquent\Contracts\FillableToMany;
 use LaravelJsonApi\Eloquent\Fields\Relations\ToMany;
+use LaravelJsonApi\Eloquent\HasQueryParameters;
 use UnexpectedValueException;
 
 class ToManyHydrator implements ToManyBuilder
 {
+
+    use HasQueryParameters;
 
     /**
      * @var Model
@@ -41,11 +43,6 @@ class ToManyHydrator implements ToManyBuilder
      * @var ToMany|FillableToMany
      */
     private ToMany $relation;
-
-    /**
-     * @var IncludePaths|null
-     */
-    private ?IncludePaths $includePaths = null;
 
     /**
      * ToManyHydrator constructor.
@@ -64,26 +61,7 @@ class ToManyHydrator implements ToManyBuilder
 
         $this->model = $model;
         $this->relation = $relation;
-    }
-
-    /**
-     * @inheritDoc
-     */
-    public function using(QueryParameters $query): ToManyBuilder
-    {
-        $this->with($query->includePaths());
-
-        return $this;
-    }
-
-    /**
-     * @inheritDoc
-     */
-    public function with($includePaths): ToManyBuilder
-    {
-        $this->includePaths = IncludePaths::nullable($includePaths);
-
-        return $this;
+        $this->queryParameters = new QueryParameters();
     }
 
     /**
@@ -128,12 +106,10 @@ class ToManyHydrator implements ToManyBuilder
      */
     private function prepareResult(EloquentCollection $related): EloquentCollection
     {
-        /**
-         * Always do eager loading, in case we have default include paths.
-         */
+        /** Always do eager loading, in case we have default include paths. */
         if ($related->isNotEmpty()) {
             $this->relation->schema()->loader()->forModels($related)->loadMissing(
-                $this->includePaths
+                $this->queryParameters->includePaths()
             );
         }
 

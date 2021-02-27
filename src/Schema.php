@@ -19,7 +19,10 @@ declare(strict_types=1);
 
 namespace LaravelJsonApi\Eloquent;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\Relation;
+use Illuminate\Http\Request;
 use LaravelJsonApi\Contracts\Store\Repository as RepositoryContract;
 use LaravelJsonApi\Core\Schema\Schema as BaseSchema;
 use LaravelJsonApi\Eloquent\EagerLoading\EagerLoader;
@@ -62,9 +65,9 @@ abstract class Schema extends BaseSchema
     }
 
     /**
-     * @return Builder
+     * @return JsonApiBuilder
      */
-    public static function query(): Builder
+    public static function query(): JsonApiBuilder
     {
         return app(static::class)->newQuery();
     }
@@ -88,11 +91,45 @@ abstract class Schema extends BaseSchema
     }
 
     /**
+     * Get a new JSON:API query builder.
+     *
+     * @return JsonApiBuilder
+     */
+    public function newQuery(): JsonApiBuilder
+    {
+        return new JsonApiBuilder($this, $this->newInstance()->newQuery());
+    }
+
+    /**
+     * Build an index query for this resource.
+     *
+     * Allows the developer to implement resource specific filtering
+     * when querying all resources (an "index" query). This is required
+     * for authorization implementation - i.e. to remove certain resources
+     * that the user is not allowed to access.
+     *
+     * The request will be `null` if querying the resource outside of a HTTP
+     * request - for example, queued broadcasting.
+     *
+     * @param Request|null $request
+     * @param Builder $query
      * @return Builder
      */
-    public function newQuery(): Builder
+    public function indexQuery(?Request $request, Builder $query): Builder
     {
-        return new Builder($this, $this->newInstance()->newQuery());
+        return $query;
+    }
+
+    /**
+     * Build a "relatable" query for this resource.
+     *
+     * @param Request|null $request
+     * @param Relation $query
+     * @return Relation
+     */
+    public function relatableQuery(?Request $request, Relation $query): Relation
+    {
+        return $query;
     }
 
     /**
@@ -164,7 +201,7 @@ abstract class Schema extends BaseSchema
      */
     public function loader(): EagerLoader
     {
-        return new EagerLoader($this->schemas, $this);
+        return new EagerLoader($this->server->schemas(), $this);
     }
 
     /**
@@ -190,6 +227,23 @@ abstract class Schema extends BaseSchema
     public function defaultPagination(): ?array
     {
         return $this->defaultPagination;
+    }
+
+    /**
+     * Will the set of filters result in zero-to-one resource?
+     *
+     * While individual filters can be marked as singular, there may be instances
+     * where the combination of filters should result in a singular response
+     * (zero-to-one resource instead of zero-to-many). Developers can use this
+     * hook to add complex logic for working out if a set of filters should
+     * return a singular resource.
+     *
+     * @param array $filters
+     * @return bool
+     */
+    public function isSingular(array $filters): bool
+    {
+        return false;
     }
 
 }

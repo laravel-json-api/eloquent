@@ -25,17 +25,17 @@ use Illuminate\Database\Eloquent\Relations\HasOne as EloquentHasOne;
 use Illuminate\Database\Eloquent\Relations\HasOneThrough as EloquentHasOneThrough;
 use Illuminate\Database\Eloquent\Relations\MorphOne as EloquentMorphOne;
 use Illuminate\Database\Eloquent\Relations\Relation as EloquentRelation;
-use LaravelJsonApi\Contracts\Query\QueryParameters;
-use LaravelJsonApi\Contracts\Query\QueryParameters as QueryParametersContract;
 use LaravelJsonApi\Contracts\Store\QueryOneBuilder;
 use LaravelJsonApi\Contracts\Store\QueryOneBuilder as QueryOneBuilderContract;
-use LaravelJsonApi\Core\Query\IncludePaths;
+use LaravelJsonApi\Core\Query\QueryParameters;
 use LaravelJsonApi\Eloquent\Fields\Relations\ToOne;
 use LogicException;
 use function sprintf;
 
 class QueryToOne implements QueryOneBuilder
 {
+
+    use HasQueryParameters;
 
     /**
      * @var Model
@@ -48,16 +48,6 @@ class QueryToOne implements QueryOneBuilder
     private ToOne $relation;
 
     /**
-     * @var array|null
-     */
-    private ?array $filters = null;
-
-    /**
-     * @var IncludePaths|null
-     */
-    private ?IncludePaths $includePaths = null;
-
-    /**
      * QueryToOne constructor.
      *
      * @param Model $model
@@ -67,16 +57,7 @@ class QueryToOne implements QueryOneBuilder
     {
         $this->model = $model;
         $this->relation = $relation;
-    }
-
-    /**
-     * @inheritDoc
-     */
-    public function using(QueryParametersContract $query): QueryOneBuilderContract
-    {
-        return $this
-            ->filter($query->filter())
-            ->with($query->includePaths());
+        $this->queryParameters = new QueryParameters();
     }
 
     /**
@@ -84,17 +65,7 @@ class QueryToOne implements QueryOneBuilder
      */
     public function filter(?array $filters): QueryOneBuilderContract
     {
-        $this->filters = $filters;
-
-        return $this;
-    }
-
-    /**
-     * @inheritDoc
-     */
-    public function with($includePaths): QueryOneBuilderContract
-    {
-        $this->includePaths = IncludePaths::nullable($includePaths);
+        $this->queryParameters->setFilters($filters);
 
         return $this;
     }
@@ -104,33 +75,27 @@ class QueryToOne implements QueryOneBuilder
      */
     public function first(): ?object
     {
-        if ($this->model->relationLoaded($this->relation->name()) && empty($this->filters)) {
+        if ($this->model->relationLoaded($this->relation->name()) && empty($this->queryParameters->filter())) {
             return $this->related();
         }
 
-        return $this->prepareQuery()->first();
+        return $this->query()->first();
     }
 
     /**
-     * @return Builder
+     * @return JsonApiBuilder
      */
-    public function query(): Builder
+    public function query(): JsonApiBuilder
     {
-        return new Builder(
+        $query = new JsonApiBuilder(
             $this->relation->schema(),
             $this->getRelation(),
             $this->relation
         );
-    }
 
-    /**
-     * @return Builder
-     */
-    private function prepareQuery(): Builder
-    {
-        return $this->query()
-            ->filter($this->filters)
-            ->with($this->includePaths);
+        $query->withQueryParameters($this->queryParameters);
+
+        return $query;
     }
 
     /**
@@ -138,7 +103,8 @@ class QueryToOne implements QueryOneBuilder
      */
     private function getRelation(): EloquentRelation
     {
-        $relation = $this->model->{$this->relation->name()}();
+        $name = $this->relation->relationName();
+        $relation = $this->model->{$name}();
 
         if ($relation instanceof EloquentHasOne ||
             $relation instanceof EloquentBelongsTo ||
@@ -151,7 +117,7 @@ class QueryToOne implements QueryOneBuilder
         if ($relation instanceof EloquentRelation) {
             throw new LogicException(sprintf(
                 'Eloquent relation %s on model %s returned a %s relation, which is not a to-one relation.',
-                $this->relation->name(),
+                $name,
                 get_class($this->model),
                 get_class($relation)
             ));
@@ -159,7 +125,7 @@ class QueryToOne implements QueryOneBuilder
 
         throw new LogicException(sprintf(
             'Expecting method %s on model %s to return an Eloquent relation.',
-            $this->relation->name(),
+            $name,
             get_class($this->model)
         ));
     }
@@ -175,7 +141,7 @@ class QueryToOne implements QueryOneBuilder
             $this->relation->schema()
                 ->loader()
                 ->forModel($related)
-                ->loadMissing($this->includePaths);
+                ->loadMissing($this->queryParameters->includePaths());
 
             return $related;
         }

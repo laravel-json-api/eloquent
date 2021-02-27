@@ -20,13 +20,14 @@ declare(strict_types=1);
 namespace LaravelJsonApi\Eloquent;
 
 use Illuminate\Contracts\Support\Arrayable;
-use Illuminate\Database\Eloquent\Builder as EloquentBuilder;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\Relation as EloquentRelation;
+use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Support\LazyCollection;
 use Illuminate\Support\Traits\ForwardsCalls;
 use InvalidArgumentException;
 use LaravelJsonApi\Contracts\Pagination\Page;
+use LaravelJsonApi\Contracts\Query\QueryParameters as QueryParametersContract;
 use LaravelJsonApi\Contracts\Schema\Relation as SchemaRelation;
 use LaravelJsonApi\Core\Query\IncludePaths;
 use LaravelJsonApi\Core\Query\QueryParameters;
@@ -40,11 +41,11 @@ use LogicException;
 use RuntimeException;
 
 /**
- * Class Builder
+ * Class JsonApiBuilder
  *
- * @mixin EloquentBuilder
+ * @mixin Builder
  */
-class Builder
+class JsonApiBuilder
 {
 
     use ForwardsCalls;
@@ -55,7 +56,7 @@ class Builder
     private Schema $schema;
 
     /**
-     * @var EloquentBuilder|EloquentRelation
+     * @var Builder|Relation
      */
     private $query;
 
@@ -80,10 +81,10 @@ class Builder
     private bool $eagerLoading = false;
 
     /**
-     * Builder constructor.
+     * JsonApiBuilder constructor.
      *
      * @param Schema $schema
-     * @param EloquentBuilder|EloquentRelation|Model $query
+     * @param Builder|Relation|Model $query
      * @param SchemaRelation|null $relation
      */
     public function __construct(Schema $schema, $query, SchemaRelation $relation = null)
@@ -92,11 +93,11 @@ class Builder
             $query = $query->newQuery();
         }
 
-        if ($query instanceof EloquentRelation && !$relation) {
+        if ($query instanceof Relation && !$relation) {
             throw new InvalidArgumentException('Expecting a schema relation when querying an Eloquent relation.');
         }
 
-        if ($relation && !$query instanceof EloquentRelation) {
+        if ($relation && !$query instanceof Relation) {
             throw new InvalidArgumentException('Expecting an Eloquent relation when querying a schema relation.');
         }
 
@@ -120,6 +121,21 @@ class Builder
         }
 
         return $result;
+    }
+
+    /**
+     * Apply the provide query parameters.
+     *
+     * @param QueryParametersContract $query
+     * @return $this
+     */
+    public function withQueryParameters(QueryParametersContract $query): self
+    {
+        $this->filter($query->filter())
+            ->sort($query->sortFields())
+            ->with($query->includePaths());
+
+        return $this;
     }
 
     /**
@@ -166,6 +182,10 @@ class Builder
                 $this->schema->type(),
                 $unrecognised->implode(', ')
             ));
+        }
+
+        if (true === $this->schema->isSingular($filters)) {
+            $this->singular = true;
         }
 
         $this->parameters->setFilters($filters);
@@ -363,11 +383,11 @@ class Builder
     }
 
     /**
-     * @return EloquentBuilder
+     * @return Builder
      */
-    public function toBase(): EloquentBuilder
+    public function toBase(): Builder
     {
-        if ($this->query instanceof EloquentRelation) {
+        if ($this->query instanceof Relation) {
             return $this->query->getQuery();
         }
 
@@ -379,10 +399,14 @@ class Builder
      */
     private function filters(): iterable
     {
-        yield from $this->schema->filters();
+        foreach ($this->schema->filters() as $filter) {
+            yield $filter;
+        }
 
         if ($this->relation) {
-            yield from $this->relation->filters();
+            foreach ($this->relation->filters() as $filter) {
+                yield $filter;
+            }
         }
     }
 

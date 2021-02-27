@@ -28,18 +28,18 @@ interface Fillable
     /**
      * Is the field read-only?
      *
-     * @param Request $request
+     * @param Request|null $request
      * @return bool
      */
-    public function isReadOnly($request): bool;
+    public function isReadOnly(?Request $request): bool;
 
     /**
      * Is the field not read-only.
      *
-     * @param Request $request
+     * @param Request|null $request
      * @return bool
      */
-    public function isNotReadOnly($request): bool;
+    public function isNotReadOnly(?Request $request): bool;
 
     /**
      * Fill the model with the value of the JSON API field.

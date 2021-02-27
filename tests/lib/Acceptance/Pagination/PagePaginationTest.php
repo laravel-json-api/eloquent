@@ -63,13 +63,13 @@ class PagePaginationTest extends TestCase
         $this->posts = $this
             ->getMockBuilder(PostSchema::class)
             ->onlyMethods(['pagination', 'defaultPagination'])
-            ->setConstructorArgs(['schemas' => $this->schemas()])
+            ->setConstructorArgs(['server' => $this->server()])
             ->getMock();
 
         $this->videos = $this
             ->getMockBuilder(VideoSchema::class)
             ->onlyMethods(['pagination', 'defaultPagination'])
-            ->setConstructorArgs(['schemas' => $this->schemas()])
+            ->setConstructorArgs(['server' => $this->server()])
             ->getMock();
 
         $this->posts->method('pagination')->willReturn($this->paginator);
@@ -161,6 +161,24 @@ class PagePaginationTest extends TestCase
 
         $this->assertInstanceOf(Post::class, $actual);
         $this->assertTrue($post->is($actual));
+    }
+
+    /**
+     * Same as previous test but the filter does not match any models.
+     */
+    public function testDefaultPaginationWithSingularFilterThatDoesNotMatch(): void
+    {
+        $this->posts->method('defaultPagination')->willReturn(['number' => 1]);
+
+        $post = Post::factory()->make();
+
+        $actual = $this->posts
+            ->repository()
+            ->queryAll()
+            ->filter(['slug' => $post->slug])
+            ->firstOrPaginate(null);
+
+        $this->assertNull($actual);
     }
 
     /**

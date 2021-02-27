@@ -19,13 +19,12 @@ declare(strict_types=1);
 
 namespace LaravelJsonApi\Eloquent\Tests\Acceptance;
 
-use App\Schemas\UserSchema;
+use App\Schemas;
 use Illuminate\Support\Arr;
 use LaravelJsonApi\Contracts\Schema\Container as SchemaContainerContract;
+use LaravelJsonApi\Contracts\Server\Server;
 use LaravelJsonApi\Core\Schema\Container as SchemaContainer;
 use Orchestra\Testbench\TestCase as BaseTestCase;
-use App\Schemas;
-use PHPUnit\Framework\MockObject\MockObject;
 
 class TestCase extends BaseTestCase
 {
@@ -39,20 +38,29 @@ class TestCase extends BaseTestCase
 
         $this->loadMigrationsFrom(__DIR__ . '/../../database/migrations');
 
-        $this->app->singleton(SchemaContainerContract::class, fn($container) => new SchemaContainer($container, [
-            Schemas\CarOwnerSchema::class,
-            Schemas\CarSchema::class,
-            Schemas\CommentSchema::class,
-            Schemas\CountrySchema::class,
-            Schemas\ImageSchema::class,
-            Schemas\MechanicSchema::class,
-            Schemas\PhoneSchema::class,
-            Schemas\PostSchema::class,
-            Schemas\RoleSchema::class,
-            Schemas\TagSchema::class,
-            Schemas\UserSchema::class,
-            Schemas\VideoSchema::class,
-        ]));
+        $this->app->singleton(
+            SchemaContainerContract::class,
+            fn($container) => new SchemaContainer($container, $container->make(Server::class), [
+                Schemas\CarOwnerSchema::class,
+                Schemas\CarSchema::class,
+                Schemas\CommentSchema::class,
+                Schemas\CountrySchema::class,
+                Schemas\ImageSchema::class,
+                Schemas\MechanicSchema::class,
+                Schemas\PhoneSchema::class,
+                Schemas\PostSchema::class,
+                Schemas\RoleSchema::class,
+                Schemas\TagSchema::class,
+                Schemas\UserSchema::class,
+                Schemas\VideoSchema::class,
+            ])
+        );
+
+        $this->app->singleton(Server::class, function () {
+            $server = $this->createMock(Server::class);
+            $server->method('schemas')->willReturnCallback(fn() => $this->schemas());
+            return $server;
+        });
     }
 
     /**
@@ -64,6 +72,14 @@ class TestCase extends BaseTestCase
     }
 
     /**
+     * @return Server
+     */
+    protected function server(): Server
+    {
+        return $this->app->make(Server::class);
+    }
+
+    /**
      * @param string $class
      * @param string|string[] $paths
      * @return void
@@ -72,7 +88,7 @@ class TestCase extends BaseTestCase
     {
         $mock = $this
             ->getMockBuilder($class)
-            ->setConstructorArgs(['schemas' => $this->schemas()])
+            ->setConstructorArgs(['server' => $this->server()])
             ->onlyMethods(['with'])
             ->getMock();
 

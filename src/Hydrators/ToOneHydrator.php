@@ -20,17 +20,19 @@ declare(strict_types=1);
 namespace LaravelJsonApi\Eloquent\Hydrators;
 
 use Illuminate\Database\Eloquent\Model;
-use LaravelJsonApi\Contracts\Query\QueryParameters;
 use LaravelJsonApi\Contracts\Store\ToOneBuilder;
-use LaravelJsonApi\Core\Query\IncludePaths;
+use LaravelJsonApi\Core\Query\QueryParameters;
 use LaravelJsonApi\Core\Support\Str;
 use LaravelJsonApi\Eloquent\Contracts\FillableToOne;
 use LaravelJsonApi\Eloquent\Fields\Relations\MorphTo;
 use LaravelJsonApi\Eloquent\Fields\Relations\ToOne;
+use LaravelJsonApi\Eloquent\HasQueryParameters;
 use UnexpectedValueException;
 
 class ToOneHydrator implements ToOneBuilder
 {
+
+    use HasQueryParameters;
 
     /**
      * @var Model
@@ -41,11 +43,6 @@ class ToOneHydrator implements ToOneBuilder
      * @var ToOne|FillableToOne
      */
     private ToOne $relation;
-
-    /**
-     * @var IncludePaths|null
-     */
-    private ?IncludePaths $includePaths = null;
 
     /**
      * ToOneHydrator constructor.
@@ -64,26 +61,7 @@ class ToOneHydrator implements ToOneBuilder
 
         $this->model = $model;
         $this->relation = $relation;
-    }
-
-    /**
-     * @inheritDoc
-     */
-    public function using(QueryParameters $query): ToOneBuilder
-    {
-        $this->with($query->includePaths());
-
-        return $this;
-    }
-
-    /**
-     * @inheritDoc
-     */
-    public function with($includePaths): ToOneBuilder
-    {
-        $this->includePaths = IncludePaths::nullable($includePaths);
-
-        return $this;
+        $this->queryParameters = new QueryParameters();
     }
 
     /**
@@ -124,7 +102,9 @@ class ToOneHydrator implements ToOneBuilder
                 ->loader();
         }
 
-        $loader->forModel($related)->loadMissing($this->includePaths);
+        $loader->forModel($related)->loadMissing(
+            $this->queryParameters->includePaths()
+        );
 
         return $related;
     }
