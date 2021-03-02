@@ -21,11 +21,12 @@ namespace LaravelJsonApi\Eloquent\Tests\Integration\Fields;
 
 use App\Models\Post;
 use Carbon\Carbon;
+use Carbon\CarbonInterface;
 use Illuminate\Http\Request;
-use LaravelJsonApi\Eloquent\Fields\DateTime;
+use LaravelJsonApi\Eloquent\Fields\SoftDelete;
 use LaravelJsonApi\Eloquent\Tests\Integration\TestCase;
 
-class DateTimeTest extends TestCase
+class SoftDeleteTest extends TestCase
 {
 
     /**
@@ -35,20 +36,32 @@ class DateTimeTest extends TestCase
     {
         parent::setUp();
 
+        Carbon::setTestNow('2020-03-02 12:00:00');
+
         config()->set('app.timezone', 'UTC');
+    }
+
+    /**
+     * @return void
+     */
+    protected function tearDown(): void
+    {
+        parent::tearDown();
+
+        Carbon::setTestNow();
     }
 
     public function test(): void
     {
         $request = $this->createMock(Request::class);
-        $attr = DateTime::make('publishedAt');
+        $attr = SoftDelete::make('deletedAt');
 
-        $this->assertInstanceOf(DateTime::class, $attr);
-        $this->assertSame('publishedAt', $attr->name());
-        $this->assertSame('publishedAt', $attr->serializedFieldName());
-        $this->assertSame('published_at', $attr->column());
+        $this->assertInstanceOf(SoftDelete::class, $attr);
+        $this->assertSame('deletedAt', $attr->name());
+        $this->assertSame('deletedAt', $attr->serializedFieldName());
+        $this->assertSame('deleted_at', $attr->column());
         $this->assertTrue($attr->isSparseField());
-        $this->assertSame(['published_at'], $attr->columnsForField());
+        $this->assertSame(['deleted_at'], $attr->columnsForField());
         $this->assertFalse($attr->isSortable());
         $this->assertFalse($attr->isReadOnly($request));
         $this->assertTrue($attr->isNotReadOnly($request));
@@ -58,16 +71,16 @@ class DateTimeTest extends TestCase
 
     public function testColumn(): void
     {
-        $attr = DateTime::make('published', 'published_at');
+        $attr = SoftDelete::make('published', 'deleted_at');
 
         $this->assertSame('published', $attr->name());
-        $this->assertSame('published_at', $attr->column());
-        $this->assertSame(['published_at'], $attr->columnsForField());
+        $this->assertSame('deleted_at', $attr->column());
+        $this->assertSame(['deleted_at'], $attr->columnsForField());
     }
 
     public function testNotSparseField(): void
     {
-        $attr = DateTime::make('publishedAt')->notSparseField();
+        $attr = SoftDelete::make('deletedAt')->notSparseField();
 
         $this->assertFalse($attr->isSparseField());
     }
@@ -76,13 +89,13 @@ class DateTimeTest extends TestCase
     {
         $query = Post::query();
 
-        $attr = DateTime::make('publishedAt')->sortable();
+        $attr = SoftDelete::make('deletedAt')->sortable();
 
         $this->assertTrue($attr->isSortable());
         $attr->sort($query, 'desc');
 
         $this->assertSame(
-            [['column' => 'posts.published_at', 'direction' => 'desc']],
+            [['column' => 'posts.deleted_at', 'direction' => 'desc']],
             $query->toBase()->orders
         );
     }
@@ -90,11 +103,11 @@ class DateTimeTest extends TestCase
     public function testNull(): void
     {
         $model = $this->createMock(Post::class);
-        $model->expects($this->once())->method('fill')->with(
-            $this->equalTo(['published_at' => null])
-        )->willReturnSelf();
+        $model->expects($this->once())->method('__set')->with(
+            'deleted_at', null
+        );
 
-        $attr = DateTime::make('publishedAt')->retainTimezone();
+        $attr = SoftDelete::make('deletedAt')->retainTimezone();
 
         $attr->fill($model, null);
     }
@@ -102,15 +115,14 @@ class DateTimeTest extends TestCase
     public function testAppTimezone(): void
     {
         $model = $this->createMock(Post::class);
-        $model->expects($this->once())->method('fill')->with($this->callback(function ($value) {
-            $this->assertIsArray($value);
-            $this->assertArrayHasKey('published_at', $value);
-            $this->assertSame('2020-11-23 16:48:17', $value['published_at']->toDateTimeString());
-            $this->assertSame('UTC', $value['published_at']->getTimezone()->getName());
+        $model->expects($this->once())->method('__set')->with('deleted_at', $this->callback(function ($value) {
+            $this->assertInstanceOf(CarbonInterface::class, $value);
+            $this->assertSame('2020-11-23 16:48:17', $value->toDateTimeString());
+            $this->assertSame('UTC', $value->getTimezone()->getName());
             return true;
         }))->willReturnSelf();
 
-        $attr = DateTime::make('publishedAt');
+        $attr = SoftDelete::make('deletedAt');
 
         $attr->fill($model, '2020-11-23T11:48:17.000000-05:00');
     }
@@ -118,15 +130,14 @@ class DateTimeTest extends TestCase
     public function testSpecifiedTimezone(): void
     {
         $model = $this->createMock(Post::class);
-        $model->expects($this->once())->method('fill')->with($this->callback(function ($value) {
-            $this->assertIsArray($value);
-            $this->assertArrayHasKey('published_at', $value);
-            $this->assertSame('2020-11-23 01:48:17', $value['published_at']->toDateTimeString());
-            $this->assertSame('America/New_York', $value['published_at']->getTimezone()->getName());
+        $model->expects($this->once())->method('__set')->with('deleted_at', $this->callback(function ($value) {
+            $this->assertInstanceOf(CarbonInterface::class, $value);
+            $this->assertSame('2020-11-23 01:48:17', $value->toDateTimeString());
+            $this->assertSame('America/New_York', $value->getTimezone()->getName());
             return true;
         }))->willReturnSelf();
 
-        $attr = DateTime::make('publishedAt')->useTimezone('America/New_York');
+        $attr = SoftDelete::make('deletedAt')->useTimezone('America/New_York');
 
         // 10 hours ahead of New York. (5 ahead of UTC, then New York is 5 behind UTC)
         $attr->fill($model, '2020-11-23T11:48:17.000000+05:00');
@@ -135,15 +146,14 @@ class DateTimeTest extends TestCase
     public function testRetainTimezone(): void
     {
         $model = $this->createMock(Post::class);
-        $model->expects($this->once())->method('fill')->with($this->callback(function ($value) {
-            $this->assertIsArray($value);
-            $this->assertArrayHasKey('published_at', $value);
-            $this->assertSame('2020-11-23 11:48:17', $value['published_at']->toDateTimeString());
-            $this->assertSame('-05:00', $value['published_at']->getTimezone()->getName());
+        $model->expects($this->once())->method('__set')->with('deleted_at', $this->callback(function ($value) {
+            $this->assertInstanceOf(CarbonInterface::class, $value);
+            $this->assertSame('2020-11-23 11:48:17', $value->toDateTimeString());
+            $this->assertSame('-05:00', $value->getTimezone()->getName());
             return true;
         }))->willReturnSelf();
 
-        $attr = DateTime::make('publishedAt')->retainTimezone();
+        $attr = SoftDelete::make('deletedAt')->retainTimezone();
 
         $attr->fill($model, '2020-11-23T11:48:17.000000-05:00');
     }
@@ -170,53 +180,103 @@ class DateTimeTest extends TestCase
     public function testFillWithInvalid($value): void
     {
         $model = new Post();
-        $attr = DateTime::make('publishedAt');
+        $attr = SoftDelete::make('deletedAt');
 
         $this->expectException(\UnexpectedValueException::class);
         $attr->fill($model, $value);
     }
 
-    public function testFillRespectsMassAssignment(): void
+    public function testBooleanIsTrue(): void
     {
-        $model = new Post();
-        $attr = DateTime::make('createdAt');
+        $attr = SoftDelete::make('archived', 'deleted_at')->asBoolean();
 
-        $attr->fill($model, '2020-11-23T11:48:17.238552Z');
-        $this->assertArrayNotHasKey('created_at', $model->getAttributes());
+        $model = $this->createMock(Post::class);
+        $model->expects($this->once())->method('__set')->with('deleted_at', $this->callback(function ($value) {
+            $this->assertInstanceOf(Carbon::class, $value);
+            $this->assertEquals(Carbon::now(), $value);
+            return true;
+        }))->willReturnSelf();
+
+        $attr->fill($model, true);
     }
 
-    public function testUnguarded(): void
+    public function testBooleanIsFalse(): void
+    {
+        $attr = SoftDelete::make('archived', 'deleted_at')->asBoolean();
+
+        $model = $this->createMock(Post::class);
+        $model->expects($this->once())->method('__set')->with('deleted_at', $this->callback(function ($value) {
+            $this->assertNull($value);
+            return true;
+        }))->willReturnSelf();
+
+        $attr->fill($model, false);
+    }
+
+    public function testBooleanIsNull(): void
+    {
+        $attr = SoftDelete::make('archived', 'deleted_at')->asBoolean();
+
+        $model = $this->createMock(Post::class);
+        $model->expects($this->once())->method('__set')->with('deleted_at', $this->callback(function ($value) {
+            $this->assertNull($value);
+            return true;
+        }))->willReturnSelf();
+
+        $attr->fill($model, null);
+    }
+
+    /**
+     * @return array
+     */
+    public function invalidBooleanProvider(): array
+    {
+        return [
+            ['2020-11-23T11:48:17.000000-05:00'],
+            [1],
+            [1.0],
+            [[]],
+            [new \DateTime()],
+            [''],
+        ];
+    }
+
+    /**
+     * @param $value
+     * @dataProvider invalidBooleanProvider
+     */
+    public function testFillWithInvalidBoolean($value): void
     {
         $model = new Post();
-        $attr = DateTime::make('createdAt')->unguarded();
+        $attr = SoftDelete::make('archived', 'deleted_at')->asBoolean();
 
-        $attr->fill($model, '2020-11-23T11:48:17.000000Z');
-        $this->assertEquals(Carbon::parse('2020-11-23T11:48:17.000000Z'), $model->created_at);
+        $this->expectException(\UnexpectedValueException::class);
+        $attr->fill($model, $value);
     }
 
     public function testDeserializeUsing(): void
     {
         $model = new Post();
-        $attr = DateTime::make('published_at')->deserializeUsing(
+        $attr = SoftDelete::make('deleted_at')->deserializeUsing(
             fn($value) => Carbon::parse($value)->addHour()
         );
 
         $attr->fill($model, '2020-11-23T11:48:17.000000Z');
-        $this->assertEquals(Carbon::parse('2020-11-23T12:48:17.000000Z'), $model->published_at);
+        $this->assertEquals(Carbon::parse('2020-11-23T12:48:17.000000Z'), $model->deleted_at);
     }
 
     public function testFillUsing(): void
     {
         $post = new Post();
-        $attr = DateTime::make('publishedAt')->fillUsing(function ($model, $column, $value) use ($post) {
+        $attr = SoftDelete::make('deletedAt')->fillUsing(function ($model, $column, $value) use ($post) {
             $this->assertSame($post, $model);
-            $this->assertSame('published_at', $column);
+            $this->assertSame('deleted_at', $column);
             $this->assertEquals(Carbon::parse('2020-11-23T11:48:17.000000Z'), $value);
-            $model->published_at = $value->subDay();
+            $model->deleted_at = $value->subDay();
         });
 
         $attr->fill($post, '2020-11-23T11:48:17.000000Z');
-        $this->assertSame('2020-11-22T11:48:17.000000Z', $post->published_at->toJSON());
+        $this->assertSame('2020-11-22T11:48:17.000000Z', $post->deleted_at->toJSON());
     }
 
     public function testReadOnly(): void
@@ -224,7 +284,7 @@ class DateTimeTest extends TestCase
         $request = $this->createMock(Request::class);
         $request->expects($this->never())->method($this->anything());
 
-        $attr = DateTime::make('pnulishedAt')->readOnly();
+        $attr = SoftDelete::make('pnulishedAt')->readOnly();
 
         $this->assertTrue($attr->isReadOnly($request));
         $this->assertFalse($attr->isNotReadOnly($request));
@@ -237,7 +297,7 @@ class DateTimeTest extends TestCase
             ->method('wantsJson')
             ->willReturnOnConsecutiveCalls(true, false);
 
-        $attr = DateTime::make('pnulishedAt')->readOnly(
+        $attr = SoftDelete::make('pnulishedAt')->readOnly(
             fn($request) => $request->wantsJson()
         );
 
@@ -253,7 +313,7 @@ class DateTimeTest extends TestCase
             ->with('POST')
             ->willReturnOnConsecutiveCalls(true, false);
 
-        $attr = DateTime::make('published_at')->readOnlyOnCreate();
+        $attr = SoftDelete::make('deleted_at')->readOnlyOnCreate();
 
         $this->assertTrue($attr->isReadOnly($request));
         $this->assertFalse($attr->isReadOnly($request));
@@ -267,7 +327,7 @@ class DateTimeTest extends TestCase
             ->with('PATCH')
             ->willReturnOnConsecutiveCalls(true, false);
 
-        $attr = DateTime::make('publishedAt')->readOnlyOnUpdate();
+        $attr = SoftDelete::make('deletedAt')->readOnlyOnUpdate();
 
         $this->assertTrue($attr->isReadOnly($request));
         $this->assertFalse($attr->isReadOnly($request));
@@ -276,19 +336,20 @@ class DateTimeTest extends TestCase
     public function testSerialize(): void
     {
         $model = new Post();
-        $attr = DateTime::make('publishedAt');
+        $attr = SoftDelete::make('deletedAt');
 
         $this->assertNull($attr->serialize($model));
 
-        $model->published_at = '2020-02-01 15:55:00';
+        $model->deleted_at = '2020-02-01 15:55:00';
 
         $this->assertEquals(new Carbon('2020-02-01 15:55:00'), $attr->serialize($model));
     }
 
     public function testSerializeUsing(): void
     {
-        $model = new Post(['published_at' => '2020-02-01 15:55:00']);
-        $attr = DateTime::make('publishedAt');
+        $model = new Post();
+        $model->forceFill(['deleted_at' => '2020-02-01 15:55:00']);
+        $attr = SoftDelete::make('deletedAt');
 
         $attr->serializeUsing(function ($value) {
             $this->assertEquals(new Carbon('2020-02-01 15:55:00'), $value);
@@ -298,12 +359,24 @@ class DateTimeTest extends TestCase
         $this->assertEquals(new Carbon('2020-02-01 00:00:00'), $attr->serialize($model));
     }
 
+    public function testSerializeAsBoolean(): void
+    {
+        $model = new Post();
+        $attr = SoftDelete::make('archived', 'deleted_at')->asBoolean();
+
+        $this->assertFalse($attr->serialize($model));
+
+        $model->deleted_at = '2020-02-01 15:55:00';
+
+        $this->assertTrue($attr->serialize($model));
+    }
+
     public function testHidden(): void
     {
         $request = $this->createMock(Request::class);
         $request->expects($this->never())->method($this->anything());
 
-        $attr = DateTime::make('publishedAt')->hidden();
+        $attr = SoftDelete::make('deletedAt')->hidden();
 
         $this->assertTrue($attr->isHidden($request));
     }
@@ -313,7 +386,7 @@ class DateTimeTest extends TestCase
         $mock = $this->createMock(Request::class);
         $mock->expects($this->once())->method('isMethod')->with('POST')->willReturn(true);
 
-        $attr = DateTime::make('publishedAt')->hidden(
+        $attr = SoftDelete::make('deletedAt')->hidden(
             fn($request) => $request->isMethod('POST')
         );
 

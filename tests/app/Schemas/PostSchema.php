@@ -27,14 +27,21 @@ use LaravelJsonApi\Eloquent\Fields\Relations\BelongsTo;
 use LaravelJsonApi\Eloquent\Fields\Relations\BelongsToMany;
 use LaravelJsonApi\Eloquent\Fields\Relations\HasMany;
 use LaravelJsonApi\Eloquent\Fields\Relations\HasOne;
+use LaravelJsonApi\Eloquent\Fields\SoftDelete;
 use LaravelJsonApi\Eloquent\Fields\Str;
+use LaravelJsonApi\Eloquent\Filters\OnlyTrashed;
 use LaravelJsonApi\Eloquent\Filters\Where;
 use LaravelJsonApi\Eloquent\Filters\WhereIn;
+use LaravelJsonApi\Eloquent\Filters\WhereTrashed;
+use LaravelJsonApi\Eloquent\Filters\WithTrashed;
 use LaravelJsonApi\Eloquent\Pagination\PagePagination;
 use LaravelJsonApi\Eloquent\Schema;
+use LaravelJsonApi\Eloquent\SoftDeletes;
 
 class PostSchema extends Schema
 {
+
+    use SoftDeletes;
 
     /**
      * The model the schema corresponds to.
@@ -59,6 +66,7 @@ class PostSchema extends Schema
             DateTime::make('createdAt')->sortable()->readOnly(),
             HasMany::make('comments'),
             Str::make('content'),
+            SoftDelete::make('deletedAt')->sortable(),
             HasOne::make('image'),
             Str::make('slug')->sortable(),
             BelongsToMany::make('tags')->fields(new ApprovedPivot()),
@@ -74,8 +82,11 @@ class PostSchema extends Schema
     {
         return [
             WhereIn::make('id', $this->idColumn()),
+            OnlyTrashed::make('onlyTrashed'),
             Where::make('slug')->singular(),
             WhereIn::make('slugs')->delimiter(','),
+            WhereTrashed::make('trashed'),
+            WithTrashed::make('withTrashed'),
         ];
     }
 

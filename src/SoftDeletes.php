@@ -17,29 +17,18 @@
 
 declare(strict_types=1);
 
-namespace App\Models;
+namespace LaravelJsonApi\Eloquent;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\HasManyThrough;
-use Illuminate\Database\Eloquent\SoftDeletes;
+use LaravelJsonApi\Contracts\Store\Repository as RepositoryContract;
 
-class Country extends Model
+trait SoftDeletes
 {
 
-    use HasFactory;
-    use SoftDeletes;
-
     /**
-     * @var string[]
+     * @return RepositoryContract
      */
-    protected $fillable = ['name'];
-
-    /**
-     * @return HasManyThrough
-     */
-    public function posts(): HasManyThrough
+    public function repository(): RepositoryContract
     {
-        return $this->hasManyThrough(Post::class, User::class);
+        return new SoftDeleteRepository($this);
     }
 }

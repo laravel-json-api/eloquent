@@ -61,12 +61,12 @@ class Repository implements
     /**
      * @var Schema
      */
-    private Schema $schema;
+    protected Schema $schema;
 
     /**
      * @var Model
      */
-    private Model $model;
+    protected Model $model;
 
     /**
      * Repository constructor.
@@ -85,7 +85,7 @@ class Repository implements
     public function find(string $resourceId): ?object
     {
         if ($this->schema->id()->match($resourceId)) {
-            return $this->query()->whereResourceId($resourceId)->first();
+            return $this->findQuery($resourceId)->first();
         }
 
         return null;
@@ -118,7 +118,7 @@ class Repository implements
             ->filter(fn($resourceId) => $field->match($resourceId))
             ->all();
 
-        return $this->query()->whereResourceId($ids)->get();
+        return $this->findManyQuery($ids)->get();
     }
 
     /**
@@ -127,7 +127,7 @@ class Repository implements
     public function exists(string $resourceId): bool
     {
         if ($this->schema->id()->match($resourceId)) {
-            return $this->query()->whereResourceId($resourceId)->exists();
+            return $this->findQuery($resourceId)->exists();
         }
 
         return false;
@@ -230,7 +230,7 @@ class Repository implements
     {
         $model = $this->retrieve($modelOrResourceId);
 
-        if (true !== $model->getConnection()->transaction(fn() => $model->forceDelete())) {
+        if (true !== $model->getConnection()->transaction(fn() => $this->destroy($model))) {
             throw new RuntimeException('Failed to delete resource.');
         }
     }
@@ -258,10 +258,43 @@ class Repository implements
     }
 
     /**
+     * Get a query to find the supplied resource id.
+     *
+     * @param string $resourceId
+     * @return JsonApiBuilder
+     */
+    protected function findQuery(string $resourceId): JsonApiBuilder
+    {
+        return $this->query()->whereResourceId($resourceId);
+    }
+
+    /**
+     * Get a query to find the supplied resource ids.
+     *
+     * @param array $resourceIds
+     * @return JsonApiBuilder
+     */
+    protected function findManyQuery(array $resourceIds): JsonApiBuilder
+    {
+        return $this->query()->whereResourceId($resourceIds);
+    }
+
+    /**
+     * Destroy the model.
+     *
+     * @param Model $model
+     * @return bool
+     */
+    protected function destroy(Model $model): bool
+    {
+        return (bool) $model->delete();
+    }
+
+    /**
      * @param Model|string $modelOrResourceId
      * @return Model
      */
-    private function retrieve($modelOrResourceId): Model
+    protected function retrieve($modelOrResourceId): Model
     {
         if ($modelOrResourceId instanceof $this->model) {
             return $modelOrResourceId;
@@ -269,8 +302,7 @@ class Repository implements
 
         if (is_string($modelOrResourceId)) {
             return $this
-                ->query()
-                ->whereResourceId($modelOrResourceId)
+                ->findQuery($modelOrResourceId)
                 ->firstOrFail();
         }
 
