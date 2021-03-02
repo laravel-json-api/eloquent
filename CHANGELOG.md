@@ -3,6 +3,22 @@
 All notable changes to this project will be documented in this file. This project adheres to
 [Semantic Versioning](http://semver.org/) and [this changelog format](http://keepachangelog.com/).
 
+## Unreleased
+
+### Added
+
+- [#6](https://github.com/laravel-json-api/eloquent/pull/6) Package now fully supports soft-deleting resources. If a
+  model allows soft deleting, but no changes are made to a schema, then deleting the resource will soft-delete it and
+  that resource will no longer appear in the API. However, if soft-delete capability is to be exposed to the client, a
+  schema should apply the `SoftDeletes` trait from this package and add a `Fields\SoftDelete` field to their list of
+  fields. Refer to documentation for full list of capabilities.
+- Added the `WithTrashed`, `OnlyTrashed` and `WhereTrashed` filter classes.
+
+### Changed
+
+- **BREAKING** Deleting a model now uses `Model::delete` instead of `Model::forceDelete`. This change was required when
+  adding full support for soft-deleting resources.
+
 ## [1.0.0-alpha.4] - 2021-02-27
 
 ### Added
