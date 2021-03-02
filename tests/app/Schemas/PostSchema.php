@@ -29,8 +29,11 @@ use LaravelJsonApi\Eloquent\Fields\Relations\HasMany;
 use LaravelJsonApi\Eloquent\Fields\Relations\HasOne;
 use LaravelJsonApi\Eloquent\Fields\SoftDelete;
 use LaravelJsonApi\Eloquent\Fields\Str;
+use LaravelJsonApi\Eloquent\Filters\OnlyTrashed;
 use LaravelJsonApi\Eloquent\Filters\Where;
 use LaravelJsonApi\Eloquent\Filters\WhereIn;
+use LaravelJsonApi\Eloquent\Filters\WhereTrashed;
+use LaravelJsonApi\Eloquent\Filters\WithTrashed;
 use LaravelJsonApi\Eloquent\Pagination\PagePagination;
 use LaravelJsonApi\Eloquent\Schema;
 use LaravelJsonApi\Eloquent\SoftDeletes;
@@ -79,8 +82,11 @@ class PostSchema extends Schema
     {
         return [
             WhereIn::make('id', $this->idColumn()),
+            OnlyTrashed::make('onlyTrashed'),
             Where::make('slug')->singular(),
             WhereIn::make('slugs')->delimiter(','),
+            WhereTrashed::make('trashed'),
+            WithTrashed::make('withTrashed'),
         ];
     }
 

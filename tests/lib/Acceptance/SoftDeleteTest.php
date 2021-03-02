@@ -433,6 +433,126 @@ class SoftDeleteTest extends TestCase
         ]));
     }
 
+    public function testWithTrashedIsTrue(): void
+    {
+        $posts = Post::factory()->count(5)->sequence(
+            ['deleted_at' => null],
+            ['deleted_at' => Carbon::now()],
+        )->create();
+
+        $actual = $this->schema
+            ->repository()
+            ->queryAll()
+            ->filter(['withTrashed' => 'true'])
+            ->get();
+
+        $this->assertPosts($posts, $actual);
+    }
+
+    public function testWithTrashedIsFalse(): void
+    {
+        $posts = Post::factory()->count(5)->sequence(
+            ['deleted_at' => null],
+            ['deleted_at' => Carbon::now()],
+        )->create();
+
+        $expected = $posts->reject(fn(Post $post) => $post->trashed());
+
+        $actual = $this->schema
+            ->repository()
+            ->queryAll()
+            ->filter(['withTrashed' => 'false'])
+            ->get();
+
+        $this->assertPosts($expected, $actual);
+    }
+
+    public function testOnlyTrashedIsTrue(): void
+    {
+        $posts = Post::factory()->count(5)->sequence(
+            ['deleted_at' => null],
+            ['deleted_at' => Carbon::now()],
+        )->create();
+
+        $expected = $posts->filter(fn(Post $post) => $post->trashed());
+
+        $actual = $this->schema
+            ->repository()
+            ->queryAll()
+            ->filter(['onlyTrashed' => 'true'])
+            ->get();
+
+        $this->assertPosts($expected, $actual);
+    }
+
+    public function testOnlyTrashedIsFalse(): void
+    {
+        $posts = Post::factory()->count(5)->sequence(
+            ['deleted_at' => null],
+            ['deleted_at' => Carbon::now()],
+        )->create();
+
+        $expected = $posts->reject(fn(Post $post) => $post->trashed());
+
+        $actual = $this->schema
+            ->repository()
+            ->queryAll()
+            ->filter(['onlyTrashed' => 'false'])
+            ->get();
+
+        $this->assertPosts($expected, $actual);
+    }
+
+    public function testWhereTrashedIsTrue(): void
+    {
+        $posts = Post::factory()->count(5)->sequence(
+            ['deleted_at' => null],
+            ['deleted_at' => Carbon::now()],
+        )->create();
+
+        $expected = $posts->filter(fn(Post $post) => $post->trashed());
+
+        $actual = $this->schema
+            ->repository()
+            ->queryAll()
+            ->filter(['trashed' => 'true'])
+            ->get();
+
+        $this->assertPosts($expected, $actual);
+    }
+
+    public function testWhereTrashedIsFalse(): void
+    {
+        $posts = Post::factory()->count(5)->sequence(
+            ['deleted_at' => null],
+            ['deleted_at' => Carbon::now()],
+        )->create();
+
+        $expected = $posts->reject(fn(Post $post) => $post->trashed());
+
+        $actual = $this->schema
+            ->repository()
+            ->queryAll()
+            ->filter(['trashed' => 'false'])
+            ->get();
+
+        $this->assertPosts($expected, $actual);
+    }
+
+    /**
+     * @param $expected
+     * @param $actual
+     */
+    private function assertPosts($expected, $actual): void
+    {
+        $this->assertCount(count($expected), $actual);
+
+        $this->assertSame(
+            collect($expected)->sortBy('id')->pluck('id')->all(),
+            collect($actual)->sortBy('id')->pluck('id')->all()
+        );
+    }
+
     /**
      * @return $this
      */
