@@ -42,12 +42,12 @@ class ModelHydrator implements ResourceBuilder
     /**
      * @var Schema
      */
-    private Schema $schema;
+    protected Schema $schema;
 
     /**
      * @var Model
      */
-    private Model $model;
+    protected Model $model;
 
     /**
      * ModelHydrator constructor.
@@ -115,7 +115,7 @@ class ModelHydrator implements ResourceBuilder
      * @param array $validatedData
      * @return void
      */
-    private function fillId(array $validatedData): void
+    protected function fillId(array $validatedData): void
     {
         $field = $this->schema->id();
 
@@ -130,7 +130,7 @@ class ModelHydrator implements ResourceBuilder
      * @param array $validatedData
      * @return void
      */
-    private function fillAttributes(array $validatedData): void
+    protected function fillAttributes(array $validatedData): void
     {
         /** @var Attribute|Fillable $attribute */
         foreach ($this->schema->attributes() as $attribute) {
@@ -156,7 +156,7 @@ class ModelHydrator implements ResourceBuilder
      * @param array $validatedData
      * @return bool
      */
-    private function mustFill(Field $field, array $validatedData): bool
+    protected function mustFill(Field $field, array $validatedData): bool
     {
         if (!$field instanceof Fillable) {
             return false;
@@ -176,7 +176,7 @@ class ModelHydrator implements ResourceBuilder
      * @return array
      *      relationships that have to be filled after the model is saved.
      */
-    private function fillRelationships(array $validatedData): array
+    protected function fillRelationships(array $validatedData): array
     {
         $defer = [];
 
@@ -201,7 +201,7 @@ class ModelHydrator implements ResourceBuilder
      * @param iterable $deferred
      * @param array $validatedData
      */
-    private function fillDeferredRelationships(iterable $deferred, array $validatedData): void
+    protected function fillDeferredRelationships(iterable $deferred, array $validatedData): void
     {
         /** @var Relation|Fillable $field */
         foreach ($deferred as $field) {
@@ -216,7 +216,7 @@ class ModelHydrator implements ResourceBuilder
      *
      * @return void
      */
-    private function persist(): void
+    protected function persist(): void
     {
         if (true !== $this->model->save()) {
             throw new RuntimeException('Failed to save resource.');

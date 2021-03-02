@@ -19,7 +19,8 @@ declare(strict_types=1);
 
 namespace LaravelJsonApi\Eloquent\Fields;
 
-use Carbon\Carbon;
+use Carbon\CarbonInterface;
+use Illuminate\Support\Facades\Date;
 use function config;
 
 class DateTime extends Attribute
@@ -46,7 +47,7 @@ class DateTime extends Attribute
      */
     public static function make(string $fieldName, string $column = null): self
     {
-        return new self($fieldName, $column);
+        return new static($fieldName, $column);
     }
 
     /**
@@ -96,11 +97,22 @@ class DateTime extends Attribute
     {
         $value = parent::deserialize($value);
 
+        return $this->parse($value);
+    }
+
+    /**
+     * Parse a date time value.
+     *
+     * @param CarbonInterface|string|null $value
+     * @return CarbonInterface|null
+     */
+    protected function parse($value): ?CarbonInterface
+    {
         if (is_null($value)) {
             return null;
         }
 
-        $value = Carbon::parse($value);
+        $value = is_string($value) ? Date::parse($value) : Date::instance($value);
 
         if (true === $this->useTz) {
             return $value->setTimezone($this->timezone());
