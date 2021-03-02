@@ -265,6 +265,34 @@ class SoftDeleteTest extends TestCase
         ]));
     }
 
+    public function testItSoftDeletesOnUpdateWithBoolean(): void
+    {
+        $this->asBoolean();
+
+        $deleted = false;
+
+        Post::deleted(function () use (&$deleted) {
+            $deleted = true;
+        });
+
+        $post = Post::factory()->create(['deleted_at' => null]);
+
+        $data = [
+            'deletedAt' => true,
+        ];
+
+        $this->willNotRestore()->willNotForceDelete();
+
+        $actual = $this->schema
+            ->repository()
+            ->update($post)
+            ->store($data);
+
+        $this->assertTrue($actual->trashed());
+        $this->assertTrue($deleted);
+        $this->assertSoftDeleted($post);
+    }
+
     public function testItDoesNotSoftDeleteOnUpdate(): void
     {
         $post = Post::factory()->create(['deleted_at' => null]);
@@ -347,6 +375,36 @@ class SoftDeleteTest extends TestCase
         ]));
     }
 
+    public function testItRestoresWithBoolean(): void
+    {
+        $this->asBoolean();
+
+        $restored = false;
+
+        Post::restored(function () use (&$restored) {
+            $restored = true;
+        });
+
+        $post = Post::factory()->create(['deleted_at' => Carbon::now()]);
+
+        $data = [
+            'deletedAt' => false,
+        ];
+
+        $this->willNotSoftDelete()->willNotForceDelete();
+
+        $actual = $this->schema
+            ->repository()
+            ->update($post)
+            ->store($data);
+
+        $this->assertFalse($actual->trashed());
+        $this->assertTrue($restored);
+        $this->assertDatabaseHas('posts', array_merge($post->getOriginal(), [
+            'deleted_at' => null,
+        ]));
+    }
+
     /**
      * If the model is already trashed, the soft delete events should not be triggered
      * even if the client is changing the date on which it was trashed.
@@ -409,5 +467,15 @@ class SoftDeleteTest extends TestCase
         });
 
         return $this;
+    }
+
+    /**
+     * Set the schema as using a boolean for soft deletes.
+     *
+     * @return void
+     */
+    private function asBoolean(): void
+    {
+        $this->schema->attribute('deletedAt')->asBoolean();
     }
 }
