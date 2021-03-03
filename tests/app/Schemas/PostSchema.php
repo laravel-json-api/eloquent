@@ -82,10 +82,9 @@ class PostSchema extends Schema
     {
         return [
             WhereIn::make('id', $this->idColumn()),
-            OnlyTrashed::make('onlyTrashed'),
+            OnlyTrashed::make('trashed'),
             Where::make('slug')->singular(),
             WhereIn::make('slugs')->delimiter(','),
-            WhereTrashed::make('trashed'),
             WithTrashed::make('withTrashed'),
         ];
     }

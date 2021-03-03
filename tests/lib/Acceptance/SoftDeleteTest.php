@@ -479,49 +479,13 @@ class SoftDeleteTest extends TestCase
         $actual = $this->schema
             ->repository()
             ->queryAll()
-            ->filter(['onlyTrashed' => 'true'])
-            ->get();
-
-        $this->assertPosts($expected, $actual);
-    }
-
-    public function testOnlyTrashedIsFalse(): void
-    {
-        $posts = Post::factory()->count(5)->sequence(
-            ['deleted_at' => null],
-            ['deleted_at' => Carbon::now()],
-        )->create();
-
-        $expected = $posts->reject(fn(Post $post) => $post->trashed());
-
-        $actual = $this->schema
-            ->repository()
-            ->queryAll()
-            ->filter(['onlyTrashed' => 'false'])
-            ->get();
-
-        $this->assertPosts($expected, $actual);
-    }
-
-    public function testWhereTrashedIsTrue(): void
-    {
-        $posts = Post::factory()->count(5)->sequence(
-            ['deleted_at' => null],
-            ['deleted_at' => Carbon::now()],
-        )->create();
-
-        $expected = $posts->filter(fn(Post $post) => $post->trashed());
-
-        $actual = $this->schema
-            ->repository()
-            ->queryAll()
             ->filter(['trashed' => 'true'])
             ->get();
 
         $this->assertPosts($expected, $actual);
     }
 
-    public function testWhereTrashedIsFalse(): void
+    public function testOnlyTrashedIsFalse(): void
     {
         $posts = Post::factory()->count(5)->sequence(
             ['deleted_at' => null],
