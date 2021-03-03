@@ -24,6 +24,7 @@ use LaravelJsonApi\Contracts\Schema\Attribute;
 use LaravelJsonApi\Contracts\Schema\Field;
 use LaravelJsonApi\Contracts\Store\ResourceBuilder;
 use LaravelJsonApi\Core\Query\QueryParameters;
+use LaravelJsonApi\Eloquent\Contracts\Driver;
 use LaravelJsonApi\Eloquent\Contracts\Fillable;
 use LaravelJsonApi\Eloquent\Contracts\FillableToMany;
 use LaravelJsonApi\Eloquent\Contracts\FillableToOne;
@@ -42,22 +43,32 @@ class ModelHydrator implements ResourceBuilder
     /**
      * @var Schema
      */
-    protected Schema $schema;
+    private Schema $schema;
+
+    /**
+     * @var Driver
+     */
+    private Driver $driver;
 
     /**
      * @var Model
      */
-    protected Model $model;
+    private Model $model;
 
     /**
      * ModelHydrator constructor.
      *
      * @param Schema $schema
+     * @param Driver $driver
      * @param Model $model
      */
-    public function __construct(Schema $schema, Model $model)
-    {
+    public function __construct(
+        Schema $schema,
+        Driver $driver,
+        Model $model
+    ) {
         $this->schema = $schema;
+        $this->driver = $driver;
         $this->model = $model;
         $this->queryParameters = new QueryParameters();
     }
@@ -115,7 +126,7 @@ class ModelHydrator implements ResourceBuilder
      * @param array $validatedData
      * @return void
      */
-    protected function fillId(array $validatedData): void
+    private function fillId(array $validatedData): void
     {
         $field = $this->schema->id();
 
@@ -130,7 +141,7 @@ class ModelHydrator implements ResourceBuilder
      * @param array $validatedData
      * @return void
      */
-    protected function fillAttributes(array $validatedData): void
+    private function fillAttributes(array $validatedData): void
     {
         /** @var Attribute|Fillable $attribute */
         foreach ($this->schema->attributes() as $attribute) {
@@ -156,7 +167,7 @@ class ModelHydrator implements ResourceBuilder
      * @param array $validatedData
      * @return bool
      */
-    protected function mustFill(Field $field, array $validatedData): bool
+    private function mustFill(Field $field, array $validatedData): bool
     {
         if (!$field instanceof Fillable) {
             return false;
@@ -176,7 +187,7 @@ class ModelHydrator implements ResourceBuilder
      * @return array
      *      relationships that have to be filled after the model is saved.
      */
-    protected function fillRelationships(array $validatedData): array
+    private function fillRelationships(array $validatedData): array
     {
         $defer = [];
 
@@ -201,7 +212,7 @@ class ModelHydrator implements ResourceBuilder
      * @param iterable $deferred
      * @param array $validatedData
      */
-    protected function fillDeferredRelationships(iterable $deferred, array $validatedData): void
+    private function fillDeferredRelationships(iterable $deferred, array $validatedData): void
     {
         /** @var Relation|Fillable $field */
         foreach ($deferred as $field) {
@@ -216,9 +227,9 @@ class ModelHydrator implements ResourceBuilder
      *
      * @return void
      */
-    protected function persist(): void
+    private function persist(): void
     {
-        if (true !== $this->model->save()) {
+        if (true !== $this->driver->persist($this->model)) {
             throw new RuntimeException('Failed to save resource.');
         }
     }

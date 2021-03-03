@@ -19,16 +19,17 @@ declare(strict_types=1);
 
 namespace LaravelJsonApi\Eloquent;
 
-use LaravelJsonApi\Contracts\Store\Repository as RepositoryContract;
+use LaravelJsonApi\Eloquent\Contracts\Driver;
+use LaravelJsonApi\Eloquent\Drivers\SoftDeleteDriver;
 
 trait SoftDeletes
 {
 
     /**
-     * @return RepositoryContract
+     * @return Driver
      */
-    public function repository(): RepositoryContract
+    protected function driver(): Driver
     {
-        return new SoftDeleteRepository($this);
+        return new SoftDeleteDriver($this->newInstance());
     }
 }

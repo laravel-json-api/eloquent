@@ -112,6 +112,22 @@ class SoftDeleteTest extends TestCase
      * @param $deletedAt
      * @dataProvider trashedProvider
      */
+    public function testQueryOne($deletedAt): void
+    {
+        $post = Post::factory()->create(['deleted_at' => $deletedAt]);
+
+        $actual = $this->schema
+            ->repository()
+            ->queryOne((string) $post->getRouteKey())
+            ->first();
+
+        $this->assertTrue($post->is($actual));
+    }
+
+    /**
+     * @param $deletedAt
+     * @dataProvider trashedProvider
+     */
     public function testItForceDeletesModel($deletedAt): void
     {
         $forceDeleted = false;

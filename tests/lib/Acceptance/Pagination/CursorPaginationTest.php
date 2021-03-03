@@ -182,7 +182,7 @@ class CursorPaginationTest extends TestCase
             ],
         ];
 
-        $page = $this->videos->newQuery()->paginate(['limit' => 10]);
+        $page = $this->videos->repository()->queryAll()->paginate(['limit' => 10]);
 
         $this->assertSame(['page' => $meta], $page->meta());
         $this->assertSame($links, $page->links()->toArray());
@@ -204,7 +204,7 @@ class CursorPaginationTest extends TestCase
 
         $links = $this->createLinks($videos[0], $videos[3], 4);
 
-        $page = $this->videos->newQuery()->paginate(['limit' => 4]);
+        $page = $this->videos->repository()->queryAll()->paginate(['limit' => 4]);
 
         $this->assertSame(['page' => $meta], $page->meta());
         $this->assertSame($links, $page->links()->toArray());
@@ -228,7 +228,7 @@ class CursorPaginationTest extends TestCase
 
         $links = $this->createLinks($expected[0], $expected[2], 3);
 
-        $page = $this->videos->newQuery()->paginate([
+        $page = $this->videos->repository()->queryAll()->paginate([
             'before' => $videos[7]->getRouteKey(),
             'limit' => 3,
         ]);
@@ -257,7 +257,7 @@ class CursorPaginationTest extends TestCase
 
         $links = $this->createLinks($expected[0], $expected[2], 3);
 
-        $page = $this->videos->newQuery()->paginate([
+        $page = $this->videos->repository()->queryAll()->paginate([
             'before' => $videos[7]->getRouteKey(),
             'limit' => '3',
         ]);
@@ -288,7 +288,7 @@ class CursorPaginationTest extends TestCase
 
         $links = $this->createLinks($expected[0], $expected[2], 15);
 
-        $page = $this->videos->newQuery()->paginate([
+        $page = $this->videos->repository()->queryAll()->paginate([
             'before' => $equal->last()->getRouteKey(),
         ]);
 
@@ -307,7 +307,7 @@ class CursorPaginationTest extends TestCase
         $this->expectException(\OutOfRangeException::class);
         $this->expectExceptionMessage('does not exist');
 
-        $this->videos->newQuery()->paginate([
+        $this->videos->repository()->queryAll()->paginate([
             'before' => $this->faker->uuid,
         ]);
     }
@@ -329,7 +329,7 @@ class CursorPaginationTest extends TestCase
 
         $links = $this->createLinks($expected[0], $expected[2], 3);
 
-        $page = $this->videos->newQuery()->paginate([
+        $page = $this->videos->repository()->queryAll()->paginate([
             'after' => $videos[3]->getRouteKey(),
             'limit' => '3',
         ]);
@@ -358,7 +358,7 @@ class CursorPaginationTest extends TestCase
 
         $links = $this->createLinks($expected[0], $expected[2], 3);
 
-        $page = $this->videos->newQuery()->paginate([
+        $page = $this->videos->repository()->queryAll()->paginate([
             'after' => $videos[3]->getRouteKey(),
             'limit' => 3,
         ]);
@@ -386,7 +386,7 @@ class CursorPaginationTest extends TestCase
         $links = $this->createLinks($expected[0], $expected[1], 10);
         unset($links['next']);
 
-        $page = $this->videos->newQuery()->paginate([
+        $page = $this->videos->repository()->queryAll()->paginate([
             'after' => $videos[1]->getRouteKey(),
             'limit' => 10,
         ]);
@@ -418,7 +418,7 @@ class CursorPaginationTest extends TestCase
         $links = $this->createLinks($expected[0], $expected[2], 15);
         unset($links['next']);
 
-        $page = $this->videos->newQuery()->paginate([
+        $page = $this->videos->repository()->queryAll()->paginate([
             'after' => $equal[0]->getRouteKey(),
         ]);
 
@@ -473,7 +473,7 @@ class CursorPaginationTest extends TestCase
             ],
         ];
 
-        $page = $this->videos->newQuery()->paginate([
+        $page = $this->videos->repository()->queryAll()->paginate([
             'per-page' => '3',
             'starting-after' => $videos[1]->getRouteKey(),
         ]);
@@ -493,7 +493,7 @@ class CursorPaginationTest extends TestCase
         $this->expectException(\OutOfRangeException::class);
         $this->expectExceptionMessage('does not exist');
 
-        $this->videos->newQuery()->paginate([
+        $this->videos->repository()->queryAll()->paginate([
             'after' => $this->faker->uuid,
         ]);
     }
@@ -518,7 +518,7 @@ class CursorPaginationTest extends TestCase
 
         $links = $this->createLinks($expected[0], $expected[2], 3);
 
-        $page = $this->videos->newQuery()->paginate([
+        $page = $this->videos->repository()->queryAll()->paginate([
             'limit' => 3,
             'before' => $videos[5]->getRouteKey(),
             'after' => $videos[1]->getRouteKey(),
@@ -552,7 +552,7 @@ class CursorPaginationTest extends TestCase
 
         $links = $this->createLinks($expected[0], $expected[2], 3);
 
-        $page = $this->videos->newQuery()->paginate([
+        $page = $this->videos->repository()->queryAll()->paginate([
             'limit' => '3',
             'before' => $videos[4]->getRouteKey(),
             'after' => $videos[1]->getRouteKey(),
@@ -580,7 +580,7 @@ class CursorPaginationTest extends TestCase
             'to' => $expected[2]->getRouteKey(),
         ];
 
-        $page = $this->videos->newQuery()->paginate([
+        $page = $this->videos->repository()->queryAll()->paginate([
             'limit' => '3',
             'before' => $videos[4]->getRouteKey(),
         ]);
@@ -606,7 +606,7 @@ class CursorPaginationTest extends TestCase
             'to' => $expected[2]->getRouteKey(),
         ];
 
-        $page = $this->videos->newQuery()->paginate([
+        $page = $this->videos->repository()->queryAll()->paginate([
             'limit' => '3',
             'before' => $videos[4]->getRouteKey(),
         ]);
@@ -637,7 +637,7 @@ class CursorPaginationTest extends TestCase
 
         $links = $this->createLinks($expected[0], $expected[2], 3);
 
-        $page = $this->videos->newQuery()->paginate([
+        $page = $this->videos->repository()->queryAll()->paginate([
             'limit' => '3',
             'before' => $videos[4]->getRouteKey(),
         ]);
@@ -667,7 +667,7 @@ class CursorPaginationTest extends TestCase
 
         $links = $this->createLinks($videos[1], $videos[$expected], $expected);
 
-        $page = $this->videos->newQuery()->paginate(['after' => $videos[0]->getRouteKey()]);
+        $page = $this->videos->repository()->queryAll()->paginate(['after' => $videos[0]->getRouteKey()]);
 
         $this->assertSame(['page' => $meta], $page->meta());
         $this->assertSame($links, $page->links()->toArray());
@@ -696,7 +696,7 @@ class CursorPaginationTest extends TestCase
 
         $links = $this->createLinks($videos[1], $videos[$expected], $expected);
 
-        $page = $this->videos->newQuery()->paginate(['after' => $videos[0]->getRouteKey()]);
+        $page = $this->videos->repository()->queryAll()->paginate(['after' => $videos[0]->getRouteKey()]);
 
         $this->assertSame(['page' => $meta], $page->meta());
         $this->assertSame($links, $page->links()->toArray());
@@ -713,7 +713,7 @@ class CursorPaginationTest extends TestCase
 
         $links = $this->createLinks($videos[0], $videos[2], 3);
 
-        $page = $this->videos->newQuery()->paginate(['limit' => '3']);
+        $page = $this->videos->repository()->queryAll()->paginate(['limit' => '3']);
 
         $this->assertEmpty($page->meta());
         $this->assertSame($links, $page->links()->toArray());

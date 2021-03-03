@@ -225,7 +225,7 @@ class PagePaginationTest extends TestCase
             ],
         ];
 
-        $page = $this->posts->newQuery()->paginate(['number' => '1', 'size' => '3']);
+        $page = $this->posts->repository()->queryAll()->paginate(['number' => '1', 'size' => '3']);
 
         $this->assertSame(['page' => $meta], $page->meta());
         $this->assertSame($links, $page->links()->toArray());
@@ -265,7 +265,7 @@ class PagePaginationTest extends TestCase
             ],
         ];
 
-        $page = $this->posts->newQuery()->paginate(['number' => '1', 'size' => '3']);
+        $page = $this->posts->repository()->queryAll()->paginate(['number' => '1', 'size' => '3']);
 
         $this->assertSame(['page' => $meta], $page->meta());
         $this->assertSame($links, $page->links()->toArray());
@@ -305,7 +305,7 @@ class PagePaginationTest extends TestCase
             ],
         ];
 
-        $page = $this->posts->newQuery()->paginate(['number' => '2', 'size' => '3']);
+        $page = $this->posts->repository()->queryAll()->paginate(['number' => '2', 'size' => '3']);
 
         $this->assertSame(['page' => $meta], $page->meta());
         $this->assertSame($links, $page->links()->toArray());
@@ -347,7 +347,7 @@ class PagePaginationTest extends TestCase
             ],
         ];
 
-        $page = $this->posts->newQuery()->paginate(['number' => '1']);
+        $page = $this->posts->repository()->queryAll()->paginate(['number' => '1']);
 
         $this->assertSame(['page' => $meta], $page->meta());
         $this->assertSame($links, $page->links()->toArray());
@@ -392,7 +392,7 @@ class PagePaginationTest extends TestCase
             ],
         ];
 
-        $page = $this->posts->newQuery()->paginate(['number' => '1']);
+        $page = $this->posts->repository()->queryAll()->paginate(['number' => '1']);
 
         $this->assertSame(['page' => $meta], $page->meta());
         $this->assertSame($links, $page->links()->toArray());
@@ -403,7 +403,7 @@ class PagePaginationTest extends TestCase
     {
         $posts = Post::factory()->count(4)->create();
 
-        $page = $this->posts->newQuery()
+        $page = $this->posts->repository()->queryAll()
             ->sort('-id')
             ->paginate(['number' => '1', 'size' => '3']);
 
@@ -438,7 +438,7 @@ class PagePaginationTest extends TestCase
             'created_at' => $second->created_at,
         ]);
 
-        $page = $this->videos->newQuery()
+        $page = $this->videos->repository()->queryAll()
             ->sort('createdAt')
             ->paginate(['number' => '1', 'size' => '3']);
 
@@ -469,7 +469,7 @@ class PagePaginationTest extends TestCase
             ],
         ];
 
-        $page = $this->posts->newQuery()->paginate(['page' => '1', 'limit' => '3']);
+        $page = $this->posts->repository()->queryAll()->paginate(['page' => '1', 'limit' => '3']);
 
         $this->assertSame($links, $page->links()->toArray());
     }
@@ -500,7 +500,7 @@ class PagePaginationTest extends TestCase
             ],
         ];
 
-        $page = $this->posts->newQuery()->paginate(['number' => '1', 'size' => '3']);
+        $page = $this->posts->repository()->queryAll()->paginate(['number' => '1', 'size' => '3']);
 
         $this->assertSame(['page' => $meta], $page->meta());
         $this->assertSame($links, $page->links()->toArray());
@@ -531,7 +531,7 @@ class PagePaginationTest extends TestCase
             ],
         ];
 
-        $page = $this->posts->newQuery()->paginate(['number' => '1', 'size' => '3']);
+        $page = $this->posts->repository()->queryAll()->paginate(['number' => '1', 'size' => '3']);
 
         $this->assertSame(['page' => $meta], $page->meta());
         $this->assertSame($links, $page->links()->toArray());
@@ -552,7 +552,7 @@ class PagePaginationTest extends TestCase
             'total' => 4,
         ];
 
-        $page = $this->posts->newQuery()->paginate(['number' => '1', 'size' => '3']);
+        $page = $this->posts->repository()->queryAll()->paginate(['number' => '1', 'size' => '3']);
 
         $this->assertSame(['paginator' => $meta], $page->meta());
         $this->assertPage($posts->take(3), $page);
@@ -573,7 +573,7 @@ class PagePaginationTest extends TestCase
             'total' => 4,
         ];
 
-        $page = $this->posts->newQuery()->paginate(['number' => '1', 'size' => '3']);
+        $page = $this->posts->repository()->queryAll()->paginate(['number' => '1', 'size' => '3']);
 
         $this->assertSame(['page' => $meta], $page->meta());
         $this->assertPage($posts->take(3), $page);
@@ -594,7 +594,7 @@ class PagePaginationTest extends TestCase
             'total' => 4,
         ];
 
-        $page = $this->posts->newQuery()->paginate(['number' => '1', 'size' => '3']);
+        $page = $this->posts->repository()->queryAll()->paginate(['number' => '1', 'size' => '3']);
 
         $this->assertSame($meta, $page->meta());
         $this->assertPage($posts->take(3), $page);
@@ -624,7 +624,7 @@ class PagePaginationTest extends TestCase
             ],
         ];
 
-        $page = $this->posts->newQuery()->paginate(['size' => 3]);
+        $page = $this->posts->repository()->queryAll()->paginate(['size' => 3]);
 
         $this->assertEmpty($page->meta());
         $this->assertSame($links, $page->links()->toArray());

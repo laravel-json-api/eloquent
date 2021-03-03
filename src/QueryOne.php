@@ -22,6 +22,7 @@ namespace LaravelJsonApi\Eloquent;
 use Illuminate\Database\Eloquent\Model;
 use LaravelJsonApi\Contracts\Store\QueryOneBuilder as QueryOneBuilderContract;
 use LaravelJsonApi\Core\Query\QueryParameters;
+use LaravelJsonApi\Eloquent\Contracts\Driver;
 
 class QueryOne implements QueryOneBuilderContract
 {
@@ -34,9 +35,9 @@ class QueryOne implements QueryOneBuilderContract
     private Schema $schema;
 
     /**
-     * @var JsonApiBuilder
+     * @var Driver
      */
-    private JsonApiBuilder $query;
+    private Driver $driver;
 
     /**
      * @var Model|null
@@ -52,21 +53,36 @@ class QueryOne implements QueryOneBuilderContract
      * QueryOne constructor.
      *
      * @param Schema $schema
-     * @param JsonApiBuilder $query
+     * @param Driver $driver
      * @param Model|null $model
      * @param string $resourceId
      */
     public function __construct(
         Schema $schema,
-        JsonApiBuilder $query,
+        Driver $driver,
         ?Model $model,
         string $resourceId
     ) {
         $this->schema = $schema;
-        $this->query = $query;
+        $this->driver = $driver;
         $this->model = $model;
         $this->resourceId = $resourceId;
         $this->queryParameters = new QueryParameters();
+    }
+
+    /**
+     * @return JsonApiBuilder
+     */
+    public function query(): JsonApiBuilder
+    {
+        $query = new JsonApiBuilder(
+            $this->schema,
+            $this->driver->query(),
+        );
+
+        return $query->withQueryParameters(
+            $this->queryParameters
+        );
     }
 
     /**
@@ -92,10 +108,9 @@ class QueryOne implements QueryOneBuilderContract
             return $this->model;
         }
 
-        return $this->query
+        return $this
+            ->query()
             ->whereResourceId($this->resourceId)
-            ->filter($this->queryParameters->filter())
-            ->with($this->queryParameters->includePaths())
             ->first();
     }
 

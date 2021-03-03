@@ -25,6 +25,8 @@ use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Http\Request;
 use LaravelJsonApi\Contracts\Store\Repository as RepositoryContract;
 use LaravelJsonApi\Core\Schema\Schema as BaseSchema;
+use LaravelJsonApi\Eloquent\Contracts\Driver;
+use LaravelJsonApi\Eloquent\Drivers\StandardDriver;
 use LaravelJsonApi\Eloquent\EagerLoading\EagerLoader;
 use LaravelJsonApi\Eloquent\Fields\Relations\ToMany;
 use LaravelJsonApi\Eloquent\Fields\Relations\ToOne;
@@ -65,19 +67,11 @@ abstract class Schema extends BaseSchema
     }
 
     /**
-     * @return JsonApiBuilder
-     */
-    public static function query(): JsonApiBuilder
-    {
-        return app(static::class)->newQuery();
-    }
-
-    /**
      * @inheritDoc
      */
     public function repository(): RepositoryContract
     {
-        return new Repository($this);
+        return new Repository($this, $this->driver());
     }
 
     /**
@@ -88,16 +82,6 @@ abstract class Schema extends BaseSchema
         $modelClass = $this->model();
 
         return new $modelClass;
-    }
-
-    /**
-     * Get a new JSON:API query builder.
-     *
-     * @return JsonApiBuilder
-     */
-    public function newQuery(): JsonApiBuilder
-    {
-        return new JsonApiBuilder($this, $this->newInstance()->newQuery());
     }
 
     /**
@@ -244,6 +228,14 @@ abstract class Schema extends BaseSchema
     public function isSingular(array $filters): bool
     {
         return false;
+    }
+
+    /**
+     * @return Driver
+     */
+    protected function driver(): Driver
+    {
+        return new StandardDriver($this->newInstance());
     }
 
 }

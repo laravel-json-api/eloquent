@@ -36,6 +36,7 @@ use LaravelJsonApi\Contracts\Store\ResourceBuilder;
 use LaravelJsonApi\Contracts\Store\ToManyBuilder;
 use LaravelJsonApi\Contracts\Store\ToOneBuilder;
 use LaravelJsonApi\Contracts\Store\UpdatesResources;
+use LaravelJsonApi\Eloquent\Contracts\Driver;
 use LaravelJsonApi\Eloquent\Fields\Relations\MorphTo;
 use LaravelJsonApi\Eloquent\Hydrators\ModelHydrator;
 use LaravelJsonApi\Eloquent\Hydrators\ToManyHydrator;
@@ -61,22 +62,23 @@ class Repository implements
     /**
      * @var Schema
      */
-    protected Schema $schema;
+    private Schema $schema;
 
     /**
-     * @var Model
+     * @var Driver
      */
-    protected Model $model;
+    private Driver $driver;
 
     /**
      * Repository constructor.
      *
      * @param Schema $schema
+     * @param Driver $driver
      */
-    public function __construct(Schema $schema)
+    public function __construct(Schema $schema, Driver $driver)
     {
         $this->schema = $schema;
-        $this->model = $schema->newInstance();
+        $this->driver = $driver;
     }
 
     /**
@@ -85,7 +87,10 @@ class Repository implements
     public function find(string $resourceId): ?object
     {
         if ($this->schema->id()->match($resourceId)) {
-            return $this->findQuery($resourceId)->first();
+            return $this
+                ->query()
+                ->whereResourceId($resourceId)
+                ->first();
         }
 
         return null;
@@ -115,10 +120,16 @@ class Repository implements
         $field = $this->schema->id();
 
         $ids = collect($resourceIds)
-            ->filter(fn($resourceId) => $field->match($resourceId))
-            ->all();
+            ->filter(fn($resourceId) => $field->match($resourceId));
 
-        return $this->findManyQuery($ids)->get();
+        if ($ids->isEmpty()) {
+            return $ids;
+        }
+
+        return $this
+            ->query()
+            ->whereResourceId($ids->all())
+            ->get();
     }
 
     /**
@@ -127,18 +138,13 @@ class Repository implements
     public function exists(string $resourceId): bool
     {
         if ($this->schema->id()->match($resourceId)) {
-            return $this->findQuery($resourceId)->exists();
+            return $this
+                ->query()
+                ->whereResourceId($resourceId)
+                ->exists();
         }
 
         return false;
-    }
-
-    /**
-     * @return JsonApiBuilder
-     */
-    public function query(): JsonApiBuilder
-    {
-        return new JsonApiBuilder($this->schema, $this->model->newQuery());
     }
 
     /**
@@ -146,7 +152,7 @@ class Repository implements
      */
     public function queryAll(): QueryAllBuilder
     {
-        return new QueryAll($this->schema);
+        return new QueryAll($this->schema, $this->driver);
     }
 
     /**
@@ -157,7 +163,7 @@ class Repository implements
         if ($modelOrResourceId instanceof Model) {
             return new QueryOne(
                 $this->schema,
-                $this->query(),
+                $this->driver,
                 $modelOrResourceId,
                 strval($modelOrResourceId->{$this->schema->idColumn()})
             );
@@ -166,7 +172,7 @@ class Repository implements
         if (is_string($modelOrResourceId) && !empty($modelOrResourceId)) {
             return new QueryOne(
                 $this->schema,
-                $this->query(),
+                $this->driver,
                 null,
                 $modelOrResourceId
             );
@@ -208,7 +214,8 @@ class Repository implements
     {
         return new ModelHydrator(
             $this->schema,
-            $this->schema->newInstance()
+            $this->driver,
+            $this->driver->newInstance()
         );
     }
 
@@ -219,6 +226,7 @@ class Repository implements
     {
         return new ModelHydrator(
             $this->schema,
+            $this->driver,
             $this->retrieve($modelOrResourceId)
         );
     }
@@ -230,7 +238,7 @@ class Repository implements
     {
         $model = $this->retrieve($modelOrResourceId);
 
-        if (true !== $model->getConnection()->transaction(fn() => $this->destroy($model))) {
+        if (true !== $model->getConnection()->transaction(fn() => $this->driver->destroy($model))) {
             throw new RuntimeException('Failed to delete resource.');
         }
     }
@@ -258,57 +266,38 @@ class Repository implements
     }
 
     /**
-     * Get a query to find the supplied resource id.
-     *
-     * @param string $resourceId
      * @return JsonApiBuilder
      */
-    protected function findQuery(string $resourceId): JsonApiBuilder
+    private function query(): JsonApiBuilder
     {
-        return $this->query()->whereResourceId($resourceId);
-    }
-
-    /**
-     * Get a query to find the supplied resource ids.
-     *
-     * @param array $resourceIds
-     * @return JsonApiBuilder
-     */
-    protected function findManyQuery(array $resourceIds): JsonApiBuilder
-    {
-        return $this->query()->whereResourceId($resourceIds);
-    }
-
-    /**
-     * Destroy the model.
-     *
-     * @param Model $model
-     * @return bool
-     */
-    protected function destroy(Model $model): bool
-    {
-        return (bool) $model->delete();
+        return new JsonApiBuilder(
+            $this->schema,
+            $this->driver->query()
+        );
     }
 
     /**
      * @param Model|string $modelOrResourceId
      * @return Model
      */
-    protected function retrieve($modelOrResourceId): Model
+    private function retrieve($modelOrResourceId): Model
     {
-        if ($modelOrResourceId instanceof $this->model) {
+        $expected = $this->driver->newInstance();
+
+        if ($modelOrResourceId instanceof $expected) {
             return $modelOrResourceId;
         }
 
         if (is_string($modelOrResourceId)) {
             return $this
-                ->findQuery($modelOrResourceId)
+                ->query()
+                ->whereResourceId($modelOrResourceId)
                 ->firstOrFail();
         }
 
         throw new LogicException(sprintf(
             'Expecting a %s instance or a string resource id.',
-            get_class($this->model)
+            get_class($expected)
         ));
     }
 

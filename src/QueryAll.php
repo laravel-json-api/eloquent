@@ -24,6 +24,7 @@ use Illuminate\Support\LazyCollection;
 use LaravelJsonApi\Contracts\Pagination\Page;
 use LaravelJsonApi\Contracts\Store\QueryAllBuilder;
 use LaravelJsonApi\Core\Query\QueryParameters;
+use LaravelJsonApi\Eloquent\Contracts\Driver;
 
 class QueryAll implements QueryAllBuilder
 {
@@ -36,13 +37,20 @@ class QueryAll implements QueryAllBuilder
     private Schema $schema;
 
     /**
+     * @var Driver
+     */
+    private Driver $driver;
+
+    /**
      * QueryAll constructor.
      *
      * @param Schema $schema
+     * @param Driver $driver
      */
-    public function __construct(Schema $schema)
+    public function __construct(Schema $schema, Driver $driver)
     {
         $this->schema = $schema;
+        $this->driver = $driver;
         $this->queryParameters = new QueryParameters();
     }
 
@@ -71,7 +79,7 @@ class QueryAll implements QueryAllBuilder
      */
     public function query(): JsonApiBuilder
     {
-        $base = $this->schema->newInstance()->newQuery();
+        $base = $this->driver->queryAll();
 
         $query = new JsonApiBuilder(
             $this->schema,

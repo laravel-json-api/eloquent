@@ -18,6 +18,18 @@ All notable changes to this project will be documented in this file. This projec
 
 - **BREAKING** Deleting a model now uses `Model::delete` instead of `Model::forceDelete`. This change was required when
   adding full support for soft-deleting resources.
+- **BREAKING** Repositories are now injected with a driver which defines the database interactions for the repository.
+  This allows database interactions to be modified, without having to rewrite the repository class - and is used as to
+  implement the soft-deletes feature.
+
+### Removed
+
+- **BREAKING** Remove the following methods from the `Schema` class. These were originally added as convenience methods
+  if writing custom controller actions - however, their use is now not suitable as all database querying should be
+  executed via the repository class to ensure Eloquent query builders are created according to the database driver that
+  is in use. The methods are:
+    - `Schema::newQuery()`
+    - `Schema::query()`
 
 ## [1.0.0-alpha.4] - 2021-02-27
 
