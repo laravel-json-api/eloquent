@@ -13,6 +13,9 @@ All notable changes to this project will be documented in this file. This projec
   schema should apply the `SoftDeletes` trait from this package and add a `Fields\SoftDelete` field to their list of
   fields. Refer to documentation for full list of capabilities.
 - Added the `WithTrashed`, `OnlyTrashed` and `WhereTrashed` filter classes.
+- The package now supports multi-resource models. This feature allows a model to be represented as more than one JSON:
+  API resource class and works by having proxy classes for each additional representation of a model. Refer to
+  documentation for examples and details of how to implement multi-resource models.
 
 ### Changed
 
