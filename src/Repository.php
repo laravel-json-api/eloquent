@@ -40,6 +40,7 @@ use LaravelJsonApi\Eloquent\Contracts\Driver;
 use LaravelJsonApi\Eloquent\Contracts\Parser;
 use LaravelJsonApi\Eloquent\Contracts\Proxy as ProxyContract;
 use LaravelJsonApi\Eloquent\Fields\Relations\MorphTo;
+use LaravelJsonApi\Eloquent\Fields\Relations\MorphToMany;
 use LaravelJsonApi\Eloquent\Hydrators\ModelHydrator;
 use LaravelJsonApi\Eloquent\Hydrators\ToManyHydrator;
 use LaravelJsonApi\Eloquent\Hydrators\ToOneHydrator;
@@ -202,10 +203,14 @@ class Repository implements
      */
     public function queryToMany($modelOrResourceId, string $fieldName): QueryManyBuilder
     {
-        return new QueryToMany(
-            $this->retrieve($modelOrResourceId),
-            $this->schema->toMany($fieldName)
-        );
+        $model = $this->retrieve($modelOrResourceId);
+        $relation = $this->schema->toMany($fieldName);
+
+        if ($relation instanceof MorphToMany) {
+            return new QueryMorphToMany($model, $relation);
+        }
+
+        return new QueryToMany($model, $relation);
     }
 
     /**

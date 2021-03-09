@@ -100,6 +100,42 @@ class CreatePostAndVideoTables extends Migration
                 ->cascadeOnDelete()
                 ->cascadeOnUpdate();
         });
+
+        Schema::create('image_post', function (Blueprint $table) {
+            $table->unsignedBigInteger('image_id');
+            $table->unsignedBigInteger('post_id');
+            $table->primary(['image_id', 'post_id']);
+
+            $table->foreign('image_id')
+                ->references('id')
+                ->on('images')
+                ->cascadeOnDelete()
+                ->cascadeOnUpdate();
+
+            $table->foreign('post_id')
+                ->references('id')
+                ->on('posts')
+                ->cascadeOnDelete()
+                ->cascadeOnUpdate();
+        });
+
+        Schema::create('post_video', function (Blueprint $table) {
+            $table->unsignedBigInteger('post_id');
+            $table->uuid('video_uuid');
+            $table->primary(['post_id', 'video_uuid']);
+
+            $table->foreign('post_id')
+                ->references('id')
+                ->on('posts')
+                ->cascadeOnDelete()
+                ->cascadeOnUpdate();
+
+            $table->foreign('video_uuid')
+                ->references('uuid')
+                ->on('videos')
+                ->cascadeOnDelete()
+                ->cascadeOnUpdate();
+        });
     }
 
     /**
