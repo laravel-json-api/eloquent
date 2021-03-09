@@ -25,6 +25,7 @@ use LaravelJsonApi\Contracts\Pagination\Page;
 use LaravelJsonApi\Contracts\Store\QueryAllBuilder;
 use LaravelJsonApi\Core\Query\QueryParameters;
 use LaravelJsonApi\Eloquent\Contracts\Driver;
+use LaravelJsonApi\Eloquent\Contracts\Parser;
 
 class QueryAll implements QueryAllBuilder
 {
@@ -42,15 +43,22 @@ class QueryAll implements QueryAllBuilder
     private Driver $driver;
 
     /**
+     * @var Parser
+     */
+    private Parser $parser;
+
+    /**
      * QueryAll constructor.
      *
      * @param Schema $schema
      * @param Driver $driver
+     * @param Parser $parser
      */
-    public function __construct(Schema $schema, Driver $driver)
+    public function __construct(Schema $schema, Driver $driver, Parser $parser)
     {
         $this->schema = $schema;
         $this->driver = $driver;
+        $this->parser = $parser;
         $this->queryParameters = new QueryParameters();
     }
 
@@ -96,7 +104,9 @@ class QueryAll implements QueryAllBuilder
      */
     public function first(): ?object
     {
-        return $this->query()->first();
+        return $this->parser->parseNullable(
+            $this->query()->first()
+        );
     }
 
     /**
@@ -107,10 +117,14 @@ class QueryAll implements QueryAllBuilder
         $query = $this->query();
 
         if ($query->isSingular()) {
-            return $query->first();
+            return $this->parser->parseNullable(
+                $query->first()
+            );
         }
 
-        return $query->cursor();
+        return $this->parser->parseMany(
+            $query->cursor()
+        );
     }
 
     /**
@@ -118,7 +132,15 @@ class QueryAll implements QueryAllBuilder
      */
     public function get(): Collection
     {
-        return $this->query()->get();
+        $value = $this->parser->parseMany(
+            $this->query()->get()
+        );
+
+        if ($value instanceof Collection) {
+            return $value;
+        }
+
+        return Collection::make($value);
     }
 
     /**
@@ -126,7 +148,15 @@ class QueryAll implements QueryAllBuilder
      */
     public function cursor(): LazyCollection
     {
-        return $this->query()->cursor();
+        $value = $this->parser->parseMany(
+            $this->query()->cursor()
+        );
+
+        if ($value instanceof LazyCollection) {
+            return $value;
+        }
+
+        return LazyCollection::make($value);
     }
 
     /**
@@ -134,7 +164,9 @@ class QueryAll implements QueryAllBuilder
      */
     public function paginate(array $page): Page
     {
-        return $this->query()->paginate($page);
+        return $this->parser->parsePage(
+            $this->query()->paginate($page)
+        );
     }
 
     /**
@@ -149,10 +181,14 @@ class QueryAll implements QueryAllBuilder
         }
 
         if (is_null($page)) {
-            return $query->get();
+            return $this->parser->parseMany(
+                $query->get()
+            );
         }
 
-        return $query->paginate($page);
+        return $this->parser->parsePage(
+            $query->paginate($page)
+        );
     }
 
     /**
@@ -173,15 +209,21 @@ class QueryAll implements QueryAllBuilder
          * filter has been used.
          */
         if (is_null($page) && $query->isSingular()) {
-            return $query->first();
+            return $this->parser->parseNullable(
+                $query->first()
+            );
         }
 
         $page = $page ?? $this->schema->defaultPagination();
 
         if (is_null($page)) {
-            return $query->cursor();
+            return $this->parser->parseMany(
+                $query->cursor()
+            );
         }
 
-        return $query->paginate($page);
+        return $this->parser->parsePage(
+            $query->paginate($page)
+        );
     }
 }

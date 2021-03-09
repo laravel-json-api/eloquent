@@ -22,6 +22,7 @@ namespace LaravelJsonApi\Eloquent\Fields\Relations;
 use Illuminate\Database\Eloquent\Model;
 use LaravelJsonApi\Core\Document\ResourceIdentifier;
 use LaravelJsonApi\Core\Support\Str;
+use LaravelJsonApi\Eloquent\Contracts\Proxy;
 
 abstract class ToOne extends Relation
 {
@@ -32,6 +33,21 @@ abstract class ToOne extends Relation
     public function toOne(): bool
     {
         return true;
+    }
+
+    /**
+     * Parse a model for the relationship.
+     *
+     * @param Model|null $model
+     * @return object|null
+     */
+    public function parse(?Model $model): ?object
+    {
+        if ($model) {
+            return $this->schema()->parser()->parseOne($model);
+        }
+
+        return null;
     }
 
     /**
@@ -58,10 +74,16 @@ abstract class ToOne extends Relation
 
         $this->assertInverseType($identifier->type());
 
-        return $this
+        $model = $this
             ->schemas()
             ->schemaFor($identifier->type())
             ->repository()
             ->findOrFail($identifier->id());
+
+        if ($model instanceof Proxy) {
+            return $model->toBase();
+        }
+
+        return $model;
     }
 }

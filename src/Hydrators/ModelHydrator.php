@@ -28,6 +28,7 @@ use LaravelJsonApi\Eloquent\Contracts\Driver;
 use LaravelJsonApi\Eloquent\Contracts\Fillable;
 use LaravelJsonApi\Eloquent\Contracts\FillableToMany;
 use LaravelJsonApi\Eloquent\Contracts\FillableToOne;
+use LaravelJsonApi\Eloquent\Contracts\Parser;
 use LaravelJsonApi\Eloquent\Fields\Relations\Relation;
 use LaravelJsonApi\Eloquent\HasQueryParameters;
 use LaravelJsonApi\Eloquent\Schema;
@@ -51,6 +52,11 @@ class ModelHydrator implements ResourceBuilder
     private Driver $driver;
 
     /**
+     * @var Parser
+     */
+    private Parser $parser;
+
+    /**
      * @var Model
      */
     private Model $model;
@@ -60,15 +66,18 @@ class ModelHydrator implements ResourceBuilder
      *
      * @param Schema $schema
      * @param Driver $driver
+     * @param Parser $parser
      * @param Model $model
      */
     public function __construct(
         Schema $schema,
         Driver $driver,
+        Parser $parser,
         Model $model
     ) {
         $this->schema = $schema;
         $this->driver = $driver;
+        $this->parser = $parser;
         $this->model = $model;
         $this->queryParameters = new QueryParameters();
     }
@@ -88,7 +97,7 @@ class ModelHydrator implements ResourceBuilder
             $this->queryParameters->includePaths()
         );
 
-        return $model;
+        return $this->parser->parseOne($model);
     }
 
     /**

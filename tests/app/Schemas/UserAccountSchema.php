@@ -19,16 +19,19 @@ declare(strict_types=1);
 
 namespace App\Schemas;
 
-use App\Models\Role;
+use App\Models\UserAccount;
 use LaravelJsonApi\Eloquent\Contracts\Paginator;
 use LaravelJsonApi\Eloquent\Fields\DateTime;
 use LaravelJsonApi\Eloquent\Fields\ID;
 use LaravelJsonApi\Eloquent\Fields\Relations\BelongsToMany;
+use LaravelJsonApi\Eloquent\Fields\Relations\HasOne;
 use LaravelJsonApi\Eloquent\Fields\Str;
+use LaravelJsonApi\Eloquent\Filters\Where;
 use LaravelJsonApi\Eloquent\Filters\WhereIn;
-use LaravelJsonApi\Eloquent\Schema;
+use LaravelJsonApi\Eloquent\Pagination\PagePagination;
+use LaravelJsonApi\Eloquent\ProxySchema;
 
-class RoleSchema extends Schema
+class UserAccountSchema extends ProxySchema
 {
 
     /**
@@ -36,7 +39,7 @@ class RoleSchema extends Schema
      *
      * @var string
      */
-    public static string $model = Role::class;
+    public static string $model = UserAccount::class;
 
     /**
      * @inheritDoc
@@ -46,13 +49,11 @@ class RoleSchema extends Schema
         return [
             ID::make(),
             DateTime::make('createdAt')->readOnly(),
+            Str::make('email'),
             Str::make('name'),
+            HasOne::make('phone'),
+            BelongsToMany::make('roles')->fields(new ApprovedPivot()),
             DateTime::make('updatedAt')->readOnly(),
-            BelongsToMany::make('users')->fields(new ApprovedPivot())->readOnly(),
-            BelongsToMany::make('userAccounts', 'users')
-                ->type('user-accounts')
-                ->fields(new ApprovedPivot())
-                ->readOnly(),
         ];
     }
 
@@ -63,6 +64,7 @@ class RoleSchema extends Schema
     {
         return [
             WhereIn::make('id', $this->idColumn()),
+            Where::make('email')->singular(),
         ];
     }
 
@@ -71,7 +73,7 @@ class RoleSchema extends Schema
      */
     public function pagination(): ?Paginator
     {
-        return null;
+        return PagePagination::make();
     }
 
 }

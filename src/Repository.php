@@ -37,6 +37,8 @@ use LaravelJsonApi\Contracts\Store\ToManyBuilder;
 use LaravelJsonApi\Contracts\Store\ToOneBuilder;
 use LaravelJsonApi\Contracts\Store\UpdatesResources;
 use LaravelJsonApi\Eloquent\Contracts\Driver;
+use LaravelJsonApi\Eloquent\Contracts\Parser;
+use LaravelJsonApi\Eloquent\Contracts\Proxy as ProxyContract;
 use LaravelJsonApi\Eloquent\Fields\Relations\MorphTo;
 use LaravelJsonApi\Eloquent\Hydrators\ModelHydrator;
 use LaravelJsonApi\Eloquent\Hydrators\ToManyHydrator;
@@ -70,15 +72,22 @@ class Repository implements
     private Driver $driver;
 
     /**
+     * @var Parser|null
+     */
+    private Parser $parser;
+
+    /**
      * Repository constructor.
      *
      * @param Schema $schema
      * @param Driver $driver
+     * @param Parser $parser
      */
-    public function __construct(Schema $schema, Driver $driver)
+    public function __construct(Schema $schema, Driver $driver, Parser $parser)
     {
         $this->schema = $schema;
         $this->driver = $driver;
+        $this->parser = $parser;
     }
 
     /**
@@ -86,14 +95,16 @@ class Repository implements
      */
     public function find(string $resourceId): ?object
     {
+        $model = null;
+
         if ($this->schema->id()->match($resourceId)) {
-            return $this
+            $model = $this
                 ->query()
                 ->whereResourceId($resourceId)
                 ->first();
         }
 
-        return null;
+        return $this->parser->parseNullable($model);
     }
 
     /**
@@ -126,10 +137,9 @@ class Repository implements
             return $ids;
         }
 
-        return $this
-            ->query()
-            ->whereResourceId($ids->all())
-            ->get();
+        return $this->parser->parseMany(
+            $this->query()->whereResourceId($ids->all())->get()
+        );
     }
 
     /**
@@ -152,7 +162,7 @@ class Repository implements
      */
     public function queryAll(): QueryAllBuilder
     {
-        return new QueryAll($this->schema, $this->driver);
+        return new QueryAll($this->schema, $this->driver, $this->parser);
     }
 
     /**
@@ -160,25 +170,16 @@ class Repository implements
      */
     public function queryOne($modelOrResourceId): QueryOneBuilder
     {
-        if ($modelOrResourceId instanceof Model) {
-            return new QueryOne(
-                $this->schema,
-                $this->driver,
-                $modelOrResourceId,
-                strval($modelOrResourceId->{$this->schema->idColumn()})
-            );
+        if ($modelOrResourceId instanceof ProxyContract) {
+            $modelOrResourceId = $modelOrResourceId->toBase();
         }
 
-        if (is_string($modelOrResourceId) && !empty($modelOrResourceId)) {
-            return new QueryOne(
-                $this->schema,
-                $this->driver,
-                null,
-                $modelOrResourceId
-            );
-        }
-
-        throw new LogicException('Expecting a model or non-empty string resource id.');
+        return new QueryOne(
+            $this->schema,
+            $this->driver,
+            $this->parser,
+            $modelOrResourceId
+        );
     }
 
     /**
@@ -215,6 +216,7 @@ class Repository implements
         return new ModelHydrator(
             $this->schema,
             $this->driver,
+            $this->parser,
             $this->driver->newInstance()
         );
     }
@@ -227,6 +229,7 @@ class Repository implements
         return new ModelHydrator(
             $this->schema,
             $this->driver,
+            $this->parser,
             $this->retrieve($modelOrResourceId)
         );
     }
@@ -277,12 +280,16 @@ class Repository implements
     }
 
     /**
-     * @param Model|string $modelOrResourceId
+     * @param Model|ProxyContract|string $modelOrResourceId
      * @return Model
      */
     private function retrieve($modelOrResourceId): Model
     {
         $expected = $this->driver->newInstance();
+
+        if ($modelOrResourceId instanceof ProxyContract) {
+            $modelOrResourceId = $modelOrResourceId->toBase();
+        }
 
         if ($modelOrResourceId instanceof $expected) {
             return $modelOrResourceId;

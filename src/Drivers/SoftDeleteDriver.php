@@ -50,9 +50,7 @@ class SoftDeleteDriver extends StandardDriver
          * When querying specific resources, we use `withTrashed` as we want trashed
          * resources to exist in our API.
          */
-        return $this->model
-            ->newQuery()
-            ->withTrashed();
+        return parent::query()->withTrashed();
     }
 
     /**

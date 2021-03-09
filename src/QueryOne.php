@@ -20,9 +20,11 @@ declare(strict_types=1);
 namespace LaravelJsonApi\Eloquent;
 
 use Illuminate\Database\Eloquent\Model;
+use InvalidArgumentException;
 use LaravelJsonApi\Contracts\Store\QueryOneBuilder as QueryOneBuilderContract;
 use LaravelJsonApi\Core\Query\QueryParameters;
 use LaravelJsonApi\Eloquent\Contracts\Driver;
+use LaravelJsonApi\Eloquent\Contracts\Parser;
 
 class QueryOne implements QueryOneBuilderContract
 {
@@ -40,6 +42,11 @@ class QueryOne implements QueryOneBuilderContract
     private Driver $driver;
 
     /**
+     * @var Parser
+     */
+    private Parser $parser;
+
+    /**
      * @var Model|null
      */
     private ?Model $model;
@@ -54,17 +61,24 @@ class QueryOne implements QueryOneBuilderContract
      *
      * @param Schema $schema
      * @param Driver $driver
-     * @param Model|null $model
-     * @param string $resourceId
+     * @param Parser $parser
+     * @param Model|string $modelOrResourceId
      */
-    public function __construct(
-        Schema $schema,
-        Driver $driver,
-        ?Model $model,
-        string $resourceId
-    ) {
+    public function __construct(Schema $schema, Driver $driver, Parser $parser, $modelOrResourceId)
+    {
+        if ($modelOrResourceId instanceof Model) {
+            $model = $modelOrResourceId;
+            $resourceId = strval($model->{$schema->idColumn()});
+        } else if (is_string($modelOrResourceId) && !empty($modelOrResourceId)) {
+            $model = null;
+            $resourceId = $modelOrResourceId;
+        } else {
+            throw new InvalidArgumentException('Expecting a model or non-empty string resource id.');
+        }
+
         $this->schema = $schema;
         $this->driver = $driver;
+        $this->parser = $parser;
         $this->model = $model;
         $this->resourceId = $resourceId;
         $this->queryParameters = new QueryParameters();
@@ -105,13 +119,12 @@ class QueryOne implements QueryOneBuilderContract
                 ->forModel($this->model)
                 ->loadMissing($this->queryParameters->includePaths());
 
-            return $this->model;
+            return $this->parser->parseOne($this->model);
         }
 
-        return $this
-            ->query()
-            ->whereResourceId($this->resourceId)
-            ->first();
+        return $this->parser->parseNullable(
+            $this->query()->whereResourceId($this->resourceId)->first()
+        );
     }
 
 }

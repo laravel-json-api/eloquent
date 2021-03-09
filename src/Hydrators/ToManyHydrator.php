@@ -25,6 +25,7 @@ use LaravelJsonApi\Contracts\Store\ToManyBuilder;
 use LaravelJsonApi\Core\Query\QueryParameters;
 use LaravelJsonApi\Core\Support\Str;
 use LaravelJsonApi\Eloquent\Contracts\FillableToMany;
+use LaravelJsonApi\Eloquent\Contracts\Parser;
 use LaravelJsonApi\Eloquent\Fields\Relations\ToMany;
 use LaravelJsonApi\Eloquent\HasQueryParameters;
 use UnexpectedValueException;
@@ -73,7 +74,9 @@ class ToManyHydrator implements ToManyBuilder
             fn() => $this->relation->sync($this->model, $identifiers)
         );
 
-        return $this->prepareResult($related);
+        return $this->relation->parse(
+            $this->prepareResult($related)
+        );
     }
 
     /**
@@ -85,7 +88,9 @@ class ToManyHydrator implements ToManyBuilder
             fn() => $this->relation->attach($this->model, $identifiers)
         );
 
-        return $this->prepareResult($related);
+        return $this->relation->parse(
+            $this->prepareResult($related)
+        );
     }
 
     /**
@@ -97,7 +102,9 @@ class ToManyHydrator implements ToManyBuilder
             fn() => $this->relation->detach($this->model, $identifiers)
         );
 
-        return $this->prepareResult($related);
+        return $this->relation->parse(
+            $this->prepareResult($related)
+        );
     }
 
     /**
@@ -114,6 +121,14 @@ class ToManyHydrator implements ToManyBuilder
         }
 
         return $related;
+    }
+
+    /**
+     * @return Parser
+     */
+    private function parser(): Parser
+    {
+        return $this->relation->schema()->parser();
     }
 
 }

@@ -19,6 +19,7 @@ declare(strict_types=1);
 
 namespace LaravelJsonApi\Eloquent\Fields\Relations;
 
+use Generator;
 use Illuminate\Database\Eloquent\Model;
 use InvalidArgumentException;
 use LaravelJsonApi\Contracts\Schema\PolymorphicRelation;
@@ -68,33 +69,39 @@ class MorphTo extends BelongsTo implements PolymorphicRelation
     }
 
     /**
+     * Get the inverse schema for the provided model.
+     *
      * @param Model $model
      * @return Schema
      */
     public function schemaFor(Model $model): Schema
     {
-        $expected = get_class($model);
-
-        foreach ($this->types as $type) {
-            $schema = $this->schemas()->schemaFor($type);
-
-            if ($expected === $schema->model()) {
-                if ($schema instanceof Schema) {
-                    return $schema;
-                }
-
-                throw new LogicException(sprintf(
-                    'Expecting schema for resource type %s to be an Eloquent schema.',
-                    $type
-                ));
+        /** @var Schema $schema */
+        foreach ($this->allSchemas() as $schema) {
+            if ($schema->isModel($model)) {
+                return $schema;
             }
         }
 
         throw new UnexpectedValueException(sprintf(
             'Model %s is not valid for morph-to relation %s.',
-            $expected,
+            get_class($model),
             $this->name()
         ));
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function parse(?Model $model): ?object
+    {
+        if ($model) {
+            return $this->schemaFor($model)->parser()->parseOne(
+                $model
+            );
+        }
+
+        return null;
     }
 
     /**
@@ -103,14 +110,34 @@ class MorphTo extends BelongsTo implements PolymorphicRelation
      */
     protected function assertInverseType(string $type): void
     {
-        $expected = collect($this->inverseTypes());
+        $expected = $this->allInverse();
 
-        if (!$expected->containsStrict($type)) {
+        if (!in_array($type, $expected, true)) {
             throw new LogicException(sprintf(
                 'Resource type %s is not a valid inverse resource type for relation %s: expecting %s.',
                 $type,
                 $this->name(),
-                $expected->implode(', ')
+                implode(', ', $expected),
+            ));
+        }
+    }
+
+    /**
+     * @return Generator
+     */
+    private function allSchemas(): Generator
+    {
+        foreach ($this->inverseTypes() as $type) {
+            $schema = $this->schemas()->schemaFor($type);
+
+            if ($schema instanceof Schema) {
+                yield $type => $schema;
+                continue;
+            }
+
+            throw new LogicException(sprintf(
+                'Expecting schema for resource type %s to be an Eloquent schema.',
+                $type
             ));
         }
     }

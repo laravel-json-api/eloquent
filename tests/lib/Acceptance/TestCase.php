@@ -24,6 +24,7 @@ use Illuminate\Support\Arr;
 use LaravelJsonApi\Contracts\Schema\Container as SchemaContainerContract;
 use LaravelJsonApi\Contracts\Server\Server;
 use LaravelJsonApi\Core\Schema\Container as SchemaContainer;
+use LaravelJsonApi\Core\Schema\TypeResolver;
 use Orchestra\Testbench\TestCase as BaseTestCase;
 
 class TestCase extends BaseTestCase
@@ -51,6 +52,7 @@ class TestCase extends BaseTestCase
                 Schemas\PostSchema::class,
                 Schemas\RoleSchema::class,
                 Schemas\TagSchema::class,
+                Schemas\UserAccountSchema::class,
                 Schemas\UserSchema::class,
                 Schemas\VideoSchema::class,
             ])
@@ -91,6 +93,9 @@ class TestCase extends BaseTestCase
             ->setConstructorArgs(['server' => $this->server()])
             ->onlyMethods(['with'])
             ->getMock();
+
+        $resolver = new TypeResolver();
+        $resolver->register(get_class($mock), ($resolver)($class));
 
         $mock->method('with')->willReturn(Arr::wrap($paths));
 

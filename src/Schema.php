@@ -26,10 +26,12 @@ use Illuminate\Http\Request;
 use LaravelJsonApi\Contracts\Store\Repository as RepositoryContract;
 use LaravelJsonApi\Core\Schema\Schema as BaseSchema;
 use LaravelJsonApi\Eloquent\Contracts\Driver;
+use LaravelJsonApi\Eloquent\Contracts\Parser;
 use LaravelJsonApi\Eloquent\Drivers\StandardDriver;
 use LaravelJsonApi\Eloquent\EagerLoading\EagerLoader;
 use LaravelJsonApi\Eloquent\Fields\Relations\ToMany;
 use LaravelJsonApi\Eloquent\Fields\Relations\ToOne;
+use LaravelJsonApi\Eloquent\Parsers\StandardParser;
 use LogicException;
 
 abstract class Schema extends BaseSchema
@@ -48,6 +50,13 @@ abstract class Schema extends BaseSchema
      * @var array|null
      */
     protected ?array $defaultPagination = null;
+
+    /**
+     * The cached parser instance.
+     *
+     * @var Parser|null
+     */
+    protected ?Parser $parser = null;
 
     /**
      * @var string|null
@@ -71,7 +80,11 @@ abstract class Schema extends BaseSchema
      */
     public function repository(): RepositoryContract
     {
-        return new Repository($this, $this->driver());
+        return new Repository(
+            $this,
+            $this->driver(),
+            $this->parser(),
+        );
     }
 
     /**
@@ -82,6 +95,19 @@ abstract class Schema extends BaseSchema
         $modelClass = $this->model();
 
         return new $modelClass;
+    }
+
+    /**
+     * Does the schema handle the provided model?
+     *
+     * @param Model|string $model
+     * @return bool
+     */
+    public function isModel($model): bool
+    {
+        $expected = $this->model();
+
+        return ($model instanceof $expected) || $model === $expected;
     }
 
     /**
@@ -228,6 +254,20 @@ abstract class Schema extends BaseSchema
     public function isSingular(array $filters): bool
     {
         return false;
+    }
+
+    /**
+     * Get the parser for this resource type.
+     *
+     * @return Parser
+     */
+    public function parser(): Parser
+    {
+        if ($this->parser) {
+            return $this->parser;
+        }
+
+        return $this->parser = new StandardParser();
     }
 
     /**

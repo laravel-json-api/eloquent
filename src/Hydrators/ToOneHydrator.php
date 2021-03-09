@@ -73,7 +73,9 @@ class ToOneHydrator implements ToOneBuilder
             fn() => $this->relation->associate($this->model, $identifier)
         );
 
-        return $this->prepareResult($related);
+        return $this->relation->parse(
+            $this->prepareResult($related)
+        );
     }
 
     /**
