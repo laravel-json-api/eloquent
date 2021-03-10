@@ -127,7 +127,11 @@ class QueryMorphToMany implements QueryManyBuilder, \IteratorAggregate
         foreach ($this->relation as $relation) {
             $query = $this->toQuery($relation);
             $this->request ? $query->withRequest($this->request) : null;
-            yield $query->withQuery($this->queryParameters);
+
+            yield $query->withQuery(new MorphParameters(
+                $relation->schema(),
+                $this->queryParameters,
+            ));
         }
     }
 

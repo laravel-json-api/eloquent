@@ -17,11 +17,12 @@
 
 declare(strict_types=1);
 
-namespace LaravelJsonApi\Eloquent\Tests\Acceptance;
+namespace LaravelJsonApi\Eloquent\Tests\Acceptance\EagerLoading;
 
 use App\Models\Post;
 use App\Models\User;
 use App\Schemas\PostSchema;
+use LaravelJsonApi\Eloquent\Tests\Acceptance\TestCase;
 
 class EagerLoaderTest extends TestCase
 {
@@ -42,6 +43,11 @@ class EagerLoaderTest extends TestCase
                 'author.country,comments.user.country,image.imageable',
                 // return values are sorted
                 ['comments.user.country', 'image.imageable', 'user.country'],
+            ],
+            'posts morph-to-many' => [
+                'posts',
+                'media.imageable,media.comments',
+                ['images.imageable', 'videos.comments'],
             ],
             'tags' => [
                 'tags',

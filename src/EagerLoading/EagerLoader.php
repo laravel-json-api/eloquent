@@ -61,11 +61,6 @@ class EagerLoader
     private $query;
 
     /**
-     * @var bool
-     */
-    private bool $skipMissingFields = false;
-
-    /**
      * EagerLoader constructor.
      *
      * @param Container $schemas
@@ -75,16 +70,6 @@ class EagerLoader
     {
         $this->schemas = $schemas;
         $this->schema = $schema;
-    }
-
-    /**
-     * @return $this
-     */
-    public function skipMissingFields(): self
-    {
-        $this->skipMissingFields = true;
-
-        return $this;
     }
 
     /**
@@ -189,7 +174,6 @@ class EagerLoader
     public function toRelations($includePaths): array
     {
         $paths = new EagerLoadIterator($this->schemas, $this->schema, $includePaths);
-        $paths->skipMissingFields($this->skipMissingFields);
 
         return $paths->all();
     }
@@ -237,10 +221,9 @@ class EagerLoader
             return true;
         }
 
-        foreach ($relation->inverseTypes() as $type) {
-            $schema = $this->schemas->schemaFor($type);
-
-            if ($schema instanceof Schema && !empty($schema->with())) {
+        /** @var Schema $schema */
+        foreach ($relation->allSchemas() as $schema) {
+            if (!empty($schema->with())) {
                 return true;
             }
         }

@@ -44,4 +44,34 @@ class QueryTest extends TestCase
         $this->assertCount(6, $actual);
         $this->assertMedia($expected, $actual);
     }
+
+    public function testWithIncludePaths(): void
+    {
+        $post = Post::factory()
+            ->has(Image::factory()->count(3))
+            ->has(Video::factory()->count(3))
+            ->create();
+
+        $expected = $post->images()->get()->merge(
+            $post->videos()->get()
+        );
+
+        $actual = $this->repository
+            ->queryToMany($post, 'media')
+            ->with(['imageable', 'comments'])
+            ->get();
+
+        $this->assertCount(6, $actual);
+        $this->assertMedia($expected, $actual);
+
+        $this->assertTrue(
+            $actual->whereInstanceOf(Image::class)->every(fn(Image $image) => $image->relationLoaded('imageable')),
+            'images'
+        );
+
+        $this->assertTrue(
+            $actual->whereInstanceOf(Video::class)->every(fn(Video $video) => $video->relationLoaded('comments')),
+            'videos'
+        );
+    }
 }

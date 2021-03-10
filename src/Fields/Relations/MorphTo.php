@@ -105,6 +105,26 @@ class MorphTo extends BelongsTo implements PolymorphicRelation
     }
 
     /**
+     * @return Generator
+     */
+    public function allSchemas(): Generator
+    {
+        foreach ($this->inverseTypes() as $type) {
+            $schema = $this->schemas()->schemaFor($type);
+
+            if ($schema instanceof Schema) {
+                yield $type => $schema;
+                continue;
+            }
+
+            throw new LogicException(sprintf(
+                'Expecting schema for resource type %s to be an Eloquent schema.',
+                $type
+            ));
+        }
+    }
+
+    /**
      * @param string $type
      * @return void
      */
@@ -118,26 +138,6 @@ class MorphTo extends BelongsTo implements PolymorphicRelation
                 $type,
                 $this->name(),
                 implode(', ', $expected),
-            ));
-        }
-    }
-
-    /**
-     * @return Generator
-     */
-    private function allSchemas(): Generator
-    {
-        foreach ($this->inverseTypes() as $type) {
-            $schema = $this->schemas()->schemaFor($type);
-
-            if ($schema instanceof Schema) {
-                yield $type => $schema;
-                continue;
-            }
-
-            throw new LogicException(sprintf(
-                'Expecting schema for resource type %s to be an Eloquent schema.',
-                $type
             ));
         }
     }

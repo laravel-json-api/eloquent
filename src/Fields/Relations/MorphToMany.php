@@ -74,6 +74,8 @@ class MorphToMany extends ToMany implements PolymorphicRelation, IteratorAggrega
      */
     public function withSchemas(Container $container): void
     {
+        parent::withSchemas($container);
+
         foreach ($this as $relation) {
             $relation->withSchemas($container);
         }
