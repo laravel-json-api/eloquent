@@ -20,16 +20,22 @@ declare(strict_types=1);
 namespace LaravelJsonApi\Eloquent\Fields\Relations;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Collection;
-use Illuminate\Support\Enumerable;
+use Illuminate\Support\LazyCollection;
 use InvalidArgumentException;
+use IteratorAggregate;
 use LaravelJsonApi\Contracts\Schema\Container;
 use LaravelJsonApi\Contracts\Schema\PolymorphicRelation;
-use IteratorAggregate;
+use LaravelJsonApi\Eloquent\Contracts\FillableToMany;
+use LaravelJsonApi\Eloquent\Fields\Concerns\ReadOnly;
+use LaravelJsonApi\Eloquent\Polymorphism\MorphMany;
+use LaravelJsonApi\Eloquent\Polymorphism\MorphValue;
 use UnexpectedValueException;
 
-class MorphToMany extends ToMany implements PolymorphicRelation, IteratorAggregate
+class MorphToMany extends ToMany implements PolymorphicRelation, IteratorAggregate, FillableToMany
 {
+
+    use Polymorphic;
+    use ReadOnly;
 
     /**
      * @var array
@@ -111,13 +117,77 @@ class MorphToMany extends ToMany implements PolymorphicRelation, IteratorAggrega
      * Get the value of the relationship from the supplied model.
      *
      * @param object $model
-     * @return Collection
+     * @return MorphMany
      */
-    public function value(object $model): Collection
+    public function value(object $model): MorphMany
     {
-        return collect($this->relations)
-            ->map(fn(Relation $relation) => $model->{$relation->relationName()})
-            ->flatten();
+        $values = new MorphMany();
+
+        /** @var Relation $relation */
+        foreach ($this as $relation) {
+            $values->push(new MorphValue(
+                $relation,
+                $model->{$relation->relationName()}
+            ));
+        }
+
+        return $values;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function fill(Model $model, $value): void
+    {
+        // TODO: Implement fill() method.
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function sync(Model $model, array $identifiers): iterable
+    {
+        $values = new MorphMany();
+
+        /** @var Relation $relation */
+        foreach ($this as $relation) {
+            if ($relation instanceof FillableToMany) {
+                $synced = $relation->sync($model, $this->identifiersFor($relation, $identifiers));
+                $values->push(new MorphValue($relation, $synced));
+            }
+        }
+
+        return $values;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function attach(Model $model, array $identifiers): iterable
+    {
+        // TODO: Implement attach() method.
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function detach(Model $model, array $identifiers): iterable
+    {
+        // TODO: Implement detach() method.
+    }
+
+    /**
+     * Get the identifiers that are valid for the supplied relation.
+     *
+     * @param Relation $relation
+     * @param array $identifiers
+     * @return array
+     */
+    private function identifiersFor(Relation $relation, array $identifiers): array
+    {
+        return collect($identifiers)
+            ->filter(fn(array $identifier) => in_array($identifier['type'], $relation->allInverse()))
+            ->all();
     }
 
 }

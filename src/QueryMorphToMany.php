@@ -31,6 +31,7 @@ use LaravelJsonApi\Eloquent\Fields\Relations\MorphToMany;
 use LaravelJsonApi\Eloquent\Fields\Relations\Relation;
 use LaravelJsonApi\Eloquent\Fields\Relations\ToMany;
 use LaravelJsonApi\Eloquent\Fields\Relations\ToOne;
+use LaravelJsonApi\Eloquent\Polymorphism\MorphParameters;
 use LogicException;
 
 class QueryMorphToMany implements QueryManyBuilder, \IteratorAggregate

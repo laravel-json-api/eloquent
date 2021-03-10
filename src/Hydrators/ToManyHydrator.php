@@ -28,6 +28,7 @@ use LaravelJsonApi\Eloquent\Contracts\FillableToMany;
 use LaravelJsonApi\Eloquent\Contracts\Parser;
 use LaravelJsonApi\Eloquent\Fields\Relations\ToMany;
 use LaravelJsonApi\Eloquent\HasQueryParameters;
+use LaravelJsonApi\Eloquent\Polymorphism\MorphMany;
 use UnexpectedValueException;
 
 class ToManyHydrator implements ToManyBuilder
@@ -108,14 +109,22 @@ class ToManyHydrator implements ToManyBuilder
     }
 
     /**
-     * @param EloquentCollection $related
-     * @return EloquentCollection
+     * Prepare the result for returning.
+     *
+     * @param EloquentCollection|MorphMany $related
+     * @return iterable
      */
-    private function prepareResult(EloquentCollection $related): EloquentCollection
+    private function prepareResult(iterable $related): iterable
     {
         /** Always do eager loading, in case we have default include paths. */
-        if ($related->isNotEmpty()) {
+        if ($related instanceof EloquentCollection && $related->isNotEmpty()) {
             $this->relation->schema()->loader()->forModels($related)->loadMissing(
+                $this->queryParameters->includePaths()
+            );
+        }
+
+        if ($related instanceof MorphMany) {
+            $related->loadMissing(
                 $this->queryParameters->includePaths()
             );
         }

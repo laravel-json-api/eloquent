@@ -17,14 +17,14 @@
 
 declare(strict_types=1);
 
-namespace LaravelJsonApi\Eloquent;
+namespace LaravelJsonApi\Eloquent\Polymorphism;
 
 use LaravelJsonApi\Contracts\Query\QueryParameters;
 use LaravelJsonApi\Core\Query\FieldSets;
 use LaravelJsonApi\Core\Query\IncludePaths;
-use LaravelJsonApi\Core\Query\RelationshipPath;
 use LaravelJsonApi\Core\Query\SortField;
 use LaravelJsonApi\Core\Query\SortFields;
+use LaravelJsonApi\Eloquent\Schema;
 
 class MorphParameters implements QueryParameters
 {
@@ -58,7 +58,7 @@ class MorphParameters implements QueryParameters
     {
         if ($paths = $this->parameters->includePaths()) {
             return new IncludePaths(...collect($paths->all())
-                ->filter(fn($path) => $this->isRelationshipPath($path))
+                ->filter(fn($path) => $this->schema->isIncludePath($path))
             );
         }
 
@@ -107,19 +107,6 @@ class MorphParameters implements QueryParameters
         }
 
         return null;
-    }
-
-    /**
-     * @param RelationshipPath $path
-     * @return bool
-     */
-    private function isRelationshipPath(RelationshipPath $path): bool
-    {
-        if (!$this->schema->isRelationship($path->first())) {
-            return false;
-        }
-
-        return $this->schema->relationship($path->first())->isIncludePath();
     }
 
     /**

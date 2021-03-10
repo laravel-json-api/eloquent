@@ -21,6 +21,7 @@ namespace LaravelJsonApi\Eloquent\Contracts;
 
 use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Database\Eloquent\Model;
+use LaravelJsonApi\Eloquent\Polymorphism\MorphMany;
 
 interface FillableToMany extends Fillable
 {
@@ -30,25 +31,25 @@ interface FillableToMany extends Fillable
      *
      * @param Model $model
      * @param array $identifiers
-     * @return EloquentCollection
+     * @return EloquentCollection|MorphMany
      */
-    public function sync(Model $model, array $identifiers): EloquentCollection;
+    public function sync(Model $model, array $identifiers): iterable;
 
     /**
      * Add the specified members to the relationship unless they are already present.
      *
      * @param Model $model
      * @param array $identifiers
-     * @return EloquentCollection
+     * @return EloquentCollection|MorphMany
      */
-    public function attach(Model $model, array $identifiers): EloquentCollection;
+    public function attach(Model $model, array $identifiers): iterable;
 
     /**
      * Remove the specified members from the relationship.
      *
      * @param Model $model
      * @param array $identifiers
-     * @return EloquentCollection
+     * @return EloquentCollection|MorphMany
      */
-    public function detach(Model $model, array $identifiers): EloquentCollection;
+    public function detach(Model $model, array $identifiers): iterable;
 }

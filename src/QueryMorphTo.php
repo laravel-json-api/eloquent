@@ -24,6 +24,7 @@ use LaravelJsonApi\Contracts\Schema\Filter;
 use LaravelJsonApi\Contracts\Store\QueryOneBuilder;
 use LaravelJsonApi\Core\Query\QueryParameters;
 use LaravelJsonApi\Eloquent\Fields\Relations\MorphTo;
+use LaravelJsonApi\Eloquent\Polymorphism\MorphParameters;
 use function is_null;
 
 class QueryMorphTo implements QueryOneBuilder

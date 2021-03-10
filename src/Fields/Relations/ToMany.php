@@ -24,6 +24,7 @@ use Illuminate\Support\Collection;
 use LaravelJsonApi\Contracts\Pagination\Page;
 use LaravelJsonApi\Core\Support\Str;
 use LaravelJsonApi\Eloquent\Contracts\Proxy;
+use LaravelJsonApi\Eloquent\Polymorphism\MorphMany;
 
 abstract class ToMany extends Relation
 {
@@ -77,6 +78,10 @@ abstract class ToMany extends Relation
      */
     public function parse($models): iterable
     {
+        if ($models instanceof MorphMany) {
+            return $models;
+        }
+
         return $this->schema()->parser()->parseMany(
             $models
         );

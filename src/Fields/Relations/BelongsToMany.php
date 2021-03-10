@@ -22,6 +22,7 @@ namespace LaravelJsonApi\Eloquent\Fields\Relations;
 use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany as EloquentBelongsToMany;
+use Illuminate\Support\Collection;
 use InvalidArgumentException;
 use LaravelJsonApi\Eloquent\Contracts\FillableToMany;
 use LaravelJsonApi\Eloquent\Fields\Concerns\ReadOnly;
@@ -101,7 +102,7 @@ class BelongsToMany extends ToMany implements FillableToMany
     /**
      * @inheritDoc
      */
-    public function sync(Model $model, array $identifiers): EloquentCollection
+    public function sync(Model $model, array $identifiers): iterable
     {
         $related = $this->findMany($identifiers);
         $relation = $this->getRelation($model);
@@ -120,7 +121,7 @@ class BelongsToMany extends ToMany implements FillableToMany
     /**
      * @inheritDoc
      */
-    public function attach(Model $model, array $identifiers): EloquentCollection
+    public function attach(Model $model, array $identifiers): iterable
     {
         $related = $this->findMany($identifiers);
         $relation = $this->getRelation($model);
@@ -148,7 +149,7 @@ class BelongsToMany extends ToMany implements FillableToMany
     /**
      * @inheritDoc
      */
-    public function detach(Model $model, array $identifiers): EloquentCollection
+    public function detach(Model $model, array $identifiers): iterable
     {
         $related = $this->findMany($identifiers);
 

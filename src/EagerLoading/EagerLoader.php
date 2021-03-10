@@ -95,6 +95,23 @@ class EagerLoader
     }
 
     /**
+     * @param Model|EloquentCollection $value
+     * @return $this
+     */
+    public function forModelOrModels($value): self
+    {
+        if ($value instanceof Model) {
+            return $this->forModel($value);
+        }
+
+        if ($value instanceof EloquentCollection) {
+            return $this->forModels($value);
+        }
+
+        throw new \InvalidArgumentException('Expecting a model or Eloquent collection.');
+    }
+
+    /**
      * @param Builder|Relation $query
      * @return $this
      */
@@ -151,6 +168,17 @@ class EagerLoader
     }
 
     /**
+     * Load only the include paths that are valid for the schema.
+     *
+     * @param $includePaths
+     * @return void
+     */
+    public function loadIfExists($includePaths): void
+    {
+        $this->load($this->acceptablePaths($includePaths));
+    }
+
+    /**
      * @param mixed $includePaths
      * @return void
      */
@@ -165,6 +193,19 @@ class EagerLoader
                 $target->loadMorph($relation, $map);
             }
         }
+    }
+
+    /**
+     * Load only the include paths that are valid for the schema.
+     *
+     * @param $includePaths
+     * @return void
+     */
+    public function loadMissingIfExists($includePaths): void
+    {
+        $this->loadMissing(
+            $this->acceptablePaths($includePaths)
+        );
     }
 
     /**
@@ -189,6 +230,19 @@ class EagerLoader
             ->groupBy(fn(RelationshipPath $path) => $path->first())
             ->map(fn($paths, $name) => $this->morphs($name, $paths)->all())
             ->all();
+    }
+
+    /**
+     * @param $paths
+     * @return IncludePaths
+     */
+    private function acceptablePaths($paths): IncludePaths
+    {
+        $values = collect(IncludePaths::cast($paths)->all())
+            ->filter(fn ($path) => $this->schema->isIncludePath($path))
+            ->all();
+
+        return new IncludePaths(...$values);
     }
 
     /**
