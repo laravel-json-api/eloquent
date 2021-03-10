@@ -19,6 +19,9 @@ declare(strict_types=1);
 
 namespace LaravelJsonApi\Eloquent\Fields\Relations;
 
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Collection;
+use Illuminate\Support\Enumerable;
 use InvalidArgumentException;
 use LaravelJsonApi\Contracts\Schema\Container;
 use LaravelJsonApi\Contracts\Schema\PolymorphicRelation;
@@ -102,6 +105,19 @@ class MorphToMany extends ToMany implements PolymorphicRelation, IteratorAggrega
                 'JSON:API morph-to-many relation expects to receive JSON:API relation objects.'
             );
         }
+    }
+
+    /**
+     * Get the value of the relationship from the supplied model.
+     *
+     * @param object $model
+     * @return Collection
+     */
+    public function value(object $model): Collection
+    {
+        return collect($this->relations)
+            ->map(fn(Relation $relation) => $model->{$relation->relationName()})
+            ->flatten();
     }
 
 }
