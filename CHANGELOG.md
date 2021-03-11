@@ -16,6 +16,12 @@ All notable changes to this project will be documented in this file. This projec
 - The package now supports multi-resource models. This feature allows a model to be represented as more than one JSON:
   API resource class and works by having proxy classes for each additional representation of a model. Refer to
   documentation for examples and details of how to implement multi-resource models.
+- [#7](https://github.com/laravel-json-api/eloquent/pull/7) Added a new `MorphToMany` JSON:API relation field. This
+  wraps several sub-relation fields and presents them as a single polymorphic relationship. The relationship value works
+  both as the `data` member of the relationship object and as a relationship end-point. The relationship is modifiable
+  when every sub-relation is writeable (implements the `FillableToMany` relation) and each resource type that can be in
+  the relationship maps to a single sub-relation. Include paths also work, with the include paths only being applied to
+  the sub-relations for which they are valid.
 
 ### Changed
 
@@ -24,6 +30,12 @@ All notable changes to this project will be documented in this file. This projec
 - **BREAKING** Repositories are now injected with a driver which defines the database interactions for the repository.
   This allows database interactions to be modified, without having to rewrite the repository class - and is used as to
   implement the soft-deletes feature.
+- **BREAKING** The `sync`, `attach` and `detach` methods on the `FillableToMany` interface now type-hint `iterable` as
+  their return type. Previously they type-hinted the Eloquent collection class.
+- **BREAKING** The eager load implementation has been modified to support the new polymorphic to-many relation.
+  Generally this should not cause any breaking changes, because the eager loading classes were effectively used
+  internally to handle eager loading. Changes include removing the `skipMissingFields` methods (that existed in multiple
+  locations) and rewriting the `EagerLoadPath` class.
 
 ### Removed
 
