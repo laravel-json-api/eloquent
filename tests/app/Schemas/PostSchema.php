@@ -27,12 +27,12 @@ use LaravelJsonApi\Eloquent\Fields\Relations\BelongsTo;
 use LaravelJsonApi\Eloquent\Fields\Relations\BelongsToMany;
 use LaravelJsonApi\Eloquent\Fields\Relations\HasMany;
 use LaravelJsonApi\Eloquent\Fields\Relations\HasOne;
+use LaravelJsonApi\Eloquent\Fields\Relations\MorphToMany;
 use LaravelJsonApi\Eloquent\Fields\SoftDelete;
 use LaravelJsonApi\Eloquent\Fields\Str;
 use LaravelJsonApi\Eloquent\Filters\OnlyTrashed;
 use LaravelJsonApi\Eloquent\Filters\Where;
 use LaravelJsonApi\Eloquent\Filters\WhereIn;
-use LaravelJsonApi\Eloquent\Filters\WhereTrashed;
 use LaravelJsonApi\Eloquent\Filters\WithTrashed;
 use LaravelJsonApi\Eloquent\Pagination\PagePagination;
 use LaravelJsonApi\Eloquent\Schema;
@@ -68,6 +68,10 @@ class PostSchema extends Schema
             Str::make('content'),
             SoftDelete::make('deletedAt')->sortable(),
             HasOne::make('image'),
+            MorphToMany::make('media', [
+                BelongsToMany::make('images'),
+                BelongsToMany::make('videos'),
+            ]),
             Str::make('slug')->sortable(),
             BelongsToMany::make('tags')->fields(new ApprovedPivot()),
             Str::make('title'),

@@ -287,12 +287,14 @@ abstract class Relation implements RelationContract, SchemaAwareContract, Serial
      */
     protected function assertInverseType(string $type): void
     {
-        if ($this->inverse() !== $type) {
+        $expected = $this->allInverse();
+
+        if (!in_array($type, $expected, true)) {
             throw new LogicException(sprintf(
                 'Resource type %s is not a valid inverse resource type for relation %s: expecting %s.',
                 $type,
                 $this->name(),
-                $this->inverse()
+                implode(', ', $expected),
             ));
         }
     }

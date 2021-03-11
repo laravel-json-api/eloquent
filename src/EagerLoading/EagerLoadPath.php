@@ -20,61 +20,63 @@ declare(strict_types=1);
 namespace LaravelJsonApi\Eloquent\EagerLoading;
 
 use IteratorAggregate;
-use LaravelJsonApi\Contracts\Schema\Container;
-use LaravelJsonApi\Core\Query\RelationshipPath;
 use LaravelJsonApi\Eloquent\Fields\Relations\MorphTo;
+use LaravelJsonApi\Eloquent\Fields\Relations\MorphToMany;
 use LaravelJsonApi\Eloquent\Fields\Relations\Relation;
 use LaravelJsonApi\Eloquent\Schema;
 use LogicException;
-use function implode;
-use function iterator_to_array;
 
 class EagerLoadPath implements IteratorAggregate
 {
 
     /**
-     * @var Container
+     * @var Relation[]
      */
-    private Container $schemas;
-
-    /**
-     * @var Schema
-     */
-    private Schema $schema;
-
-    /**
-     * @var RelationshipPath
-     */
-    private RelationshipPath $path;
+    private array $relations;
 
     /**
      * @var bool
      */
-    private bool $skipMissingFields = false;
+    private bool $skipMissing = false;
 
     /**
-     * EagerLoadPath constructor.
+     * Make new paths for the relation.
      *
-     * @param Container $schemas
-     * @param Schema $schema
-     * @param RelationshipPath $path
+     * @param Relation $relation
+     * @return EagerLoadPath[]
      */
-    public function __construct(Container $schemas, Schema $schema, RelationshipPath $path)
+    public static function make(Relation $relation): array
     {
-        $this->schemas = $schemas;
-        $this->schema = $schema;
-        $this->path = $path;
+        if ($relation instanceof MorphToMany) {
+            return self::makeMorphs($relation);
+        }
+
+        return [new self($relation)];
     }
 
     /**
-     * @param bool $skip
-     * @return $this
+     * Make polymorphic paths.
+     *
+     * @param MorphToMany $relation
+     * @return EagerLoadPath[]
      */
-    public function skipMissingFields(bool $skip = true): self
+    public static function makeMorphs(MorphToMany $relation): array
     {
-        $this->skipMissingFields = $skip;
+        return array_map(function (Relation $relation) {
+            $path = new self($relation);
+            $path->skipMissing = true;
+            return $path;
+        }, iterator_to_array($relation));
+    }
 
-        return $this;
+    /**
+     * Path constructor.
+     *
+     * @param Relation ...$relations
+     */
+    public function __construct(Relation ...$relations)
+    {
+        $this->relations = $relations;
     }
 
     /**
@@ -90,15 +92,132 @@ class EagerLoadPath implements IteratorAggregate
      */
     public function toString(): string
     {
-        return implode('.', $this->all());
+        return collect($this->relations)
+            ->map(fn(Relation $relation) => $relation->relationName())
+            ->implode('.');
     }
 
     /**
+     * Get the next path or paths.
+     *
+     * @param string $name
+     * @return EagerLoadPath[]|null
+     */
+    public function next(string $name): ?array
+    {
+        if ($this->mustTerminate()) {
+            return null;
+        }
+
+        $schema = $this->last()->schema();
+
+        if ($this->skipMissing && !$schema->isRelationship($name)) {
+            return null;
+        }
+
+        $relation = $schema->relationship($name);
+
+        if (!$relation->isIncludePath()) {
+            throw new LogicException(sprintf(
+                'Unsupported include field %s at path %s.',
+                $name,
+                $this->toString()
+            ));
+        }
+
+        if ($relation instanceof MorphToMany) {
+            return $this->morphs($relation);
+        }
+
+        return [$this->push($relation)];
+    }
+
+    /**
+     * @param MorphToMany $relation
      * @return array
      */
-    public function all(): array
+    public function morphs(MorphToMany $relation): array
     {
-        return iterator_to_array($this);
+        return array_map(function (Relation $relation) {
+            $path = $this->push($relation);
+            $path->skipMissing = true;
+            return $path;
+        }, iterator_to_array($relation));
+    }
+
+    /**
+     * @param Relation $relation
+     * @return $this
+     */
+    public function push(Relation $relation): self
+    {
+        if ($relation instanceof MorphToMany) {
+            throw new LogicException('Cannot push a morph-to-many relation.');
+        }
+
+        $copy = clone $this;
+        $copy->relations[] = $relation;
+
+        return $copy;
+    }
+
+    /**
+     * Must the path be the end of the eager load path?
+     *
+     * We do not support eager loading beyond a MorphTo relation - this is because
+     * a morph map needs to be used instead.
+     *
+     * @return bool
+     */
+    public function mustTerminate(): bool
+    {
+        return $this->last() instanceof MorphTo;
+    }
+
+    /**
+     * @return Relation
+     */
+    public function last(): Relation
+    {
+        if (!empty($this->relations)) {
+            return $this->relations[count($this->relations) - 1];
+        }
+
+        throw new LogicException('No relations.');
+    }
+
+    /**
+     * Get default eager load paths.
+     *
+     * To work out the default eager load paths, we work our way down
+     * the list of relations that make up this eager load path, yielding
+     * the default eager loading settings for each schema in the path.
+     *
+     * When doing this, we ignore MorphTo relations as default eager loading
+     * needs to be handled via the morph map.
+     *
+     * @return iterable
+     */
+    public function defaults(): iterable
+    {
+        $names = [];
+
+        /** @var Relation $relation */
+        foreach ($this as $relation) {
+            /** Morph to relations must be dealt with via a morph map. */
+            if ($relation instanceof MorphTo) {
+                break;
+            }
+
+            $names[] = $relation->relationName();
+            $schema = $relation->schema();
+
+            if ($schema instanceof Schema) {
+                foreach ($schema->with() as $default) {
+                    yield implode('.', array_merge($names, [$default]));
+                }
+            }
+        }
     }
 
     /**
@@ -106,47 +225,7 @@ class EagerLoadPath implements IteratorAggregate
      */
     public function getIterator()
     {
-        $schema = $this->schema;
-
-        foreach ($this->path->names() as $idx => $field) {
-            if ($this->skipMissingFields && false === $schema->isRelationship($field)) {
-                break;
-            }
-
-            $relation = $schema->relationship($field);
-
-            if (!$relation->isIncludePath()) {
-                throw new LogicException(sprintf(
-                    'Unsupported include field %s in path %s.',
-                    $field,
-                    $this->path
-                ));
-            }
-
-            /**
-             * If we have a morph to relation, we will only yield the
-             * relation name if we are at the end of the relationship
-             * path. Otherwise we need to use a morph map.
-             */
-            if ($relation instanceof MorphTo) {
-                if ($idx === ($this->path->count() - 1)) {
-                    yield $relation->relationName();
-                }
-                break;
-            }
-
-            if ($relation instanceof Relation) {
-                $schema = $this->schemas->schemaFor($relation->inverse());
-                yield $relation->relationName();
-                continue;
-            }
-
-            throw new LogicException(sprintf(
-                'Field %s in path %s is not an Eloquent include path.',
-                $field,
-                $this->path
-            ));
-        }
+        yield from $this->relations;
     }
 
 }

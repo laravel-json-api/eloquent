@@ -22,7 +22,9 @@ namespace LaravelJsonApi\Eloquent\EagerLoading;
 use IteratorAggregate;
 use LaravelJsonApi\Contracts\Schema\Container;
 use LaravelJsonApi\Core\Query\IncludePaths;
+use LaravelJsonApi\Core\Query\RelationshipPath;
 use LaravelJsonApi\Eloquent\Fields\Relations\MorphTo;
+use LaravelJsonApi\Eloquent\Schema;
 
 class EagerLoadMorphs implements IteratorAggregate
 {
@@ -77,12 +79,29 @@ class EagerLoadMorphs implements IteratorAggregate
      */
     public function getIterator()
     {
-        foreach ($this->relation->inverseTypes() as $type) {
-            $schema = $this->schemas->schemaFor($type);
+        foreach ($this->relation->allSchemas() as $schema) {
             $loader = new EagerLoader($this->schemas, $schema);
 
-            yield $schema->model() => $loader->skipMissingFields()->toRelations($this->paths);
+            yield $schema->model() => $loader->toRelations(
+                $this->pathsFor($schema)
+            );
         }
+    }
+
+    /**
+     * Get the paths that are valid for the provided schema.
+     *
+     * Paths are only valid for the provided schema if the first relation in the include
+     * path exists on the provided schema. Otherwise it needs to be skipped.
+     *
+     * @param Schema $schema
+     * @return array
+     */
+    private function pathsFor(Schema $schema): array
+    {
+        return collect($this->paths->all())
+            ->filter(fn(RelationshipPath $path) => $schema->isRelationship($path->first()))
+            ->all();
     }
 
 }

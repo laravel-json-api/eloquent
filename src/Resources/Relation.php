@@ -20,6 +20,7 @@ declare(strict_types=1);
 namespace LaravelJsonApi\Eloquent\Resources;
 
 use LaravelJsonApi\Core\Resources\Relation as BaseRelation;
+use LaravelJsonApi\Eloquent\Fields\Relations\MorphToMany;
 use LaravelJsonApi\Eloquent\Fields\Relations\Relation as SchemaRelation;
 
 class Relation extends BaseRelation
@@ -55,6 +56,10 @@ class Relation extends BaseRelation
      */
     protected function value()
     {
+        if ($this->field instanceof MorphToMany) {
+            return $this->field->value($this->resource);
+        }
+
         return $this->field->parse(
             parent::value()
         );

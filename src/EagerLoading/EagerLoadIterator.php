@@ -19,14 +19,11 @@ declare(strict_types=1);
 
 namespace LaravelJsonApi\Eloquent\EagerLoading;
 
-use Generator;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 use IteratorAggregate;
 use LaravelJsonApi\Contracts\Schema\Container;
 use LaravelJsonApi\Core\Query\IncludePaths;
-use LaravelJsonApi\Core\Query\RelationshipPath;
-use LaravelJsonApi\Eloquent\Fields\Relations\MorphTo;
 use LaravelJsonApi\Eloquent\Schema;
 
 class EagerLoadIterator implements IteratorAggregate
@@ -48,11 +45,6 @@ class EagerLoadIterator implements IteratorAggregate
     private IncludePaths $paths;
 
     /**
-     * @var bool
-     */
-    private bool $skipMissingFields = false;
-
-    /**
      * DefaultEagerLoadIterator constructor.
      *
      * @param Container $schemas
@@ -64,17 +56,6 @@ class EagerLoadIterator implements IteratorAggregate
         $this->schemas = $schemas;
         $this->schema = $schema;
         $this->paths = IncludePaths::cast($paths);
-    }
-
-    /**
-     * @param bool $skip
-     * @return $this
-     */
-    public function skipMissingFields(bool $skip = true): self
-    {
-        $this->skipMissingFields = $skip;
-
-        return $this;
     }
 
     /**
@@ -107,65 +88,24 @@ class EagerLoadIterator implements IteratorAggregate
      */
     public function getIterator()
     {
-        /** We always need to yield the default paths on the base schema. */
+        /**
+         * We always need to yield the default paths on the base schema.
+         */
         foreach ($this->schema->with() as $relation) {
             yield $relation;
         }
 
         /**
-         * Next we need to make our way down the include paths, yielding
-         * the default eager loading settings for each schema along that path.
+         * Next we iterate over the include paths, using the EagerLoadPathList
+         * class to work out what the eager load path(s) are for each include
+         * path. (One JSON:API include path can map to one-to-many Eloquent
+         * eager load paths.)
          */
         foreach ($this->paths as $path) {
-            foreach ($this->defaultsForPath($path) as $relation) {
-                yield $relation;
-            }
-        }
-
-        /**
-         * Finally we need to convert each include path to an Eloquent eager
-         * load path.
-         */
-        foreach ($this->paths as $path) {
-            $path = new EagerLoadPath($this->schemas, $this->schema, $path);
-            $path->skipMissingFields($this->skipMissingFields);
-
-            if ($relationPath = $path->toString()) {
-                yield $relationPath;
+            foreach (new EagerLoadPathList($this->schema, $path) as $eagerLoadPath) {
+                yield $eagerLoadPath;
             }
         }
     }
 
-    /**
-     * @param RelationshipPath $path
-     * @return Generator
-     */
-    private function defaultsForPath(RelationshipPath $path): Generator
-    {
-        $schema = $this->schema;
-        $names = [];
-
-        foreach ($path->names() as $name) {
-            /** Ignore a relation that does not exist. */
-            if (!$schema->isRelationship($name)) {
-                break;
-            }
-
-            $names[] = $name;
-            $relation = $schema->relationship($name);
-
-            /** Morph to relations must be dealt with via a morph map. */
-            if ($relation instanceof MorphTo) {
-                break;
-            }
-
-            $schema = $this->schemas->schemaFor($relation->inverse());
-
-            if ($schema instanceof Schema) {
-                foreach ($schema->with() as $default) {
-                    yield implode('.', array_merge($names, [$default]));
-                }
-            }
-        }
-    }
 }
