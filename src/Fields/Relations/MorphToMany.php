@@ -19,6 +19,7 @@ declare(strict_types=1);
 
 namespace LaravelJsonApi\Eloquent\Fields\Relations;
 
+use Generator;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\LazyCollection;
 use InvalidArgumentException;
@@ -29,6 +30,7 @@ use LaravelJsonApi\Eloquent\Contracts\FillableToMany;
 use LaravelJsonApi\Eloquent\Fields\Concerns\ReadOnly;
 use LaravelJsonApi\Eloquent\Polymorphism\MorphMany;
 use LaravelJsonApi\Eloquent\Polymorphism\MorphValue;
+use LogicException;
 use UnexpectedValueException;
 
 class MorphToMany extends ToMany implements PolymorphicRelation, IteratorAggregate, FillableToMany
@@ -139,7 +141,14 @@ class MorphToMany extends ToMany implements PolymorphicRelation, IteratorAggrega
      */
     public function fill(Model $model, $value): void
     {
-        // TODO: Implement fill() method.
+        if (!is_array($value)) {
+            throw new LogicException('Expecting value to be an array of identifiers.');
+        }
+
+        /** @var Relation|FillableToMany $relation */
+        foreach ($this->fillable() as $relation) {
+            $relation->fill($model, $this->identifiersFor($relation, $value));
+        }
     }
 
     /**
@@ -149,12 +158,10 @@ class MorphToMany extends ToMany implements PolymorphicRelation, IteratorAggrega
     {
         $values = new MorphMany();
 
-        /** @var Relation $relation */
-        foreach ($this as $relation) {
-            if ($relation instanceof FillableToMany) {
-                $synced = $relation->sync($model, $this->identifiersFor($relation, $identifiers));
-                $values->push(new MorphValue($relation, $synced));
-            }
+        /** @var Relation|FillableToMany $relation */
+        foreach ($this->fillable() as $relation) {
+            $synced = $relation->sync($model, $this->identifiersFor($relation, $identifiers));
+            $values->push(new MorphValue($relation, $synced));
         }
 
         return $values;
@@ -165,7 +172,15 @@ class MorphToMany extends ToMany implements PolymorphicRelation, IteratorAggrega
      */
     public function attach(Model $model, array $identifiers): iterable
     {
-        // TODO: Implement attach() method.
+        $values = new MorphMany();
+
+        /** @var Relation|FillableToMany $relation */
+        foreach ($this->fillable() as $relation) {
+            $attached = $relation->attach($model, $this->identifiersFor($relation, $identifiers));
+            $values->push(new MorphValue($relation, $attached));
+        }
+
+        return $values;
     }
 
     /**
@@ -173,7 +188,39 @@ class MorphToMany extends ToMany implements PolymorphicRelation, IteratorAggrega
      */
     public function detach(Model $model, array $identifiers): iterable
     {
-        // TODO: Implement detach() method.
+        $values = new MorphMany();
+
+        /** @var Relation|FillableToMany $relation */
+        foreach ($this->fillable() as $relation) {
+            $detached = $relation->detach($model, $this->identifiersFor($relation, $identifiers));
+            $values->push(new MorphValue($relation, $detached));
+        }
+
+        return $values;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function parse($models): iterable
+    {
+        /**
+         * The MorphMany value object already takes care of parsing the models
+         * it contains, so we can just return that. It is used as it is more efficient
+         * at parsing because internally it holds the models with the relationship
+         * that generated them (so it can use that relationship to parse the models
+         * when it is iterating).
+         *
+         * If we didn't use it, we would have to traverse the models and work out which
+         * relation to use to parse the models. Although this would be possible, it
+         * is much more efficient to just store the values with the relationship that
+         * generated them in the MorphMany value object.
+         */
+        if ($models instanceof MorphMany) {
+            return $models;
+        }
+
+        throw new LogicException('Expecting model value to already be a morph many value.');
     }
 
     /**
@@ -185,9 +232,30 @@ class MorphToMany extends ToMany implements PolymorphicRelation, IteratorAggrega
      */
     private function identifiersFor(Relation $relation, array $identifiers): array
     {
+        $inverse = $relation->allInverse();
+
         return collect($identifiers)
-            ->filter(fn(array $identifier) => in_array($identifier['type'], $relation->allInverse()))
+            ->filter(fn(array $identifier) => in_array($identifier['type'], $inverse))
             ->all();
+    }
+
+    /**
+     * @return Generator
+     */
+    private function fillable(): Generator
+    {
+        foreach ($this as $relation) {
+            if ($relation instanceof FillableToMany) {
+                yield $relation;
+                continue;
+            }
+
+            throw new LogicException(sprintf(
+                'Cannot modify morph-to-many relation %s because it contains relation %s that is not fillable.',
+                $this->name(),
+                $relation->relationName(),
+            ));
+        }
     }
 
 }

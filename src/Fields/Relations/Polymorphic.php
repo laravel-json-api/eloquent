@@ -31,11 +31,6 @@ trait Polymorphic
 {
 
     /**
-     * @var array
-     */
-    private array $modelSchemas = [];
-
-    /**
      * Get the inverse schema for the provided model.
      *
      * @param Model $model
@@ -45,14 +40,10 @@ trait Polymorphic
     {
         $class = get_class($model);
 
-        if (isset($this->modelSchemas[$class])) {
-            return $this->modelSchemas[$class];
-        }
-
         /** @var Schema $schema */
         foreach ($this->allSchemas() as $schema) {
             if ($schema->isModel($model)) {
-                return $this->modelSchemas[$class] = $schema;
+                return $schema;
             }
         }
 

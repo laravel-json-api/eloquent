@@ -19,6 +19,7 @@ declare(strict_types=1);
 
 namespace LaravelJsonApi\Eloquent\Polymorphism;
 
+use Illuminate\Support\Collection;
 use IteratorAggregate;
 
 class MorphMany implements IteratorAggregate, \Countable
@@ -74,6 +75,22 @@ class MorphMany implements IteratorAggregate, \Countable
         $this->values[] = $value;
 
         return $this;
+    }
+
+    /**
+     * @return Collection
+     */
+    public function collect(): Collection
+    {
+        return collect($this->all());
+    }
+
+    /**
+     * @return array
+     */
+    public function all(): array
+    {
+        return iterator_to_array($this);
     }
 
     /**

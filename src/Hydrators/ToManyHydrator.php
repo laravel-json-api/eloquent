@@ -25,7 +25,6 @@ use LaravelJsonApi\Contracts\Store\ToManyBuilder;
 use LaravelJsonApi\Core\Query\QueryParameters;
 use LaravelJsonApi\Core\Support\Str;
 use LaravelJsonApi\Eloquent\Contracts\FillableToMany;
-use LaravelJsonApi\Eloquent\Contracts\Parser;
 use LaravelJsonApi\Eloquent\Fields\Relations\ToMany;
 use LaravelJsonApi\Eloquent\HasQueryParameters;
 use LaravelJsonApi\Eloquent\Polymorphism\MorphMany;
@@ -130,14 +129,6 @@ class ToManyHydrator implements ToManyBuilder
         }
 
         return $related;
-    }
-
-    /**
-     * @return Parser
-     */
-    private function parser(): Parser
-    {
-        return $this->relation->schema()->parser();
     }
 
 }
