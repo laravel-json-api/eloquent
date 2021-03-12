@@ -62,7 +62,7 @@ class HasMany extends ToMany implements FillableToMany
     /**
      * @inheritDoc
      */
-    public function sync(Model $model, array $identifiers): EloquentCollection
+    public function sync(Model $model, array $identifiers): iterable
     {
         $models = $this->findMany($identifiers);
 
@@ -75,7 +75,7 @@ class HasMany extends ToMany implements FillableToMany
     /**
      * @inheritDoc
      */
-    public function attach(Model $model, array $identifiers): EloquentCollection
+    public function attach(Model $model, array $identifiers): iterable
     {
         $models = $this->findMany($identifiers);
 
@@ -88,7 +88,7 @@ class HasMany extends ToMany implements FillableToMany
     /**
      * @inheritDoc
      */
-    public function detach(Model $model, array $identifiers): EloquentCollection
+    public function detach(Model $model, array $identifiers): iterable
     {
         $models = $this->findMany($identifiers);
 

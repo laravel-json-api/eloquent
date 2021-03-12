@@ -19,7 +19,6 @@ declare(strict_types=1);
 
 namespace LaravelJsonApi\Eloquent\Tests\Integration\Fields;
 
-use App\Models\Car;
 use App\Models\Post;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -44,6 +43,7 @@ class DateTimeTest extends TestCase
         $request = $this->createMock(Request::class);
         $attr = DateTime::make('publishedAt');
 
+        $this->assertInstanceOf(DateTime::class, $attr);
         $this->assertSame('publishedAt', $attr->name());
         $this->assertSame('publishedAt', $attr->serializedFieldName());
         $this->assertSame('published_at', $attr->column());

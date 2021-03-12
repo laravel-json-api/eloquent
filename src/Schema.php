@@ -24,10 +24,15 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Http\Request;
 use LaravelJsonApi\Contracts\Store\Repository as RepositoryContract;
+use LaravelJsonApi\Core\Query\RelationshipPath;
 use LaravelJsonApi\Core\Schema\Schema as BaseSchema;
+use LaravelJsonApi\Eloquent\Contracts\Driver;
+use LaravelJsonApi\Eloquent\Contracts\Parser;
+use LaravelJsonApi\Eloquent\Drivers\StandardDriver;
 use LaravelJsonApi\Eloquent\EagerLoading\EagerLoader;
 use LaravelJsonApi\Eloquent\Fields\Relations\ToMany;
 use LaravelJsonApi\Eloquent\Fields\Relations\ToOne;
+use LaravelJsonApi\Eloquent\Parsers\StandardParser;
 use LogicException;
 
 abstract class Schema extends BaseSchema
@@ -48,6 +53,13 @@ abstract class Schema extends BaseSchema
     protected ?array $defaultPagination = null;
 
     /**
+     * The cached parser instance.
+     *
+     * @var Parser|null
+     */
+    protected ?Parser $parser = null;
+
+    /**
      * @var string|null
      */
     private ?string $idColumn = null;
@@ -65,19 +77,15 @@ abstract class Schema extends BaseSchema
     }
 
     /**
-     * @return JsonApiBuilder
-     */
-    public static function query(): JsonApiBuilder
-    {
-        return app(static::class)->newQuery();
-    }
-
-    /**
      * @inheritDoc
      */
     public function repository(): RepositoryContract
     {
-        return new Repository($this);
+        return new Repository(
+            $this,
+            $this->driver(),
+            $this->parser(),
+        );
     }
 
     /**
@@ -91,13 +99,16 @@ abstract class Schema extends BaseSchema
     }
 
     /**
-     * Get a new JSON:API query builder.
+     * Does the schema handle the provided model?
      *
-     * @return JsonApiBuilder
+     * @param Model|string $model
+     * @return bool
      */
-    public function newQuery(): JsonApiBuilder
+    public function isModel($model): bool
     {
-        return new JsonApiBuilder($this, $this->newInstance()->newQuery());
+        $expected = $this->model();
+
+        return ($model instanceof $expected) || $model === $expected;
     }
 
     /**
@@ -244,6 +255,43 @@ abstract class Schema extends BaseSchema
     public function isSingular(array $filters): bool
     {
         return false;
+    }
+
+    /**
+     * Get the parser for this resource type.
+     *
+     * @return Parser
+     */
+    public function parser(): Parser
+    {
+        if ($this->parser) {
+            return $this->parser;
+        }
+
+        return $this->parser = new StandardParser();
+    }
+
+    /**
+     * @param RelationshipPath $path
+     * @return bool
+     */
+    public function isIncludePath(RelationshipPath $path): bool
+    {
+        if (!$this->isRelationship($path->first())) {
+            return false;
+        }
+
+        return $this
+            ->relationship($path->first())
+            ->isIncludePath();
+    }
+
+    /**
+     * @return Driver
+     */
+    protected function driver(): Driver
+    {
+        return new StandardDriver($this->newInstance());
     }
 
 }

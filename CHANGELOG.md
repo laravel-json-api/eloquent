@@ -3,6 +3,49 @@
 All notable changes to this project will be documented in this file. This project adheres to
 [Semantic Versioning](http://semver.org/) and [this changelog format](http://keepachangelog.com/).
 
+## [1.0.0-alpha.5] - 2021-03-12
+
+### Added
+
+- [#6](https://github.com/laravel-json-api/eloquent/pull/6) Package now fully supports soft-deleting resources. If a
+  model allows soft deleting, but no changes are made to a schema, then deleting the resource will soft-delete it and
+  that resource will no longer appear in the API. However, if soft-delete capability is to be exposed to the client, a
+  schema should apply the `SoftDeletes` trait from this package and add a `Fields\SoftDelete` field to their list of
+  fields. Refer to documentation for full list of capabilities.
+- Added the `WithTrashed` and `OnlyTrashed` filter classes.
+- The package now supports multi-resource models. This feature allows a model to be represented as more than one JSON:
+  API resource class and works by having proxy classes for each additional representation of a model. Refer to
+  documentation for examples and details of how to implement multi-resource models.
+- [#7](https://github.com/laravel-json-api/eloquent/pull/7) Added a new `MorphToMany` JSON:API relation field. This
+  wraps several sub-relation fields and presents them as a single polymorphic relationship. The relationship value works
+  both as the `data` member of the relationship object and as a relationship end-point. The relationship is modifiable
+  when every sub-relation is writeable (implements the `FillableToMany` relation) and each resource type that can be in
+  the relationship maps to a single sub-relation. Include paths also work, with the include paths only being applied to
+  the sub-relations for which they are valid.
+
+### Changed
+
+- **BREAKING** Deleting a model now uses `Model::delete` instead of `Model::forceDelete`. This change was required when
+  adding full support for soft-deleting resources.
+- **BREAKING** Repositories are now injected with a driver which defines the database interactions for the repository.
+  This allows database interactions to be modified, without having to rewrite the repository class - and is used as to
+  implement the soft-deletes feature.
+- **BREAKING** The `sync`, `attach` and `detach` methods on the `FillableToMany` interface now type-hint `iterable` as
+  their return type. Previously they type-hinted the Eloquent collection class.
+- **BREAKING** The eager load implementation has been modified to support the new polymorphic to-many relation.
+  Generally this should not cause any breaking changes, because the eager loading classes were effectively used
+  internally to handle eager loading. Changes include removing the `skipMissingFields` methods (that existed in multiple
+  locations) and rewriting the `EagerLoadPath` class.
+
+### Removed
+
+- **BREAKING** Remove the following methods from the `Schema` class. These were originally added as convenience methods
+  if writing custom controller actions - however, their use is now not suitable as all database querying should be
+  executed via the repository class to ensure Eloquent query builders are created according to the database driver that
+  is in use. The methods are:
+    - `Schema::newQuery()`
+    - `Schema::query()`
+
 ## [1.0.0-alpha.4] - 2021-02-27
 
 ### Added

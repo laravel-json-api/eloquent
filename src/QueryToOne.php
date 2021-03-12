@@ -76,10 +76,14 @@ class QueryToOne implements QueryOneBuilder
     public function first(): ?object
     {
         if ($this->model->relationLoaded($this->relation->name()) && empty($this->queryParameters->filter())) {
-            return $this->related();
+            return $this->relation->parse(
+                $this->related()
+            );
         }
 
-        return $this->query()->first();
+        return $this->relation->parse(
+            $this->query()->first()
+        );
     }
 
     /**

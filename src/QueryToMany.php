@@ -88,7 +88,15 @@ class QueryToMany implements QueryManyBuilder
      */
     public function get(): Collection
     {
-        return $this->query()->get();
+        $value = $this->relation->parse(
+            $this->query()->get()
+        );
+
+        if ($value instanceof Collection) {
+            return $value;
+        }
+
+        return Collection::make($value);
     }
 
     /**
@@ -96,7 +104,15 @@ class QueryToMany implements QueryManyBuilder
      */
     public function cursor(): LazyCollection
     {
-        return $this->query()->cursor();
+        $value = $this->relation->parse(
+            $this->query()->cursor()
+        );
+
+        if ($value instanceof LazyCollection) {
+            return $value;
+        }
+
+        return LazyCollection::make($value);
     }
 
     /**
@@ -104,7 +120,9 @@ class QueryToMany implements QueryManyBuilder
      */
     public function paginate(array $page): Page
     {
-        return $this->query()->paginate($page);
+        return $this->relation->parsePage(
+            $this->query()->paginate($page)
+        );
     }
 
     /**

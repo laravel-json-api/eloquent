@@ -19,7 +19,6 @@ declare(strict_types=1);
 
 namespace LaravelJsonApi\Eloquent\Tests\Acceptance\Relations\MorphToMany\TagVideos;
 
-use App\Models\Tag;
 use App\Models\User;
 use App\Models\Video;
 use Illuminate\Database\Eloquent\Collection as EloquentCollection;

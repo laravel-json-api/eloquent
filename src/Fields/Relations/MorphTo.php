@@ -22,13 +22,13 @@ namespace LaravelJsonApi\Eloquent\Fields\Relations;
 use Illuminate\Database\Eloquent\Model;
 use InvalidArgumentException;
 use LaravelJsonApi\Contracts\Schema\PolymorphicRelation;
-use LaravelJsonApi\Eloquent\Schema;
 use LogicException;
-use UnexpectedValueException;
 use function sprintf;
 
 class MorphTo extends BelongsTo implements PolymorphicRelation
 {
+
+    use Polymorphic;
 
     /**
      * @var string[]
@@ -68,50 +68,17 @@ class MorphTo extends BelongsTo implements PolymorphicRelation
     }
 
     /**
-     * @param Model $model
-     * @return Schema
+     * @inheritDoc
      */
-    public function schemaFor(Model $model): Schema
+    public function parse(?Model $model): ?object
     {
-        $expected = get_class($model);
-
-        foreach ($this->types as $type) {
-            $schema = $this->schemas()->schemaFor($type);
-
-            if ($expected === $schema->model()) {
-                if ($schema instanceof Schema) {
-                    return $schema;
-                }
-
-                throw new LogicException(sprintf(
-                    'Expecting schema for resource type %s to be an Eloquent schema.',
-                    $type
-                ));
-            }
+        if ($model) {
+            return $this->schemaFor($model)->parser()->parseOne(
+                $model
+            );
         }
 
-        throw new UnexpectedValueException(sprintf(
-            'Model %s is not valid for morph-to relation %s.',
-            $expected,
-            $this->name()
-        ));
+        return null;
     }
 
-    /**
-     * @param string $type
-     * @return void
-     */
-    protected function assertInverseType(string $type): void
-    {
-        $expected = collect($this->inverseTypes());
-
-        if (!$expected->containsStrict($type)) {
-            throw new LogicException(sprintf(
-                'Resource type %s is not a valid inverse resource type for relation %s: expecting %s.',
-                $type,
-                $this->name(),
-                $expected->implode(', ')
-            ));
-        }
-    }
 }

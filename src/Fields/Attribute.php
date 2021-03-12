@@ -151,6 +151,18 @@ abstract class Attribute implements AttributeContract, Fillable, Selectable, Sor
     }
 
     /**
+     * Use mass-assignment rules when filling the attribute.
+     *
+     * @return $this
+     */
+    public function guarded(): self
+    {
+        $this->force = false;
+
+        return $this;
+    }
+
+    /**
      * Customise deserialization of the value.
      *
      * @param Closure $deserializer

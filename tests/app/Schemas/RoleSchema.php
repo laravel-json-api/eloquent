@@ -49,6 +49,10 @@ class RoleSchema extends Schema
             Str::make('name'),
             DateTime::make('updatedAt')->readOnly(),
             BelongsToMany::make('users')->fields(new ApprovedPivot())->readOnly(),
+            BelongsToMany::make('userAccounts', 'users')
+                ->type('user-accounts')
+                ->fields(new ApprovedPivot())
+                ->readOnly(),
         ];
     }
 

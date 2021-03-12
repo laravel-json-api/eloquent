@@ -36,7 +36,11 @@ use LaravelJsonApi\Contracts\Store\ResourceBuilder;
 use LaravelJsonApi\Contracts\Store\ToManyBuilder;
 use LaravelJsonApi\Contracts\Store\ToOneBuilder;
 use LaravelJsonApi\Contracts\Store\UpdatesResources;
+use LaravelJsonApi\Eloquent\Contracts\Driver;
+use LaravelJsonApi\Eloquent\Contracts\Parser;
+use LaravelJsonApi\Eloquent\Contracts\Proxy as ProxyContract;
 use LaravelJsonApi\Eloquent\Fields\Relations\MorphTo;
+use LaravelJsonApi\Eloquent\Fields\Relations\MorphToMany;
 use LaravelJsonApi\Eloquent\Hydrators\ModelHydrator;
 use LaravelJsonApi\Eloquent\Hydrators\ToManyHydrator;
 use LaravelJsonApi\Eloquent\Hydrators\ToOneHydrator;
@@ -64,19 +68,27 @@ class Repository implements
     private Schema $schema;
 
     /**
-     * @var Model
+     * @var Driver
      */
-    private Model $model;
+    private Driver $driver;
+
+    /**
+     * @var Parser|null
+     */
+    private Parser $parser;
 
     /**
      * Repository constructor.
      *
      * @param Schema $schema
+     * @param Driver $driver
+     * @param Parser $parser
      */
-    public function __construct(Schema $schema)
+    public function __construct(Schema $schema, Driver $driver, Parser $parser)
     {
         $this->schema = $schema;
-        $this->model = $schema->newInstance();
+        $this->driver = $driver;
+        $this->parser = $parser;
     }
 
     /**
@@ -84,11 +96,16 @@ class Repository implements
      */
     public function find(string $resourceId): ?object
     {
+        $model = null;
+
         if ($this->schema->id()->match($resourceId)) {
-            return $this->query()->whereResourceId($resourceId)->first();
+            $model = $this
+                ->query()
+                ->whereResourceId($resourceId)
+                ->first();
         }
 
-        return null;
+        return $this->parser->parseNullable($model);
     }
 
     /**
@@ -115,10 +132,15 @@ class Repository implements
         $field = $this->schema->id();
 
         $ids = collect($resourceIds)
-            ->filter(fn($resourceId) => $field->match($resourceId))
-            ->all();
+            ->filter(fn($resourceId) => $field->match($resourceId));
 
-        return $this->query()->whereResourceId($ids)->get();
+        if ($ids->isEmpty()) {
+            return $ids;
+        }
+
+        return $this->parser->parseMany(
+            $this->query()->whereResourceId($ids->all())->get()
+        );
     }
 
     /**
@@ -127,18 +149,13 @@ class Repository implements
     public function exists(string $resourceId): bool
     {
         if ($this->schema->id()->match($resourceId)) {
-            return $this->query()->whereResourceId($resourceId)->exists();
+            return $this
+                ->query()
+                ->whereResourceId($resourceId)
+                ->exists();
         }
 
         return false;
-    }
-
-    /**
-     * @return JsonApiBuilder
-     */
-    public function query(): JsonApiBuilder
-    {
-        return new JsonApiBuilder($this->schema, $this->model->newQuery());
     }
 
     /**
@@ -146,7 +163,7 @@ class Repository implements
      */
     public function queryAll(): QueryAllBuilder
     {
-        return new QueryAll($this->schema);
+        return new QueryAll($this->schema, $this->driver, $this->parser);
     }
 
     /**
@@ -154,25 +171,16 @@ class Repository implements
      */
     public function queryOne($modelOrResourceId): QueryOneBuilder
     {
-        if ($modelOrResourceId instanceof Model) {
-            return new QueryOne(
-                $this->schema,
-                $this->query(),
-                $modelOrResourceId,
-                strval($modelOrResourceId->{$this->schema->idColumn()})
-            );
+        if ($modelOrResourceId instanceof ProxyContract) {
+            $modelOrResourceId = $modelOrResourceId->toBase();
         }
 
-        if (is_string($modelOrResourceId) && !empty($modelOrResourceId)) {
-            return new QueryOne(
-                $this->schema,
-                $this->query(),
-                null,
-                $modelOrResourceId
-            );
-        }
-
-        throw new LogicException('Expecting a model or non-empty string resource id.');
+        return new QueryOne(
+            $this->schema,
+            $this->driver,
+            $this->parser,
+            $modelOrResourceId
+        );
     }
 
     /**
@@ -195,10 +203,14 @@ class Repository implements
      */
     public function queryToMany($modelOrResourceId, string $fieldName): QueryManyBuilder
     {
-        return new QueryToMany(
-            $this->retrieve($modelOrResourceId),
-            $this->schema->toMany($fieldName)
-        );
+        $model = $this->retrieve($modelOrResourceId);
+        $relation = $this->schema->toMany($fieldName);
+
+        if ($relation instanceof MorphToMany) {
+            return new QueryMorphToMany($model, $relation);
+        }
+
+        return new QueryToMany($model, $relation);
     }
 
     /**
@@ -208,7 +220,9 @@ class Repository implements
     {
         return new ModelHydrator(
             $this->schema,
-            $this->schema->newInstance()
+            $this->driver,
+            $this->parser,
+            $this->driver->newInstance()
         );
     }
 
@@ -219,6 +233,8 @@ class Repository implements
     {
         return new ModelHydrator(
             $this->schema,
+            $this->driver,
+            $this->parser,
             $this->retrieve($modelOrResourceId)
         );
     }
@@ -230,7 +246,7 @@ class Repository implements
     {
         $model = $this->retrieve($modelOrResourceId);
 
-        if (true !== $model->getConnection()->transaction(fn() => $model->forceDelete())) {
+        if (true !== $model->getConnection()->transaction(fn() => $this->driver->destroy($model))) {
             throw new RuntimeException('Failed to delete resource.');
         }
     }
@@ -258,12 +274,29 @@ class Repository implements
     }
 
     /**
-     * @param Model|string $modelOrResourceId
+     * @return JsonApiBuilder
+     */
+    private function query(): JsonApiBuilder
+    {
+        return new JsonApiBuilder(
+            $this->schema,
+            $this->driver->query()
+        );
+    }
+
+    /**
+     * @param Model|ProxyContract|string $modelOrResourceId
      * @return Model
      */
     private function retrieve($modelOrResourceId): Model
     {
-        if ($modelOrResourceId instanceof $this->model) {
+        $expected = $this->driver->newInstance();
+
+        if ($modelOrResourceId instanceof ProxyContract) {
+            $modelOrResourceId = $modelOrResourceId->toBase();
+        }
+
+        if ($modelOrResourceId instanceof $expected) {
             return $modelOrResourceId;
         }
 
@@ -276,7 +309,7 @@ class Repository implements
 
         throw new LogicException(sprintf(
             'Expecting a %s instance or a string resource id.',
-            get_class($this->model)
+            get_class($expected)
         ));
     }
 

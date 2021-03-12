@@ -50,6 +50,7 @@ class PhoneSchema extends Schema
             Str::make('number'),
             DateTime::make('updatedAt')->readOnly(),
             BelongsTo::make('user'),
+            BelongsTo::make('userAccount', 'user')->type('user-accounts'),
         ];
     }
 

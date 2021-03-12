@@ -26,7 +26,6 @@ use LaravelJsonApi\Contracts\Resources\Serializer\Relation as SerializableContra
 use LaravelJsonApi\Contracts\Schema\PolymorphicRelation;
 use LaravelJsonApi\Contracts\Schema\Relation as RelationContract;
 use LaravelJsonApi\Contracts\Schema\SchemaAware as SchemaAwareContract;
-use LaravelJsonApi\Core\Resources\Relation as ResourceRelation;
 use LaravelJsonApi\Core\Schema\Concerns\EagerLoadable;
 use LaravelJsonApi\Core\Schema\Concerns\Filterable;
 use LaravelJsonApi\Core\Schema\Concerns\RequiredForValidation;
@@ -34,6 +33,7 @@ use LaravelJsonApi\Core\Schema\Concerns\SchemaAware;
 use LaravelJsonApi\Core\Schema\Concerns\SparseField;
 use LaravelJsonApi\Core\Support\Str;
 use LaravelJsonApi\Eloquent\Fields\Concerns\Hideable;
+use LaravelJsonApi\Eloquent\Resources\Relation as ResourceRelation;
 use LaravelJsonApi\Eloquent\Schema;
 use LogicException;
 use function sprintf;
@@ -271,9 +271,7 @@ abstract class Relation implements RelationContract, SchemaAwareContract, Serial
         $relation = new ResourceRelation(
             $model,
             $baseUri,
-            $this->name(),
-            $this->relationName(),
-            $this->uriName()
+            $this,
         );
 
         if ($this->serializer) {
@@ -289,12 +287,14 @@ abstract class Relation implements RelationContract, SchemaAwareContract, Serial
      */
     protected function assertInverseType(string $type): void
     {
-        if ($this->inverse() !== $type) {
+        $expected = $this->allInverse();
+
+        if (!in_array($type, $expected, true)) {
             throw new LogicException(sprintf(
                 'Resource type %s is not a valid inverse resource type for relation %s: expecting %s.',
                 $type,
                 $this->name(),
-                $this->inverse()
+                implode(', ', $expected),
             ));
         }
     }

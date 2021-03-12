@@ -20,8 +20,11 @@ declare(strict_types=1);
 namespace LaravelJsonApi\Eloquent;
 
 use Illuminate\Database\Eloquent\Model;
+use InvalidArgumentException;
 use LaravelJsonApi\Contracts\Store\QueryOneBuilder as QueryOneBuilderContract;
 use LaravelJsonApi\Core\Query\QueryParameters;
+use LaravelJsonApi\Eloquent\Contracts\Driver;
+use LaravelJsonApi\Eloquent\Contracts\Parser;
 
 class QueryOne implements QueryOneBuilderContract
 {
@@ -34,9 +37,14 @@ class QueryOne implements QueryOneBuilderContract
     private Schema $schema;
 
     /**
-     * @var JsonApiBuilder
+     * @var Driver
      */
-    private JsonApiBuilder $query;
+    private Driver $driver;
+
+    /**
+     * @var Parser
+     */
+    private Parser $parser;
 
     /**
      * @var Model|null
@@ -52,21 +60,43 @@ class QueryOne implements QueryOneBuilderContract
      * QueryOne constructor.
      *
      * @param Schema $schema
-     * @param JsonApiBuilder $query
-     * @param Model|null $model
-     * @param string $resourceId
+     * @param Driver $driver
+     * @param Parser $parser
+     * @param Model|string $modelOrResourceId
      */
-    public function __construct(
-        Schema $schema,
-        JsonApiBuilder $query,
-        ?Model $model,
-        string $resourceId
-    ) {
+    public function __construct(Schema $schema, Driver $driver, Parser $parser, $modelOrResourceId)
+    {
+        if ($modelOrResourceId instanceof Model) {
+            $model = $modelOrResourceId;
+            $resourceId = strval($model->{$schema->idColumn()});
+        } else if (is_string($modelOrResourceId) && !empty($modelOrResourceId)) {
+            $model = null;
+            $resourceId = $modelOrResourceId;
+        } else {
+            throw new InvalidArgumentException('Expecting a model or non-empty string resource id.');
+        }
+
         $this->schema = $schema;
-        $this->query = $query;
+        $this->driver = $driver;
+        $this->parser = $parser;
         $this->model = $model;
         $this->resourceId = $resourceId;
         $this->queryParameters = new QueryParameters();
+    }
+
+    /**
+     * @return JsonApiBuilder
+     */
+    public function query(): JsonApiBuilder
+    {
+        $query = new JsonApiBuilder(
+            $this->schema,
+            $this->driver->query(),
+        );
+
+        return $query->withQueryParameters(
+            $this->queryParameters
+        );
     }
 
     /**
@@ -89,14 +119,12 @@ class QueryOne implements QueryOneBuilderContract
                 ->forModel($this->model)
                 ->loadMissing($this->queryParameters->includePaths());
 
-            return $this->model;
+            return $this->parser->parseOne($this->model);
         }
 
-        return $this->query
-            ->whereResourceId($this->resourceId)
-            ->filter($this->queryParameters->filter())
-            ->with($this->queryParameters->includePaths())
-            ->first();
+        return $this->parser->parseNullable(
+            $this->query()->whereResourceId($this->resourceId)->first()
+        );
     }
 
 }

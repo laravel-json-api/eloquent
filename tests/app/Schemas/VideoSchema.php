@@ -46,7 +46,7 @@ class VideoSchema extends Schema
     public function fields(): iterable
     {
         return [
-            ID::make()->uuid(),
+            ID::make()->uuid()->sortable(),
             DateTime::make('createdAt')->sortable()->readOnly(),
             HasMany::make('comments'),
             Str::make('slug'),

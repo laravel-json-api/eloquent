@@ -24,6 +24,7 @@ use LaravelJsonApi\Contracts\Schema\Filter;
 use LaravelJsonApi\Contracts\Store\QueryOneBuilder;
 use LaravelJsonApi\Core\Query\QueryParameters;
 use LaravelJsonApi\Eloquent\Fields\Relations\MorphTo;
+use LaravelJsonApi\Eloquent\Polymorphism\MorphParameters;
 use function is_null;
 
 class QueryMorphTo implements QueryOneBuilder
@@ -78,7 +79,9 @@ class QueryMorphTo implements QueryOneBuilder
          * model - loading any missing relations.
          */
         if (is_null($related) || empty($filters)) {
-            return $this->prepareResult($related);
+            return $this->relation->parse(
+                $this->prepareResult($related)
+            );
         }
 
         $schema = $this->relation->schemaFor($related);
@@ -105,7 +108,9 @@ class QueryMorphTo implements QueryOneBuilder
             ->filter($filters)
             ->first();
 
-        return $this->prepareResult($result);
+        return $this->relation->parse(
+            $this->prepareResult($result)
+        );
     }
 
     /**
@@ -117,12 +122,15 @@ class QueryMorphTo implements QueryOneBuilder
     private function prepareResult(?Model $related): ?Model
     {
         if ($related) {
-            $this->relation
-                ->schemaFor($related)
+            $parameters = new MorphParameters(
+                $schema = $this->relation->schemaFor($related),
+                $this->queryParameters,
+            );
+
+            $schema
                 ->loader()
-                ->skipMissingFields()
                 ->forModel($related)
-                ->loadMissing($this->queryParameters->includePaths());
+                ->loadMissing($parameters->includePaths());
         }
 
         return $related;
