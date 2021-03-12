@@ -3,7 +3,7 @@
 All notable changes to this project will be documented in this file. This project adheres to
 [Semantic Versioning](http://semver.org/) and [this changelog format](http://keepachangelog.com/).
 
-## Unreleased
+## [1.0.0-alpha.5] - 2021-03-12
 
 ### Added
 
@@ -12,7 +12,7 @@ All notable changes to this project will be documented in this file. This projec
   that resource will no longer appear in the API. However, if soft-delete capability is to be exposed to the client, a
   schema should apply the `SoftDeletes` trait from this package and add a `Fields\SoftDelete` field to their list of
   fields. Refer to documentation for full list of capabilities.
-- Added the `WithTrashed`, `OnlyTrashed` and `WhereTrashed` filter classes.
+- Added the `WithTrashed` and `OnlyTrashed` filter classes.
 - The package now supports multi-resource models. This feature allows a model to be represented as more than one JSON:
   API resource class and works by having proxy classes for each additional representation of a model. Refer to
   documentation for examples and details of how to implement multi-resource models.

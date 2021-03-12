@@ -21,7 +21,6 @@ namespace LaravelJsonApi\Eloquent\Fields\Relations;
 
 use Generator;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\LazyCollection;
 use InvalidArgumentException;
 use IteratorAggregate;
 use LaravelJsonApi\Contracts\Schema\Container;

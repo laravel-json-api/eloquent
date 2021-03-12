@@ -24,7 +24,6 @@ use App\Schemas\ImageSchema;
 use App\Schemas\UserAccountSchema;
 use Illuminate\Contracts\Routing\UrlRoutable;
 use LaravelJsonApi\Eloquent\Fields\Relations\MorphTo;
-use LaravelJsonApi\Eloquent\Schema;
 use LaravelJsonApi\Eloquent\Tests\Acceptance\TestCase as BaseTestCase;
 
 class TestCase extends BaseTestCase
