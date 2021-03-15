@@ -60,11 +60,11 @@ class MorphValue implements IteratorAggregate, Countable
     public function load($includePaths): self
     {
         if ($this->isNotEmpty()) {
-            $this->relation
-                ->schema()
-                ->loader()
-                ->forModelOrModels($this->value)
-                ->loadIfExists($includePaths);
+            $schema = $this->relation->schema();
+
+            $schema
+                ->loaderFor($this->value)
+                ->load($schema->acceptableIncludePaths($includePaths));
         }
 
         return $this;
@@ -77,11 +77,11 @@ class MorphValue implements IteratorAggregate, Countable
     public function loadMissing($includePaths): self
     {
         if ($this->isNotEmpty()) {
-            $this->relation
-                ->schema()
-                ->loader()
-                ->forModelOrModels($this->value)
-                ->loadMissingIfExists($includePaths);
+            $schema = $this->relation->schema();
+
+            $schema
+                ->loaderFor($this->value)
+                ->loadMissing($schema->acceptableIncludePaths($includePaths));
         }
 
         return $this;

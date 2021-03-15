@@ -278,9 +278,8 @@ class Repository implements
      */
     private function query(): JsonApiBuilder
     {
-        return new JsonApiBuilder(
-            $this->schema,
-            $this->driver->query()
+        return $this->schema->newQuery(
+            $this->driver->query(),
         );
     }
 

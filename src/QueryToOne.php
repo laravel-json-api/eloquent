@@ -91,15 +91,9 @@ class QueryToOne implements QueryOneBuilder
      */
     public function query(): JsonApiBuilder
     {
-        $query = new JsonApiBuilder(
-            $this->relation->schema(),
-            $this->getRelation(),
-            $this->relation
-        );
-
-        $query->withQueryParameters($this->queryParameters);
-
-        return $query;
+        return $this->relation
+            ->newQuery($this->getRelation())
+            ->withQueryParameters($this->queryParameters);
     }
 
     /**
@@ -142,9 +136,9 @@ class QueryToOne implements QueryOneBuilder
     private function related(): ?Model
     {
         if ($related = $this->model->getRelation($this->relation->relationName())) {
-            $this->relation->schema()
-                ->loader()
-                ->forModel($related)
+            $this->relation
+                ->schema()
+                ->loaderFor($related)
                 ->loadMissing($this->queryParameters->includePaths());
 
             return $related;

@@ -24,12 +24,12 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Http\Request;
 use LaravelJsonApi\Contracts\Store\Repository as RepositoryContract;
+use LaravelJsonApi\Core\Query\IncludePaths;
 use LaravelJsonApi\Core\Query\RelationshipPath;
 use LaravelJsonApi\Core\Schema\Schema as BaseSchema;
 use LaravelJsonApi\Eloquent\Contracts\Driver;
 use LaravelJsonApi\Eloquent\Contracts\Parser;
 use LaravelJsonApi\Eloquent\Drivers\StandardDriver;
-use LaravelJsonApi\Eloquent\EagerLoading\EagerLoader;
 use LaravelJsonApi\Eloquent\Fields\Relations\ToMany;
 use LaravelJsonApi\Eloquent\Fields\Relations\ToOne;
 use LaravelJsonApi\Eloquent\Parsers\StandardParser;
@@ -208,11 +208,39 @@ abstract class Schema extends BaseSchema
     }
 
     /**
-     * @return EagerLoader
+     * Create a model loader for the supplied model or models.
+     *
+     * The model loader is a convenience class that allows us to call methods
+     * such as `loadMissing` with JSON:API query parameter values, e.g.
+     * include paths. The model loader converts the JSON:API parameters to
+     * Eloquent equivalents (e.g. eager load paths) and then calls the relevant
+     * method or methods on the model or Eloquent collection.
+     *
+     * @param $modelOrModels
+     * @return ModelLoader
      */
-    public function loader(): EagerLoader
+    public function loaderFor($modelOrModels): ModelLoader
     {
-        return new EagerLoader($this->server->schemas(), $this);
+        return new ModelLoader(
+            $this->server->schemas(),
+            $this,
+            $modelOrModels,
+        );
+    }
+
+    /**
+     * Create a new database query.
+     *
+     * @param Builder|null $query
+     * @return JsonApiBuilder
+     */
+    public function newQuery($query = null): JsonApiBuilder
+    {
+        return new JsonApiBuilder(
+            $this->server->schemas(),
+            $this,
+            $query ?: $this->newInstance()->newQuery(),
+        );
     }
 
     /**
@@ -284,6 +312,18 @@ abstract class Schema extends BaseSchema
         return $this
             ->relationship($path->first())
             ->isIncludePath();
+    }
+
+    /**
+     * Get acceptable include paths for the schema.
+     *
+     * @param $paths
+     * @return IncludePaths
+     */
+    public function acceptableIncludePaths($paths): IncludePaths
+    {
+        return IncludePaths::cast($paths)
+            ->filter(fn ($path) => $this->isIncludePath($path));
     }
 
     /**

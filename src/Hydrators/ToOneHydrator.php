@@ -94,16 +94,12 @@ class ToOneHydrator implements ToOneBuilder
         }
 
         if ($this->relation instanceof MorphTo) {
-            $loader = $this->relation
-                ->schemaFor($related)
-                ->loader();
+            $schema = $this->relation->schemaFor($related);
         } else {
-            $loader = $this->relation
-                ->schema()
-                ->loader();
+            $schema = $this->relation->schema();
         }
 
-        $loader->forModel($related)->loadMissing(
+        $schema->loaderFor($related)->loadMissing(
             $this->queryParameters->includePaths()
         );
 

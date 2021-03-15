@@ -21,13 +21,14 @@ namespace LaravelJsonApi\Eloquent;
 
 use Illuminate\Contracts\Support\Arrayable;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\MorphTo as EloquentMorphTo;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Support\LazyCollection;
 use Illuminate\Support\Traits\ForwardsCalls;
 use InvalidArgumentException;
 use LaravelJsonApi\Contracts\Pagination\Page;
 use LaravelJsonApi\Contracts\Query\QueryParameters as QueryParametersContract;
+use LaravelJsonApi\Contracts\Schema\Container;
 use LaravelJsonApi\Contracts\Schema\Relation as SchemaRelation;
 use LaravelJsonApi\Core\Query\IncludePaths;
 use LaravelJsonApi\Core\Query\QueryParameters;
@@ -37,6 +38,7 @@ use LaravelJsonApi\Core\Query\SortFields;
 use LaravelJsonApi\Eloquent\Contracts\Filter;
 use LaravelJsonApi\Eloquent\Contracts\Paginator;
 use LaravelJsonApi\Eloquent\Contracts\Sortable;
+use LaravelJsonApi\Eloquent\EagerLoading\EagerLoader;
 use LogicException;
 use RuntimeException;
 
@@ -49,6 +51,11 @@ class JsonApiBuilder
 {
 
     use ForwardsCalls;
+
+    /**
+     * @var Container
+     */
+    private Container $schemas;
 
     /**
      * @var Schema
@@ -83,16 +90,13 @@ class JsonApiBuilder
     /**
      * JsonApiBuilder constructor.
      *
+     * @param Container $schemas
      * @param Schema $schema
-     * @param Builder|Relation|Model $query
+     * @param Builder|Relation $query
      * @param SchemaRelation|null $relation
      */
-    public function __construct(Schema $schema, $query, SchemaRelation $relation = null)
+    public function __construct(Container $schemas, Schema $schema, $query, SchemaRelation $relation = null)
     {
-        if ($query instanceof Model) {
-            $query = $query->newQuery();
-        }
-
         if ($query instanceof Relation && !$relation) {
             throw new InvalidArgumentException('Expecting a schema relation when querying an Eloquent relation.');
         }
@@ -101,6 +105,7 @@ class JsonApiBuilder
             throw new InvalidArgumentException('Expecting an Eloquent relation when querying a schema relation.');
         }
 
+        $this->schemas = $schemas;
         $this->schema = $schema;
         $this->query = $query;
         $this->relation = $relation;
@@ -244,11 +249,21 @@ class JsonApiBuilder
     {
         $includePaths = IncludePaths::cast($includePaths);
 
-        $this->eagerLoading = $this->schema
-            ->loader()
-            ->using($this->query)
-            ->with($includePaths);
+        $loader = new EagerLoader(
+            $this->schemas,
+            $this->schema,
+            $includePaths,
+        );
 
+        $this->query->with($paths = $loader->getRelations());
+
+        foreach ($morphs = $loader->getMorphs() as $name => $map) {
+            $this->query->with($name, static function(EloquentMorphTo $morphTo) use ($map) {
+                $morphTo->morphWith($map);
+            });
+        }
+
+        $this->eagerLoading = (!empty($paths) || !empty($map));
         $this->parameters->setIncludePaths($includePaths);
 
         return $this;

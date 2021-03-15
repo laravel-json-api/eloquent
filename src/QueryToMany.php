@@ -146,17 +146,13 @@ class QueryToMany implements QueryManyBuilder
      */
     public function query(): JsonApiBuilder
     {
-        $schema = $this->relation->schema();
-
-        $query = new JsonApiBuilder(
-            $schema,
-            $schema->relatableQuery($this->request, $this->getRelation()),
-            $this->relation
+        $base = $this->relation->schema()->relatableQuery(
+            $this->request, $this->getRelation()
         );
 
-        return $query->withQueryParameters(
-            $this->queryParameters
-        );
+        return $this->relation
+            ->newQuery($base)
+            ->withQueryParameters($this->queryParameters);
     }
 
     /**

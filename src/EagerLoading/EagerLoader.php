@@ -19,19 +19,17 @@ declare(strict_types=1);
 
 namespace LaravelJsonApi\Eloquent\EagerLoading;
 
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\Collection as EloquentCollection;
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\MorphTo as EloquentMorphTo;
-use Illuminate\Database\Eloquent\Relations\Relation;
-use InvalidArgumentException;
 use LaravelJsonApi\Contracts\Schema\Container;
 use LaravelJsonApi\Core\Query\IncludePaths;
 use LaravelJsonApi\Core\Query\RelationshipPath;
 use LaravelJsonApi\Eloquent\Fields\Relations\MorphTo;
 use LaravelJsonApi\Eloquent\Schema;
-use LogicException;
 
+/**
+ * Class EagerLoader
+ *
+ * @internal
+ */
 class EagerLoader
 {
 
@@ -46,203 +44,47 @@ class EagerLoader
     private Schema $schema;
 
     /**
-     * @var Model|null
+     * @var IncludePaths
      */
-    private ?Model $model = null;
-
-    /**
-     * @var EloquentCollection|null
-     */
-    private ?EloquentCollection $models = null;
-
-    /**
-     * @var Builder|Relation|null
-     */
-    private $query;
+    private IncludePaths $paths;
 
     /**
      * EagerLoader constructor.
      *
      * @param Container $schemas
      * @param Schema $schema
+     * @param IncludePaths $paths
      */
-    public function __construct(Container $schemas, Schema $schema)
+    public function __construct(Container $schemas, Schema $schema, IncludePaths $paths)
     {
         $this->schemas = $schemas;
         $this->schema = $schema;
+        $this->paths = $paths;
     }
 
     /**
-     * @param Model $model
-     * @return $this
-     */
-    public function forModel(Model $model): self
-    {
-        $this->model = $model;
-
-        return $this;
-    }
-
-    /**
-     * @param EloquentCollection $models
-     * @return $this
-     */
-    public function forModels(EloquentCollection $models): self
-    {
-        $this->models = $models;
-
-        return $this;
-    }
-
-    /**
-     * @param Model|EloquentCollection $value
-     * @return $this
-     */
-    public function forModelOrModels($value): self
-    {
-        if ($value instanceof Model) {
-            return $this->forModel($value);
-        }
-
-        if ($value instanceof EloquentCollection) {
-            return $this->forModels($value);
-        }
-
-        throw new \InvalidArgumentException('Expecting a model or Eloquent collection.');
-    }
-
-    /**
-     * @param Builder|Relation $query
-     * @return $this
-     */
-    public function using($query): self
-    {
-        if ($query instanceof Builder || $query instanceof Relation) {
-            $this->query = $query;
-            return $this;
-        }
-
-        throw new InvalidArgumentException('Expecting an Eloquent builder or relation.');
-    }
-
-    /**
-     * @param $includePaths
-     * @return bool
-     *      whether any eager load paths were applied.
-     */
-    public function with($includePaths): bool
-    {
-        if (!$this->query) {
-            throw new LogicException('No query to load relations on.');
-        }
-
-        $paths = $this->toRelations($includePaths);
-        $morphs = $this->toMorphs($includePaths);
-
-        $this->query->with($paths);
-
-        foreach ($morphs as $name => $map) {
-            $this->query->with($name, static function(EloquentMorphTo $morphTo) use ($map) {
-                $morphTo->morphWith($map);
-            });
-        }
-
-        return !empty($paths) || !empty($morphs);
-    }
-
-    /**
-     * @param mixed $includePaths
-     * @return void
-     */
-    public function load($includePaths): void
-    {
-        foreach (array_filter([$this->models, $this->model]) as $target) {
-            $target->load(
-                $this->toRelations($includePaths)
-            );
-
-            foreach ($this->toMorphs($includePaths) as $relation => $map) {
-                $target->loadMorph($relation, $map);
-            }
-        }
-    }
-
-    /**
-     * Load only the include paths that are valid for the schema.
+     * Get the eager load relationship paths.
      *
-     * @param $includePaths
-     * @return void
-     */
-    public function loadIfExists($includePaths): void
-    {
-        $this->load($this->acceptablePaths($includePaths));
-    }
-
-    /**
-     * @param mixed $includePaths
-     * @return void
-     */
-    public function loadMissing($includePaths): void
-    {
-        foreach (array_filter([$this->models, $this->model]) as $target) {
-            $target->loadMissing(
-                $this->toRelations($includePaths)
-            );
-
-            foreach ($this->toMorphs($includePaths) as $relation => $map) {
-                $target->loadMorph($relation, $map);
-            }
-        }
-    }
-
-    /**
-     * Load only the include paths that are valid for the schema.
-     *
-     * @param $includePaths
-     * @return void
-     */
-    public function loadMissingIfExists($includePaths): void
-    {
-        $this->loadMissing(
-            $this->acceptablePaths($includePaths)
-        );
-    }
-
-    /**
-     * @param mixed $includePaths
      * @return array
      */
-    public function toRelations($includePaths): array
+    public function getRelations(): array
     {
-        $paths = new EagerLoadIterator($this->schemas, $this->schema, $includePaths);
-
-        return $paths->all();
+        return EagerLoadIterator::make($this->schema, $this->paths)->all();
     }
 
     /**
-     * @param $includePaths
+     * Get the morph-to eager load paths.
+     *
      * @return array
      */
-    public function toMorphs($includePaths): array
+    public function getMorphs(): array
     {
-        return collect(IncludePaths::cast($includePaths)->all())
+        return $this->paths
+            ->collect()
             ->filter(fn($path) => $this->isMorph($path))
             ->groupBy(fn(RelationshipPath $path) => $path->first())
             ->map(fn($paths, $name) => $this->morphs($name, $paths)->all())
             ->all();
-    }
-
-    /**
-     * @param $paths
-     * @return IncludePaths
-     */
-    private function acceptablePaths($paths): IncludePaths
-    {
-        $values = collect(IncludePaths::cast($paths)->all())
-            ->filter(fn ($path) => $this->schema->isIncludePath($path))
-            ->all();
-
-        return new IncludePaths(...$values);
     }
 
     /**

@@ -110,6 +110,15 @@ class MorphParameters implements QueryParameters
     }
 
     /**
+     * @inheritDoc
+     */
+    public function unrecognisedParameters(): array
+    {
+        return $this->parameters->unrecognisedParameters();
+    }
+
+
+    /**
      * @param SortField $field
      * @return bool
      */

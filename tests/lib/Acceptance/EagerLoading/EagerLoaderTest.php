@@ -22,6 +22,8 @@ namespace LaravelJsonApi\Eloquent\Tests\Acceptance\EagerLoading;
 use App\Models\Post;
 use App\Models\User;
 use App\Schemas\PostSchema;
+use LaravelJsonApi\Core\Query\IncludePaths;
+use LaravelJsonApi\Eloquent\EagerLoading\EagerLoader;
 use LaravelJsonApi\Eloquent\Tests\Acceptance\TestCase;
 
 class EagerLoaderTest extends TestCase
@@ -70,16 +72,11 @@ class EagerLoaderTest extends TestCase
      */
     public function test(string $type, $includePaths, array $expected): void
     {
-        $loader = $this
-            ->schemas()
-            ->schemaFor($type)
-            ->loader();
+        $loader = $this->eagerLoader($type, $includePaths);
 
-        $this->assertSame($expected, $loader->toRelations(
-            $includePaths
-        ));
+        $this->assertSame($expected, $loader->getRelations());
 
-        $this->assertEmpty($loader->toMorphs($includePaths));
+        $this->assertEmpty($loader->getMorphs());
     }
 
     /**
@@ -87,12 +84,7 @@ class EagerLoaderTest extends TestCase
      */
     public function testMorphTo(): void
     {
-        $loader = $this
-            ->schemas()
-            ->schemaFor('images')
-            ->loader();
-
-        $actual = $loader->toMorphs([
+        $loader = $this->eagerLoader('images', [
             'imageable.author.country',
             'imageable.country',
         ]);
@@ -102,7 +94,7 @@ class EagerLoaderTest extends TestCase
                 Post::class => ['user.country'],
                 User::class => ['country'],
             ],
-        ], $actual);
+        ], $loader->getMorphs());
     }
 
     /**
@@ -149,12 +141,9 @@ class EagerLoaderTest extends TestCase
     {
         $this->createSchemaWithDefaultEagerLoading(PostSchema::class, 'user');
 
-        $loader = $this
-            ->schemas()
-            ->schemaFor($type)
-            ->loader();
+        $loader = $this->eagerLoader($type, $includePaths);
 
-        $this->assertSame($expected, $loader->toRelations($includePaths));
+        $this->assertSame($expected, $loader->getRelations());
     }
 
     /**
@@ -201,13 +190,24 @@ class EagerLoaderTest extends TestCase
     {
         $this->createSchemaWithDefaultEagerLoading(PostSchema::class, 'user');
 
-        $loader = $this
-            ->schemas()
-            ->schemaFor('images')
-            ->loader();
+        $loader = $this->eagerLoader('images', $includePaths);
 
-        $actual = $loader->toMorphs($includePaths);
+        $actual = $loader->getMorphs();
 
         $this->assertSame($expected, $actual);
+    }
+
+    /**
+     * @param string $resourceType
+     * @param $includePaths
+     * @return EagerLoader
+     */
+    private function eagerLoader(string $resourceType, $includePaths): EagerLoader
+    {
+        return new EagerLoader(
+            $this->schemas(),
+            $this->schemas()->schemaFor($resourceType),
+            IncludePaths::cast($includePaths),
+        );
     }
 }

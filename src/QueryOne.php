@@ -89,14 +89,9 @@ class QueryOne implements QueryOneBuilderContract
      */
     public function query(): JsonApiBuilder
     {
-        $query = new JsonApiBuilder(
-            $this->schema,
-            $this->driver->query(),
-        );
-
-        return $query->withQueryParameters(
-            $this->queryParameters
-        );
+        return $this->schema
+            ->newQuery($this->driver->query())
+            ->withQueryParameters($this->queryParameters);
     }
 
     /**
@@ -115,8 +110,8 @@ class QueryOne implements QueryOneBuilderContract
     public function first(): ?object
     {
         if ($this->model && empty($this->queryParameters->filter())) {
-            $this->schema->loader()
-                ->forModel($this->model)
+            $this->schema
+                ->loaderFor($this->model)
                 ->loadMissing($this->queryParameters->includePaths());
 
             return $this->parser->parseOne($this->model);

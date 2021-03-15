@@ -26,6 +26,11 @@ use LaravelJsonApi\Core\Query\RelationshipPath;
 use LaravelJsonApi\Eloquent\Fields\Relations\MorphTo;
 use LaravelJsonApi\Eloquent\Schema;
 
+/**
+ * Class EagerLoadMorphs
+ *
+ * @internal
+ */
 class EagerLoadMorphs implements IteratorAggregate
 {
 
@@ -80,11 +85,9 @@ class EagerLoadMorphs implements IteratorAggregate
     public function getIterator()
     {
         foreach ($this->relation->allSchemas() as $schema) {
-            $loader = new EagerLoader($this->schemas, $schema);
+            $loader = new EagerLoader($this->schemas, $schema, $this->pathsFor($schema));
 
-            yield $schema->model() => $loader->toRelations(
-                $this->pathsFor($schema)
-            );
+            yield $schema->model() => $loader->getRelations();
         }
     }
 
@@ -95,13 +98,13 @@ class EagerLoadMorphs implements IteratorAggregate
      * path exists on the provided schema. Otherwise it needs to be skipped.
      *
      * @param Schema $schema
-     * @return array
+     * @return IncludePaths
      */
-    private function pathsFor(Schema $schema): array
+    private function pathsFor(Schema $schema): IncludePaths
     {
-        return collect($this->paths->all())
-            ->filter(fn(RelationshipPath $path) => $schema->isRelationship($path->first()))
-            ->all();
+        return $this->paths->filter(
+            fn(RelationshipPath $path) => $schema->isRelationship($path->first())
+        );
     }
 
 }

@@ -117,7 +117,7 @@ class ToManyHydrator implements ToManyBuilder
     {
         /** Always do eager loading, in case we have default include paths. */
         if ($related instanceof EloquentCollection && $related->isNotEmpty()) {
-            $this->relation->schema()->loader()->forModels($related)->loadMissing(
+            $this->relation->schema()->loaderFor($related)->loadMissing(
                 $this->queryParameters->includePaths()
             );
         }

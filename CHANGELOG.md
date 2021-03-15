@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file. This project adheres to
 [Semantic Versioning](http://semver.org/) and [this changelog format](http://keepachangelog.com/).
 
+## Unreleased
+
+### Changed
+
+- Made improvements to the eager loading implementation. All classes in the `EagerLoading` namespace are now marked as
+  internal, as they are not intended for use outside of this package. The public API is `JsonApiBuilder::with()`,
+  `ModelLoader::load()` and `ModelLoader::loadMissing()`.
+- Refactored the Eloquent Schema `loader()` method to `loaderFor($modelOrModels)`.
+- The `JsonApiBuilder` class now expects the schema container as its first argument. To construct a new `JsonApiBuilder`
+  instance, the `Schema::newQuery()` and `Relation::newQuery()` methods should be used.
+
 ## [1.0.0-alpha.5] - 2021-03-12
 
 ### Added

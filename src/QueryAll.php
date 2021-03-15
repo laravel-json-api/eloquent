@@ -87,16 +87,13 @@ class QueryAll implements QueryAllBuilder
      */
     public function query(): JsonApiBuilder
     {
-        $base = $this->driver->queryAll();
-
-        $query = new JsonApiBuilder(
-            $this->schema,
-            $this->schema->indexQuery($this->request, $base)
+        $base = $this->schema->indexQuery(
+            $this->request, $this->driver->queryAll()
         );
 
-        return $query->withQueryParameters(
-            $this->queryParameters
-        );
+        return $this->schema
+            ->newQuery($base)
+            ->withQueryParameters($this->queryParameters);
     }
 
     /**

@@ -71,7 +71,7 @@ class QueryMorphTo implements QueryOneBuilder
     public function first(): ?object
     {
         /** @var Model|null $related */
-        $related = $related = $this->model->{$this->relation->relationName()};
+        $related = $this->model->{$this->relation->relationName()};
         $filters = $this->queryParameters->filter();
 
         /**
@@ -103,7 +103,8 @@ class QueryMorphTo implements QueryOneBuilder
          * Otherwise we need to re-query this specific model to see if
          * it matches our filters or not.
          */
-        $result = (new JsonApiBuilder($schema, $related))
+        $result = $schema
+            ->newQuery($related->newQuery())
             ->whereKey($related->getKey())
             ->filter($filters)
             ->first();
@@ -128,8 +129,7 @@ class QueryMorphTo implements QueryOneBuilder
             );
 
             $schema
-                ->loader()
-                ->forModel($related)
+                ->loaderFor($related)
                 ->loadMissing($parameters->includePaths());
         }
 
