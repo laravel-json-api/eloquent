@@ -25,13 +25,14 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\LazyCollection;
 use LaravelJsonApi\Contracts\Pagination\Page;
 use LaravelJsonApi\Contracts\Store\QueryManyBuilder;
-use LaravelJsonApi\Core\Query\QueryParameters;
 use LaravelJsonApi\Eloquent\Fields\Relations\MorphTo;
 use LaravelJsonApi\Eloquent\Fields\Relations\MorphToMany;
 use LaravelJsonApi\Eloquent\Fields\Relations\Relation;
 use LaravelJsonApi\Eloquent\Fields\Relations\ToMany;
 use LaravelJsonApi\Eloquent\Fields\Relations\ToOne;
 use LaravelJsonApi\Eloquent\Polymorphism\MorphParameters;
+use LaravelJsonApi\Eloquent\Query\ExtendedQueryParameters;
+use LaravelJsonApi\Eloquent\Query\HasQueryParameters;
 use LogicException;
 
 class QueryMorphToMany implements QueryManyBuilder, \IteratorAggregate
@@ -59,7 +60,7 @@ class QueryMorphToMany implements QueryManyBuilder, \IteratorAggregate
     {
         $this->model = $model;
         $this->relation = $relation;
-        $this->queryParameters = new QueryParameters();
+        $this->queryParameters = new ExtendedQueryParameters();
     }
 
     /**

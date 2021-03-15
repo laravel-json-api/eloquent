@@ -29,8 +29,9 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\LazyCollection;
 use LaravelJsonApi\Contracts\Pagination\Page;
 use LaravelJsonApi\Contracts\Store\QueryManyBuilder;
-use LaravelJsonApi\Core\Query\QueryParameters;
 use LaravelJsonApi\Eloquent\Fields\Relations\ToMany;
+use LaravelJsonApi\Eloquent\Query\ExtendedQueryParameters;
+use LaravelJsonApi\Eloquent\Query\HasQueryParameters;
 use LogicException;
 use function get_class;
 use function sprintf;
@@ -60,7 +61,7 @@ class QueryToMany implements QueryManyBuilder
     {
         $this->model = $model;
         $this->relation = $relation;
-        $this->queryParameters = new QueryParameters();
+        $this->queryParameters = new ExtendedQueryParameters();
     }
 
     /**

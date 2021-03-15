@@ -1,0 +1,188 @@
+<?php
+/*
+ * Copyright 2021 Cloud Creativity Limited
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+declare(strict_types=1);
+
+namespace LaravelJsonApi\Eloquent\Query;
+
+use Countable;
+use Illuminate\Contracts\Support\Arrayable;
+use Illuminate\Support\Collection;
+use Illuminate\Support\Enumerable;
+use IteratorAggregate;
+use UnexpectedValueException;
+use function is_array;
+use function is_null;
+use function is_string;
+
+class CountablePaths implements IteratorAggregate, Countable, Arrayable
+{
+
+    /**
+     * Create a new countable paths value object.
+     *
+     * @param mixed $value
+     * @return static
+     */
+    public static function cast($value): self
+    {
+        if ($value instanceof self) {
+            return $value;
+        }
+
+        if (is_string($value)) {
+            return self::fromString($value);
+        }
+
+        if (is_array($value) || $value instanceof Enumerable) {
+            return self::fromArray($value);
+        }
+
+        if (is_null($value)) {
+            return new self();
+        }
+
+        throw new UnexpectedValueException('Unable to cast provided value to countable paths.');
+    }
+
+    /**
+     * @param $paths
+     * @return static
+     */
+    public static function fromArray($paths): self
+    {
+        if ($paths instanceof Enumerable) {
+            $paths = $paths->all();
+        }
+
+        if (is_array($paths)) {
+            return new self(...$paths);
+        }
+
+        throw new UnexpectedValueException('Expecting an array or enumerable.');
+    }
+
+    /**
+     * @param string $paths
+     * @return static
+     */
+    public static function fromString(string $paths): self
+    {
+        return new self(...explode(',', $paths));
+    }
+
+    /**
+     * @param mixed|null $value
+     * @return static|null
+     */
+    public static function nullable($value): ?self
+    {
+        if (!is_null($value)) {
+            return self::cast($value);
+        }
+
+        return null;
+    }
+
+    /**
+     * @var string[]
+     */
+    private array $paths;
+
+    /**
+     * CountablePaths constructor.
+     *
+     * @param string ...$paths
+     */
+    public function __construct(string ...$paths)
+    {
+        $this->paths = $paths;
+    }
+
+    /**
+     * @return string
+     */
+    public function __toString()
+    {
+        return $this->toString();
+    }
+
+    /**
+     * @return string
+     */
+    public function toString(): string
+    {
+        return implode(',', $this->paths);
+    }
+
+    /**
+     * @return bool
+     */
+    public function isEmpty(): bool
+    {
+        return empty($this->paths);
+    }
+
+    /**
+     * @return bool
+     */
+    public function isNotEmpty(): bool
+    {
+        return !$this->isEmpty();
+    }
+
+    /**
+     * @return string[]
+     */
+    public function all(): array
+    {
+        return $this->paths;
+    }
+
+    /**
+     * @return Collection
+     */
+    public function collect(): Collection
+    {
+        return Collection::make($this->paths);
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function count()
+    {
+        return count($this->paths);
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function getIterator()
+    {
+        yield from $this->paths;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function toArray()
+    {
+        return $this->paths;
+    }
+
+}

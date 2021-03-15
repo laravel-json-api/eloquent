@@ -22,9 +22,10 @@ namespace LaravelJsonApi\Eloquent;
 use Illuminate\Database\Eloquent\Model;
 use InvalidArgumentException;
 use LaravelJsonApi\Contracts\Store\QueryOneBuilder as QueryOneBuilderContract;
-use LaravelJsonApi\Core\Query\QueryParameters;
 use LaravelJsonApi\Eloquent\Contracts\Driver;
 use LaravelJsonApi\Eloquent\Contracts\Parser;
+use LaravelJsonApi\Eloquent\Query\ExtendedQueryParameters;
+use LaravelJsonApi\Eloquent\Query\HasQueryParameters;
 
 class QueryOne implements QueryOneBuilderContract
 {
@@ -81,7 +82,7 @@ class QueryOne implements QueryOneBuilderContract
         $this->parser = $parser;
         $this->model = $model;
         $this->resourceId = $resourceId;
-        $this->queryParameters = new QueryParameters();
+        $this->queryParameters = new ExtendedQueryParameters();
     }
 
     /**

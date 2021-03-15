@@ -39,6 +39,7 @@ use LaravelJsonApi\Eloquent\Contracts\Filter;
 use LaravelJsonApi\Eloquent\Contracts\Paginator;
 use LaravelJsonApi\Eloquent\Contracts\Sortable;
 use LaravelJsonApi\Eloquent\EagerLoading\EagerLoader;
+use LaravelJsonApi\Eloquent\Query\ExtendedQueryParameters;
 use LogicException;
 use RuntimeException;
 
@@ -73,9 +74,9 @@ class JsonApiBuilder
     private ?SchemaRelation $relation;
 
     /**
-     * @var QueryParameters
+     * @var ExtendedQueryParameters
      */
-    private QueryParameters $parameters;
+    private ExtendedQueryParameters $parameters;
 
     /**
      * @var bool
@@ -109,7 +110,7 @@ class JsonApiBuilder
         $this->schema = $schema;
         $this->query = $query;
         $this->relation = $relation;
-        $this->parameters = new QueryParameters();
+        $this->parameters = new ExtendedQueryParameters();
     }
 
     /**

@@ -22,12 +22,12 @@ namespace LaravelJsonApi\Eloquent\Hydrators;
 use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Database\Eloquent\Model;
 use LaravelJsonApi\Contracts\Store\ToManyBuilder;
-use LaravelJsonApi\Core\Query\QueryParameters;
 use LaravelJsonApi\Core\Support\Str;
 use LaravelJsonApi\Eloquent\Contracts\FillableToMany;
 use LaravelJsonApi\Eloquent\Fields\Relations\ToMany;
-use LaravelJsonApi\Eloquent\HasQueryParameters;
 use LaravelJsonApi\Eloquent\Polymorphism\MorphMany;
+use LaravelJsonApi\Eloquent\Query\ExtendedQueryParameters;
+use LaravelJsonApi\Eloquent\Query\HasQueryParameters;
 use UnexpectedValueException;
 
 class ToManyHydrator implements ToManyBuilder
@@ -62,7 +62,7 @@ class ToManyHydrator implements ToManyBuilder
 
         $this->model = $model;
         $this->relation = $relation;
-        $this->queryParameters = new QueryParameters();
+        $this->queryParameters = new ExtendedQueryParameters();
     }
 
     /**

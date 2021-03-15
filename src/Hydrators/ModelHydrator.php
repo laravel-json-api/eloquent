@@ -23,14 +23,14 @@ use Illuminate\Database\Eloquent\Model;
 use LaravelJsonApi\Contracts\Schema\Attribute;
 use LaravelJsonApi\Contracts\Schema\Field;
 use LaravelJsonApi\Contracts\Store\ResourceBuilder;
-use LaravelJsonApi\Core\Query\QueryParameters;
 use LaravelJsonApi\Eloquent\Contracts\Driver;
 use LaravelJsonApi\Eloquent\Contracts\Fillable;
 use LaravelJsonApi\Eloquent\Contracts\FillableToMany;
 use LaravelJsonApi\Eloquent\Contracts\FillableToOne;
 use LaravelJsonApi\Eloquent\Contracts\Parser;
 use LaravelJsonApi\Eloquent\Fields\Relations\Relation;
-use LaravelJsonApi\Eloquent\HasQueryParameters;
+use LaravelJsonApi\Eloquent\Query\ExtendedQueryParameters;
+use LaravelJsonApi\Eloquent\Query\HasQueryParameters;
 use LaravelJsonApi\Eloquent\Schema;
 use LogicException;
 use RuntimeException;
@@ -79,7 +79,7 @@ class ModelHydrator implements ResourceBuilder
         $this->driver = $driver;
         $this->parser = $parser;
         $this->model = $model;
-        $this->queryParameters = new QueryParameters();
+        $this->queryParameters = new ExtendedQueryParameters();
     }
 
     /**

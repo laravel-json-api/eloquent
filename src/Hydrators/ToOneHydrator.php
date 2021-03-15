@@ -21,12 +21,12 @@ namespace LaravelJsonApi\Eloquent\Hydrators;
 
 use Illuminate\Database\Eloquent\Model;
 use LaravelJsonApi\Contracts\Store\ToOneBuilder;
-use LaravelJsonApi\Core\Query\QueryParameters;
 use LaravelJsonApi\Core\Support\Str;
 use LaravelJsonApi\Eloquent\Contracts\FillableToOne;
 use LaravelJsonApi\Eloquent\Fields\Relations\MorphTo;
 use LaravelJsonApi\Eloquent\Fields\Relations\ToOne;
-use LaravelJsonApi\Eloquent\HasQueryParameters;
+use LaravelJsonApi\Eloquent\Query\ExtendedQueryParameters;
+use LaravelJsonApi\Eloquent\Query\HasQueryParameters;
 use UnexpectedValueException;
 
 class ToOneHydrator implements ToOneBuilder
@@ -61,7 +61,7 @@ class ToOneHydrator implements ToOneBuilder
 
         $this->model = $model;
         $this->relation = $relation;
-        $this->queryParameters = new QueryParameters();
+        $this->queryParameters = new ExtendedQueryParameters();
     }
 
     /**

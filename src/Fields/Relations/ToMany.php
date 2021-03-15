@@ -22,10 +22,11 @@ namespace LaravelJsonApi\Eloquent\Fields\Relations;
 use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Support\Collection;
 use LaravelJsonApi\Contracts\Pagination\Page;
+use LaravelJsonApi\Contracts\Schema\Countable;
 use LaravelJsonApi\Core\Support\Str;
 use LaravelJsonApi\Eloquent\Contracts\Proxy;
 
-abstract class ToMany extends Relation
+abstract class ToMany extends Relation implements Countable
 {
 
     /**
@@ -41,6 +42,14 @@ abstract class ToMany extends Relation
     public function toOne(): bool
     {
         return false;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function isCountable(): bool
+    {
+        return true;
     }
 
     /**
