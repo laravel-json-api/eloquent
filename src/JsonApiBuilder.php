@@ -35,10 +35,12 @@ use LaravelJsonApi\Core\Query\QueryParameters;
 use LaravelJsonApi\Core\Query\RelationshipPath;
 use LaravelJsonApi\Core\Query\SortField;
 use LaravelJsonApi\Core\Query\SortFields;
+use LaravelJsonApi\Eloquent\Aggregates\CountableLoader;
 use LaravelJsonApi\Eloquent\Contracts\Filter;
 use LaravelJsonApi\Eloquent\Contracts\Paginator;
 use LaravelJsonApi\Eloquent\Contracts\Sortable;
 use LaravelJsonApi\Eloquent\EagerLoading\EagerLoader;
+use LaravelJsonApi\Eloquent\Query\CountablePaths;
 use LaravelJsonApi\Eloquent\Query\ExtendedQueryParameters;
 use LogicException;
 use RuntimeException;
@@ -137,9 +139,12 @@ class JsonApiBuilder
      */
     public function withQueryParameters(QueryParametersContract $query): self
     {
+        $query = ExtendedQueryParameters::cast($query);
+
         $this->filter($query->filter())
             ->sort($query->sortFields())
-            ->with($query->includePaths());
+            ->with($query->includePaths())
+            ->withCount($query->countable());
 
         return $this;
     }
@@ -266,6 +271,25 @@ class JsonApiBuilder
 
         $this->eagerLoading = (!empty($paths) || !empty($map));
         $this->parameters->setIncludePaths($includePaths);
+
+        return $this;
+    }
+
+    /**
+     * Add queries to count the provided JSON:API relations.
+     *
+     * @param $countable
+     * @return $this
+     */
+    public function withCount($countable): self
+    {
+        $loader = new CountableLoader(
+            $this->schema,
+            $countable = CountablePaths::cast($countable)
+        );
+
+        $this->query->withCount($loader->getRelations());
+        $this->parameters->setCountable($countable);
 
         return $this;
     }

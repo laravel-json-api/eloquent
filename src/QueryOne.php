@@ -113,7 +113,8 @@ class QueryOne implements QueryOneBuilderContract
         if ($this->model && empty($this->queryParameters->filter())) {
             $this->schema
                 ->loaderFor($this->model)
-                ->loadMissing($this->queryParameters->includePaths());
+                ->loadMissing($this->queryParameters->includePaths())
+                ->loadCount($this->queryParameters->countable());
 
             return $this->parser->parseOne($this->model);
         }

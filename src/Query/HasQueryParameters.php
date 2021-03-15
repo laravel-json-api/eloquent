@@ -67,4 +67,15 @@ trait HasQueryParameters
         return $this;
     }
 
+    /**
+     * @param mixed $countable
+     * @return BuilderContract
+     */
+    public function withCount($countable): BuilderContract
+    {
+        $this->queryParameters->setCountable($countable);
+
+        return $this;
+    }
+
 }

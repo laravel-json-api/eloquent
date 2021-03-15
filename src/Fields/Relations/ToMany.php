@@ -22,12 +22,15 @@ namespace LaravelJsonApi\Eloquent\Fields\Relations;
 use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Support\Collection;
 use LaravelJsonApi\Contracts\Pagination\Page;
-use LaravelJsonApi\Contracts\Schema\Countable;
+use LaravelJsonApi\Contracts\Schema\Countable as CountableContract;
 use LaravelJsonApi\Core\Support\Str;
 use LaravelJsonApi\Eloquent\Contracts\Proxy;
+use LaravelJsonApi\Eloquent\Fields\Concerns\Countable;
 
-abstract class ToMany extends Relation implements Countable
+abstract class ToMany extends Relation implements CountableContract
 {
+
+    use Countable;
 
     /**
      * Should the relationship use the schema's default pagination?
@@ -42,14 +45,6 @@ abstract class ToMany extends Relation implements Countable
     public function toOne(): bool
     {
         return false;
-    }
-
-    /**
-     * @inheritDoc
-     */
-    public function isCountable(): bool
-    {
-        return true;
     }
 
     /**
