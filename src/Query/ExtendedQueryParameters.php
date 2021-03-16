@@ -146,7 +146,7 @@ class ExtendedQueryParameters extends QueryParameters
 
     /**
      * @param Schema $schema
-     * @return QueryParameters
+     * @return static
      */
     public function forSchema(Schema $schema): QueryParameters
     {

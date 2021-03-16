@@ -25,6 +25,7 @@ use LaravelJsonApi\Contracts\Schema\Filter;
 use LaravelJsonApi\Contracts\Store\QueryOneBuilder;
 use LaravelJsonApi\Core\Query\IncludePaths;
 use LaravelJsonApi\Eloquent\Fields\Relations\MorphTo;
+use LaravelJsonApi\Eloquent\Query\CountablePaths;
 use LaravelJsonApi\Eloquent\Query\ExtendedQueryParameters;
 use LaravelJsonApi\Eloquent\Query\HasQueryParameters;
 use function is_null;
@@ -126,11 +127,12 @@ class QueryMorphTo implements QueryOneBuilder
     {
         if ($related) {
             $schema = $this->relation->schemaFor($related);
-            $paths = $this->queryParameters->includePaths() ?: new IncludePaths();
+            $parameters = $this->queryParameters->forSchema($schema);
 
             $schema
                 ->loaderFor($related)
-                ->loadMissing($paths->forSchema($schema));
+                ->loadMissing($parameters->includePaths())
+                ->loadCount($parameters->countable());
         }
 
         return $related;

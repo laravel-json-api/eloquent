@@ -214,6 +214,7 @@ class Repository implements
     }
 
     /**
+     * @inheritDoc
      * @return ModelHydrator
      */
     public function create(): ResourceBuilder
@@ -227,7 +228,7 @@ class Repository implements
     }
 
     /**
-     * @param mixed $modelOrResourceId
+     * @inheritDoc
      * @return ModelHydrator
      */
     public function update($modelOrResourceId): ResourceBuilder
@@ -254,6 +255,7 @@ class Repository implements
 
     /**
      * @inheritDoc
+     * @return ToOneHydrator
      */
     public function modifyToOne($modelOrResourceId, string $fieldName): ToOneBuilder
     {
@@ -265,6 +267,7 @@ class Repository implements
 
     /**
      * @inheritDoc
+     * @return ToManyHydrator
      */
     public function modifyToMany($modelOrResourceId, string $fieldName): ToManyBuilder
     {

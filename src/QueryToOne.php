@@ -140,7 +140,8 @@ class QueryToOne implements QueryOneBuilder
             $this->relation
                 ->schema()
                 ->loaderFor($related)
-                ->loadMissing($this->queryParameters->includePaths());
+                ->loadMissing($this->queryParameters->includePaths())
+                ->loadCount($this->queryParameters->countable());
 
             return $related;
         }

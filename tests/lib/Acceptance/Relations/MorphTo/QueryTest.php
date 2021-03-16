@@ -21,6 +21,8 @@ namespace LaravelJsonApi\Eloquent\Tests\Acceptance\Relations\MorphTo;
 
 use App\Models\Image;
 use App\Models\Post;
+use App\Models\Role;
+use App\Models\Tag;
 use App\Models\User;
 use App\Schemas\PostSchema;
 use App\Schemas\UserSchema;
@@ -212,5 +214,64 @@ class QueryTest extends TestCase
 
         $this->assertTrue($image->imageable->is($actual));
         $this->assertTrue($actual->relationLoaded('phone'));
+    }
+
+    public function testPostWithCount(): void
+    {
+        $post = Post::factory()
+            ->has(Tag::factory()->count(2))
+            ->create();
+
+        $image = Image::factory()
+            ->for($post, 'imageable')
+            ->create();
+
+        $actual = $this->repository
+            ->queryToOne($image, 'imageable')
+            ->withCount('tags,roles')
+            ->first();
+
+        $this->assertTrue($image->imageable->is($actual));
+        $this->assertEquals(2, $image->imageable->tags_count);
+    }
+
+    public function testUserWithCount(): void
+    {
+        $user = User::factory()
+            ->has(Role::factory()->count(2))
+            ->create();
+
+        $image = Image::factory()
+            ->for($user, 'imageable')
+            ->create();
+
+        $actual = $this->repository
+            ->queryToOne($image, 'imageable')
+            ->withCount('tags,roles')
+            ->first();
+
+        $this->assertTrue($image->imageable->is($actual));
+        $this->assertEquals(2, $image->imageable->roles_count);
+    }
+
+    public function testWithCountAndInclude(): void
+    {
+        $post = Post::factory()
+            ->has(Tag::factory()->count(2))
+            ->create();
+
+        $image = Image::factory()
+            ->for($post, 'imageable')
+            ->create();
+
+        $actual = $this->repository
+            ->queryToOne($image, 'imageable')
+            ->with('tags,roles')
+            ->withCount('tags,roles')
+            ->first();
+
+        $this->assertTrue($image->imageable->is($actual));
+        $this->assertTrue($image->imageable->relationLoaded('tags'));
+        $this->assertEquals(2, $image->imageable->tags_count);
     }
 }
