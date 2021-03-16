@@ -130,8 +130,8 @@ class Relation extends BaseRelation
             return $this->field->count($this->resource);
         }
 
-        if ($this->field instanceof ToMany && $count = $this->field->countName()) {
-            $value = $this->resource->{$count};
+        if ($this->field instanceof ToMany) {
+            $value = $this->resource->{$this->field->countName()};
             return !is_null($value) ? intval($value) : null;
         }
 
