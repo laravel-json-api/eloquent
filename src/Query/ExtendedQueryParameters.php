@@ -19,7 +19,9 @@ declare(strict_types=1);
 
 namespace LaravelJsonApi\Eloquent\Query;
 
+use LaravelJsonApi\Contracts\Schema\Schema;
 use LaravelJsonApi\Core\Query\FieldSets;
+use LaravelJsonApi\Core\Query\FilterParameters;
 use LaravelJsonApi\Core\Query\IncludePaths;
 use LaravelJsonApi\Core\Query\QueryParameters;
 use LaravelJsonApi\Core\Query\SortFields;
@@ -55,7 +57,7 @@ class ExtendedQueryParameters extends QueryParameters
      * @param FieldSets|null $fieldSets
      * @param SortFields|null $sortFields
      * @param array|null $page
-     * @param array|null $filters
+     * @param FilterParameters|null $filters
      * @param array|null $unrecognised
      */
     public function __construct(
@@ -63,7 +65,7 @@ class ExtendedQueryParameters extends QueryParameters
         FieldSets $fieldSets = null,
         SortFields $sortFields = null,
         array $page = null,
-        array $filters = null,
+        FilterParameters $filters = null,
         array $unrecognised = null
     ) {
         parent::__construct(
@@ -72,7 +74,7 @@ class ExtendedQueryParameters extends QueryParameters
             $sortFields,
             $page,
             $filters,
-            collect($unrecognised)->forget(self::$withCount)->all(),
+            collect($unrecognised)->forget(self::$withCount)->all() ?: null,
         );
 
         $this->countable = CountablePaths::nullable($unrecognised[self::$withCount] ?? null);
@@ -116,17 +118,16 @@ class ExtendedQueryParameters extends QueryParameters
     /**
      * @return array
      */
-    public function toQuery(): array
+    public function unrecognisedParameters(): array
     {
-        $values = parent::toQuery();
+        $parameters = parent::unrecognisedParameters();
+        $countable = $this->countable();
 
-        if ($this->countable && $this->countable->isNotEmpty()) {
-            $values[self::$withCount] = $this->countable->toString();
+        if ($countable && $countable->isNotEmpty()) {
+            $parameters[self::$withCount] = $countable->toString();
         }
 
-        ksort($values);
-
-        return $values;
+        return $parameters;
     }
 
     /**
@@ -136,12 +137,26 @@ class ExtendedQueryParameters extends QueryParameters
     {
         $values = parent::toArray();
 
-        if ($this->countable && $this->countable->isNotEmpty()) {
-            $values[self::$withCount] = $this->countable->toArray();
+        if (isset($values[self::$withCount])) {
+            $values[self::$withCount] = $this->countable()->toArray();
         }
 
-        ksort($values);
-
         return $values;
+    }
+
+    /**
+     * @param Schema $schema
+     * @return QueryParameters
+     */
+    public function forSchema(Schema $schema): QueryParameters
+    {
+        $copy = parent::forSchema($schema);
+        $countable = CountablePaths::cast($this->countable)->forSchema($schema);
+
+        $copy->setCountable(
+            $countable->isNotEmpty() ? $countable : null
+        );
+
+        return $copy;
     }
 }

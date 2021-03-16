@@ -207,10 +207,10 @@ class Repository implements
         $relation = $this->schema->toMany($fieldName);
 
         if ($relation instanceof MorphToMany) {
-            return new QueryMorphToMany($model, $relation);
+            return new QueryMorphToMany($this->schema, $model, $relation);
         }
 
-        return new QueryToMany($model, $relation);
+        return new QueryToMany($this->schema, $model, $relation);
     }
 
     /**
@@ -268,6 +268,7 @@ class Repository implements
     public function modifyToMany($modelOrResourceId, string $fieldName): ToManyBuilder
     {
         return new ToManyHydrator(
+            $this->schema,
             $this->retrieve($modelOrResourceId),
             $this->schema->toMany($fieldName)
         );

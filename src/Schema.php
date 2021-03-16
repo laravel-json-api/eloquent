@@ -24,8 +24,6 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Http\Request;
 use LaravelJsonApi\Contracts\Store\Repository as RepositoryContract;
-use LaravelJsonApi\Core\Query\IncludePaths;
-use LaravelJsonApi\Core\Query\RelationshipPath;
 use LaravelJsonApi\Core\Schema\Schema as BaseSchema;
 use LaravelJsonApi\Eloquent\Contracts\Driver;
 use LaravelJsonApi\Eloquent\Contracts\Parser;
@@ -297,33 +295,6 @@ abstract class Schema extends BaseSchema
         }
 
         return $this->parser = new StandardParser();
-    }
-
-    /**
-     * @param RelationshipPath $path
-     * @return bool
-     */
-    public function isIncludePath(RelationshipPath $path): bool
-    {
-        if (!$this->isRelationship($path->first())) {
-            return false;
-        }
-
-        return $this
-            ->relationship($path->first())
-            ->isIncludePath();
-    }
-
-    /**
-     * Get acceptable include paths for the schema.
-     *
-     * @param $paths
-     * @return IncludePaths
-     */
-    public function acceptableIncludePaths($paths): IncludePaths
-    {
-        return IncludePaths::cast($paths)
-            ->filter(fn ($path) => $this->isIncludePath($path));
     }
 
     /**

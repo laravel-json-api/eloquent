@@ -51,6 +51,9 @@ class SyncTest extends TestCase
         $this->assertInstanceOf(EloquentCollection::class, $actual);
         $this->assertTags($expected, $actual);
 
+        // as the relationship is countable, we expect the count to be loaded so the relationship meta is complete.
+        $this->assertEquals(count($expected), $video->tags_count);
+
         $this->assertTrue($video->relationLoaded('tags'));
         $this->assertSame($actual, $video->getRelation('tags'));
 

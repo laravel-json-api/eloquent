@@ -30,6 +30,7 @@ use LaravelJsonApi\Contracts\Pagination\Page;
 use LaravelJsonApi\Contracts\Query\QueryParameters as QueryParametersContract;
 use LaravelJsonApi\Contracts\Schema\Container;
 use LaravelJsonApi\Contracts\Schema\Relation as SchemaRelation;
+use LaravelJsonApi\Core\Query\FilterParameters;
 use LaravelJsonApi\Core\Query\IncludePaths;
 use LaravelJsonApi\Core\Query\QueryParameters;
 use LaravelJsonApi\Core\Query\RelationshipPath;
@@ -152,24 +153,25 @@ class JsonApiBuilder
     /**
      * Apply the supplied JSON API filters.
      *
-     * @param array|null $filters
+     * @param FilterParameters|array|mixed|null $filters
      * @return $this
      */
-    public function filter(?array $filters): self
+    public function filter($filters): self
     {
         if (is_null($filters)) {
             $this->parameters->withoutFilters();
             return $this;
         }
 
+        $filters = FilterParameters::cast($filters);
         $keys = [];
 
         foreach ($this->filters() as $filter) {
             if ($filter instanceof Filter) {
                 $keys[] = $key = $filter->key();
 
-                if (array_key_exists($key, $filters)) {
-                    $filter->apply($this->query, $value = $filters[$key]);
+                if ($filters->exists($key)) {
+                    $filter->apply($this->query, $value = $filters->get($key)->value());
                     $actual[$key] = $value;
 
                     if ($filter->isSingular()) {
@@ -185,7 +187,7 @@ class JsonApiBuilder
             ));
         }
 
-        $unrecognised = collect($filters)->keys()->diff($keys);
+        $unrecognised = $filters->collect()->keys()->diff($keys);
 
         if ($unrecognised->isNotEmpty()) {
             throw new RuntimeException(sprintf(
@@ -195,7 +197,7 @@ class JsonApiBuilder
             ));
         }
 
-        if (true === $this->schema->isSingular($filters)) {
+        if (true === $this->schema->isSingular($filters->toArray())) {
             $this->singular = true;
         }
 

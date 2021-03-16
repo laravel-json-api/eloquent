@@ -24,16 +24,24 @@ use Illuminate\Database\Eloquent\Model;
 use LaravelJsonApi\Contracts\Store\ToManyBuilder;
 use LaravelJsonApi\Core\Support\Str;
 use LaravelJsonApi\Eloquent\Contracts\FillableToMany;
+use LaravelJsonApi\Eloquent\Fields\Relations\MorphToMany;
+use LaravelJsonApi\Eloquent\Fields\Relations\Relation;
 use LaravelJsonApi\Eloquent\Fields\Relations\ToMany;
 use LaravelJsonApi\Eloquent\Polymorphism\MorphMany;
 use LaravelJsonApi\Eloquent\Query\ExtendedQueryParameters;
 use LaravelJsonApi\Eloquent\Query\HasQueryParameters;
+use LaravelJsonApi\Eloquent\Schema;
 use UnexpectedValueException;
 
 class ToManyHydrator implements ToManyBuilder
 {
 
     use HasQueryParameters;
+
+    /**
+     * @var Schema
+     */
+    private Schema $schema;
 
     /**
      * @var Model
@@ -48,10 +56,11 @@ class ToManyHydrator implements ToManyBuilder
     /**
      * ToManyHydrator constructor.
      *
+     * @param Schema $schema
      * @param Model $model
      * @param ToMany $relation
      */
-    public function __construct(Model $model, ToMany $relation)
+    public function __construct(Schema $schema, Model $model, ToMany $relation)
     {
         if (!$relation instanceof FillableToMany) {
             throw new UnexpectedValueException(sprintf(
@@ -60,6 +69,7 @@ class ToManyHydrator implements ToManyBuilder
             ));
         }
 
+        $this->schema = $schema;
         $this->model = $model;
         $this->relation = $relation;
         $this->queryParameters = new ExtendedQueryParameters();
@@ -73,6 +83,8 @@ class ToManyHydrator implements ToManyBuilder
         $related = $this->model->getConnection()->transaction(
             fn() => $this->relation->sync($this->model, $identifiers)
         );
+
+        $this->prepareModel();
 
         return $this->relation->parse(
             $this->prepareResult($related)
@@ -88,6 +100,8 @@ class ToManyHydrator implements ToManyBuilder
             fn() => $this->relation->attach($this->model, $identifiers)
         );
 
+        $this->prepareModel();
+
         return $this->relation->parse(
             $this->prepareResult($related)
         );
@@ -101,6 +115,8 @@ class ToManyHydrator implements ToManyBuilder
         $related = $this->model->getConnection()->transaction(
             fn() => $this->relation->detach($this->model, $identifiers)
         );
+
+        $this->prepareModel();
 
         return $this->relation->parse(
             $this->prepareResult($related)
@@ -129,6 +145,20 @@ class ToManyHydrator implements ToManyBuilder
         }
 
         return $related;
+    }
+
+    /**
+     * @return $this
+     */
+    private function prepareModel(): self
+    {
+        if ($this->relation->isCountableInRelationship()) {
+            $this->schema->loaderFor($this->model)->loadCount(
+                $this->relation->name(),
+            );
+        }
+
+        return $this;
     }
 
 }

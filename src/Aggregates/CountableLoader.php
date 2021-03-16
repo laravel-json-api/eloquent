@@ -20,7 +20,9 @@ declare(strict_types=1);
 namespace LaravelJsonApi\Eloquent\Aggregates;
 
 use LaravelJsonApi\Contracts\Schema\Countable;
+use LaravelJsonApi\Eloquent\Fields\Relations\MorphToMany;
 use LaravelJsonApi\Eloquent\Query\CountablePaths;
+use LaravelJsonApi\Eloquent\Fields\Relations\Relation;
 use LaravelJsonApi\Eloquent\Schema;
 
 class CountableLoader
@@ -58,8 +60,10 @@ class CountableLoader
         foreach ($this->paths as $path) {
             $relation = $this->schema->relationship($path);
 
-            if ($relation instanceof Countable && $relation->isCountable()) {
-                $relations[] = $relation->relationName();
+            if ($this->isCountable($relation)) {
+                foreach ($this->relationsFor($relation) as $name) {
+                    $relations[] = $name;
+                }
                 continue;
             }
 
@@ -71,6 +75,34 @@ class CountableLoader
         }
 
         return $relations;
+    }
+
+    /**
+     * @param $relation
+     * @return bool
+     */
+    private function isCountable($relation): bool
+    {
+        return
+            ($relation instanceof Relation) &&
+            ($relation instanceof Countable) &&
+            $relation->isCountable();
+    }
+
+    /**
+     * @param Relation $relation
+     * @return \Generator
+     */
+    private function relationsFor(Relation $relation): \Generator
+    {
+        if ($relation instanceof MorphToMany) {
+            foreach ($relation as $child) {
+                yield $child->relationName();
+            }
+            return;
+        }
+
+        yield $relation->relationName();
     }
 
 }

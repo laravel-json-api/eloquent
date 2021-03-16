@@ -42,6 +42,11 @@ class QueryToMany implements QueryManyBuilder
     use HasQueryParameters;
 
     /**
+     * @var Schema
+     */
+    private Schema $schema;
+
+    /**
      * @var Model
      */
     private Model $model;
@@ -54,11 +59,13 @@ class QueryToMany implements QueryManyBuilder
     /**
      * QueryToMany constructor.
      *
+     * @param Schema $schema
      * @param Model $model
      * @param ToMany $relation
      */
-    public function __construct(Model $model, ToMany $relation)
+    public function __construct(Schema $schema, Model $model, ToMany $relation)
     {
+        $this->schema = $schema;
         $this->model = $model;
         $this->relation = $relation;
         $this->queryParameters = new ExtendedQueryParameters();
@@ -147,6 +154,8 @@ class QueryToMany implements QueryManyBuilder
      */
     public function query(): JsonApiBuilder
     {
+        $this->prepareModel();
+
         $base = $this->relation->schema()->relatableQuery(
             $this->request, $this->getRelation()
         );
@@ -186,6 +195,20 @@ class QueryToMany implements QueryManyBuilder
             $name,
             get_class($this->model)
         ));
+    }
+
+    /**
+     * @return $this
+     */
+    private function prepareModel(): self
+    {
+        if ($this->relation->isCountableInRelationship()) {
+            $this->model->loadCount(
+                $this->relation->relationName(),
+            );
+        }
+
+        return $this;
     }
 
 }

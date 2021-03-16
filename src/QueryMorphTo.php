@@ -20,10 +20,11 @@ declare(strict_types=1);
 namespace LaravelJsonApi\Eloquent;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Validation\Rules\In;
 use LaravelJsonApi\Contracts\Schema\Filter;
 use LaravelJsonApi\Contracts\Store\QueryOneBuilder;
+use LaravelJsonApi\Core\Query\IncludePaths;
 use LaravelJsonApi\Eloquent\Fields\Relations\MorphTo;
-use LaravelJsonApi\Eloquent\Polymorphism\MorphParameters;
 use LaravelJsonApi\Eloquent\Query\ExtendedQueryParameters;
 use LaravelJsonApi\Eloquent\Query\HasQueryParameters;
 use function is_null;
@@ -124,14 +125,12 @@ class QueryMorphTo implements QueryOneBuilder
     private function prepareResult(?Model $related): ?Model
     {
         if ($related) {
-            $parameters = new MorphParameters(
-                $schema = $this->relation->schemaFor($related),
-                $this->queryParameters,
-            );
+            $schema = $this->relation->schemaFor($related);
+            $paths = $this->queryParameters->includePaths() ?: new IncludePaths();
 
             $schema
                 ->loaderFor($related)
-                ->loadMissing($parameters->includePaths());
+                ->loadMissing($paths->forSchema($schema));
         }
 
         return $related;

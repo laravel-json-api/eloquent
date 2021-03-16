@@ -61,6 +61,10 @@ class SyncTest extends TestCase
         $this->assertInstanceOf(MorphMany::class, $actual);
         $this->assertMedia($expected, $actual);
 
+        // as the relationship is countable, we expect the count to be loaded so the relationship meta is complete.
+        $this->assertEquals(count($expectedImages), $post->images_count);
+        $this->assertEquals(count($expectedVideos), $post->videos_count);
+
         $this->assertDatabaseCount('image_post', count($expectedImages));
         $this->assertDatabaseCount('post_video', count($expectedVideos));
 

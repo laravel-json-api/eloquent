@@ -61,6 +61,9 @@ class Test extends TestCase
             ->cursor();
 
         $this->assertPosts($expected1->merge($expected2), $actual);
+
+        // as the relationship is countable, we expect the count to be loaded so the relationship meta is complete.
+        $this->assertEquals(count($expected1) + count($expected2), $country->posts_count);
     }
 
     public function testWithIncludePaths(): void

@@ -19,6 +19,8 @@ declare(strict_types=1);
 
 namespace LaravelJsonApi\Eloquent\Fields\Concerns;
 
+use function is_bool;
+
 trait Countable
 {
 
@@ -28,11 +30,40 @@ trait Countable
     private bool $countable = true;
 
     /**
+     * @var bool|null
+     */
+    private ?bool $countableInRelationship = null;
+
+    /**
      * @return $this
      */
     public function cannotCount(): self
     {
         $this->countable = false;
+
+        return $this;
+    }
+
+    /**
+     * Mark the relation as always having a "count" in the top-level meta of a relationship endpoint.
+     *
+     * @return $this
+     */
+    public function alwaysCountInRelationship(): self
+    {
+        $this->countableInRelationship = true;
+
+        return $this;
+    }
+
+    /**
+     * Mark the relation as never having a "count" in the top-level meta of a relationship endpoint.
+     *
+     * @return $this
+     */
+    public function dontCountInRelationship(): self
+    {
+        $this->countableInRelationship = false;
 
         return $this;
     }
@@ -46,16 +77,28 @@ trait Countable
     }
 
     /**
-     * Get the model key for the relationship count.
-     *
-     * @return string|null
+     * @return bool
      */
-    public function countName(): ?string
+    public function isCountableInRelationship(): bool
     {
-        if ($this->isCountable()) {
-            return $this->relationName() . '_count';
+        if (!$this->isCountable()) {
+            return false;
         }
 
-        return null;
+        if (is_bool($this->countableInRelationship)) {
+            return $this->countableInRelationship;
+        }
+
+        return true;
+    }
+
+    /**
+     * Get the model key for the relationship count.
+     *
+     * @return string
+     */
+    public function countName(): string
+    {
+        return $this->relationName() . '_count';
     }
 }

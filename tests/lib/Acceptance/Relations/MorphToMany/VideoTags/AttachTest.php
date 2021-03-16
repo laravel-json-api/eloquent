@@ -53,6 +53,9 @@ class AttachTest extends TestCase
         $this->assertTags($expected, $actual);
         $this->assertSame(5, $video->tags()->count());
 
+        // as the relationship is countable, we expect the count to be loaded so the relationship meta is complete.
+        $this->assertEquals(5, $video->tags_count);
+
         /**
          * We expect the relation to be unloaded because we know it has changed in the
          * database, but we don't know what it now is in its entirety.

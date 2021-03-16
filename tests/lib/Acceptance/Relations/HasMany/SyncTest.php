@@ -51,6 +51,9 @@ class SyncTest extends TestCase
         $this->assertInstanceOf(EloquentCollection::class, $actual);
         $this->assertComments($expected, $actual);
 
+        // as the relationship is countable, we expect the count to be loaded so the relationship meta is complete.
+        $this->assertEquals(count($expected), $user->comments_count);
+
         $this->assertTrue($user->relationLoaded('comments'));
         $this->assertSame($actual, $user->getRelation('comments'));
 

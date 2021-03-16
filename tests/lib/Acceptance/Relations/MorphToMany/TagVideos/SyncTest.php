@@ -54,6 +54,9 @@ class SyncTest extends TestCase
         $this->assertTrue($tag->relationLoaded('videos'));
         $this->assertSame($actual, $tag->getRelation('videos'));
 
+        // as the relationship is countable, we expect the count to be loaded so the relationship meta is complete.
+        $this->assertEquals(count($actual), $tag->videos_count);
+
         foreach ($expected as $video) {
             $this->assertDatabaseHas('taggables', [
                 'tag_id' => $tag->getKey(),

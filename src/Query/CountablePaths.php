@@ -24,6 +24,8 @@ use Illuminate\Contracts\Support\Arrayable;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Enumerable;
 use IteratorAggregate;
+use LaravelJsonApi\Contracts\Schema\Countable as CountableField;
+use LaravelJsonApi\Contracts\Schema\Schema;
 use UnexpectedValueException;
 use function is_array;
 use function is_null;
@@ -162,6 +164,39 @@ class CountablePaths implements IteratorAggregate, Countable, Arrayable
     }
 
     /**
+     * @param callable $callback
+     * @return $this
+     */
+    public function filter(callable $callback): self
+    {
+        return new self(
+            ...collect($this->paths)->filter($callback)
+        );
+    }
+
+    /**
+     * @param callable $callback
+     * @return $this
+     */
+    public function reject(callable $callback): self
+    {
+        return new self(
+            ...collect($this->paths)->reject($callback)
+        );
+    }
+
+    /**
+     * @param Schema $schema
+     * @return $this
+     */
+    public function forSchema(Schema $schema): self
+    {
+        return $this->filter(
+            fn($name) => $this->isCountablePath($schema, $name)
+        );
+    }
+
+    /**
      * @inheritDoc
      */
     public function count()
@@ -183,6 +218,28 @@ class CountablePaths implements IteratorAggregate, Countable, Arrayable
     public function toArray()
     {
         return $this->paths;
+    }
+
+    /**
+     * Is the path a valid countable path?
+     *
+     * @param Schema $schema
+     * @param string $path
+     * @return bool
+     */
+    private function isCountablePath(Schema $schema, string $path): bool
+    {
+        $relation = null;
+
+        if ($schema->isRelationship($path)) {
+            $relation = $schema->relationship($path);
+        }
+
+        if ($relation instanceof CountableField) {
+            return $relation->isCountable();
+        }
+
+        return false;
     }
 
 }

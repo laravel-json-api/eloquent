@@ -20,6 +20,7 @@ declare(strict_types=1);
 namespace LaravelJsonApi\Eloquent\Resources;
 
 use LaravelJsonApi\Core\Resources\Relation as BaseRelation;
+use LaravelJsonApi\Eloquent\Fields\Relations\MorphTo;
 use LaravelJsonApi\Eloquent\Fields\Relations\MorphToMany;
 use LaravelJsonApi\Eloquent\Fields\Relations\Relation as SchemaRelation;
 use LaravelJsonApi\Eloquent\Fields\Relations\ToMany;
@@ -125,6 +126,10 @@ class Relation extends BaseRelation
      */
     private function count(): ?int
     {
+        if ($this->field instanceof MorphToMany) {
+            return $this->field->count($this->resource);
+        }
+
         if ($this->field instanceof ToMany && $count = $this->field->countName()) {
             $value = $this->resource->{$count};
             return !is_null($value) ? intval($value) : null;

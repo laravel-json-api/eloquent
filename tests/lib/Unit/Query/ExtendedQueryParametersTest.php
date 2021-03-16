@@ -21,6 +21,7 @@ namespace LaravelJsonApi\Eloquent\Tests\Unit\Query;
 
 use Illuminate\Support\Arr;
 use LaravelJsonApi\Core\Query\FieldSets;
+use LaravelJsonApi\Core\Query\FilterParameters;
 use LaravelJsonApi\Core\Query\IncludePaths;
 use LaravelJsonApi\Core\Query\QueryParameters;
 use LaravelJsonApi\Core\Query\SortFields;
@@ -50,14 +51,21 @@ class ExtendedQueryParametersTest extends TestCase
 
         $this->assertInstanceOf(ExtendedQueryParameters::class, $parameters);
         $this->assertEquals(FieldSets::fromArray($value['fields']), $parameters->sparseFieldSets());
-        $this->assertEquals($value['filter'], $parameters->filter());
+        $this->assertEquals(FilterParameters::fromArray($value['filter']), $parameters->filter());
         $this->assertEquals(IncludePaths::fromString($value['include']), $parameters->includePaths());
         $this->assertEquals($value['page'], $parameters->page());
         $this->assertEquals(SortFields::fromString($value['sort']), $parameters->sortFields());
         $this->assertEquals(new CountablePaths('comments', 'tags'), $parameters->countable());
+
+        /**
+         * Our extended query parameters e.g. withCount, need to appear in unrecognised parameters,
+         * because the interface defines that as returning all parameters that are not defined in the
+         * JSON:API spec.
+         */
         $this->assertEquals([
             'foobar' => 'bazbat',
             'bazbat' => 'foobar',
+            'withCount' => 'comments,tags',
         ], $parameters->unrecognisedParameters());
 
         $arr = $value;
@@ -91,6 +99,39 @@ class ExtendedQueryParametersTest extends TestCase
             $actual = ExtendedQueryParameters::cast($base)
         );
 
+        $this->assertEquals($expected->toQuery(), $actual->toQuery());
         $this->assertEquals($expected->countable(), $actual->countable());
+    }
+
+    /**
+     * @param ExtendedQueryParameters $expected
+     * @depends test
+     */
+    public function testCastToBase(ExtendedQueryParameters $expected): void
+    {
+        $base = QueryParameters::cast($expected);
+
+        $this->assertSame($expected, $base);
+    }
+
+    public function testSetCountable(): void
+    {
+        $parameters = ExtendedQueryParameters::fromArray([
+            'withCount' => 'comments,tags',
+        ]);
+
+        $this->assertSame($parameters, $parameters->setCountable('posts,tags'));
+        $this->assertEquals(new CountablePaths('posts', 'tags'), $parameters->countable());
+        $this->assertNull($parameters->setCountable(null)->countable());
+    }
+
+    public function testWithoutCountable(): void
+    {
+        $parameters = ExtendedQueryParameters::fromArray([
+            'withCount' => 'comments,tags',
+        ]);
+
+        $this->assertSame($parameters, $parameters->withoutCountable());
+        $this->assertNull($parameters->countable());
     }
 }
