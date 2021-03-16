@@ -96,4 +96,33 @@ class UpdateTest extends TestCase
         $this->assertDatabaseCount('image_post', 0);
         $this->assertDatabaseCount('post_video', 0);
     }
+
+    public function testWithCount(): void
+    {
+        $post = Post::factory()
+            ->has(Image::factory()->count(3))
+            ->has(Video::factory()->count(3))
+            ->create();
+
+        $existingImages = $post->images()->get();
+        $existingVideos = $post->videos()->get();
+
+        $expectedImages = $existingImages->take(2)->push(Image::factory()->create());
+        $expectedVideos = $existingVideos->skip(1)->push(Video::factory()->create());
+
+        $expected = collect($expectedImages)->merge($expectedVideos);
+
+        $ids = $expected->map(fn($model) => [
+            'type' => ($model instanceof Image) ? 'images' : 'videos',
+            'id' => (string) $model->getRouteKey(),
+        ])->all();
+
+        $this->repository->update($post)->withCount('media')->store([
+            'title' => 'Hello World',
+            'media' => $ids,
+        ]);
+
+        $this->assertEquals(count($expectedImages), $post->images_count);
+        $this->assertEquals(count($expectedVideos), $post->videos_count);
+    }
 }

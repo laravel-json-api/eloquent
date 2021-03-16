@@ -93,9 +93,10 @@ class ModelHydrator implements ResourceBuilder
          * Always do eager loading, as we may have default eager
          * load paths.
          */
-        $this->schema->loaderFor($model)->loadMissing(
-            $this->queryParameters->includePaths()
-        );
+        $this->schema
+            ->loaderFor($model)
+            ->loadMissing($this->queryParameters->includePaths())
+            ->loadCount($this->queryParameters->countable());
 
         return $this->parser->parseOne($model);
     }

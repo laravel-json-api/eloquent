@@ -97,4 +97,27 @@ class CreateTest extends TestCase
         $this->assertEmpty($post->images);
         $this->assertEmpty($post->videos);
     }
+
+    public function testWithCount(): void
+    {
+        $images = Image::factory()->count(2)->create();
+        $videos = Video::factory()->count(2)->create();
+
+        $expected = collect($images)->merge($videos);
+
+        $ids = $expected->map(fn($model) => [
+            'type' => ($model instanceof Image) ? 'images' : 'videos',
+            'id' => (string) $model->getRouteKey(),
+        ])->all();
+
+        $post = $this->repository->create()->withCount('media')->store([
+            'content' => '...',
+            'media' => $ids,
+            'slug' => 'hello-world',
+            'title' => 'Hello World',
+        ]);
+
+        $this->assertEquals(count($images), $post->images_count);
+        $this->assertEquals(count($videos), $post->videos_count);
+    }
 }

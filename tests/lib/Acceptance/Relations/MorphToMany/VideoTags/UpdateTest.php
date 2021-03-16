@@ -140,4 +140,29 @@ class UpdateTest extends TestCase
             'taggable_type' => Video::class,
         ]);
     }
+
+    public function testWithCount(): void
+    {
+        $this->actingAs(User::factory()->create(['admin' => true]));
+
+        /** @var Video $video */
+        $video = Video::factory()
+            ->has(Tag::factory()->count(3))
+            ->create();
+
+        $existing = $video->tags()->get();
+
+        $expected = $existing->take(2)->push(
+            Tag::factory()->create()
+        );
+
+        $this->repository->update($video)->withCount('tags')->store([
+            'tags' => $expected->map(fn(Tag $tag) => [
+                'type' => 'tags',
+                'id' => (string) $tag->getRouteKey(),
+            ])->all(),
+        ]);
+
+        $this->assertEquals(count($expected), $video->tags_count);
+    }
 }

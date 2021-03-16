@@ -214,7 +214,7 @@ class Repository implements
     }
 
     /**
-     * @inheritDoc
+     * @return ModelHydrator
      */
     public function create(): ResourceBuilder
     {
@@ -227,7 +227,8 @@ class Repository implements
     }
 
     /**
-     * @inheritDoc
+     * @param mixed $modelOrResourceId
+     * @return ModelHydrator
      */
     public function update($modelOrResourceId): ResourceBuilder
     {

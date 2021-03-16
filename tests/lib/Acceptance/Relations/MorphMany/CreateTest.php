@@ -100,4 +100,21 @@ class CreateTest extends TestCase
             ]);
         }
     }
+
+    public function testWithCount(): void
+    {
+        $comments = Comment::factory()->count(2)->create();
+
+        $video = $this->repository->create()->withCount('comments')->store([
+            'comments' => $comments->map(fn(Comment $comment) => [
+                'type' => 'comments',
+                'id' => (string) $comment->getRouteKey(),
+            ])->all(),
+            'slug' => 'my-first-video',
+            'title' => 'Video 123',
+            'url' => 'http://example.com/videos/123.mov',
+        ]);
+
+        $this->assertEquals(count($comments), $video->comments_count);
+    }
 }

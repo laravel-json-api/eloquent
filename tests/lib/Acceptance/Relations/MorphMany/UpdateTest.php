@@ -135,4 +135,27 @@ class UpdateTest extends TestCase
             'commentable_type' => null,
         ]);
     }
+
+    public function testWithCount(): void
+    {
+        /** @var Video $video */
+        $video = Video::factory()
+            ->has(Comment::factory()->count(3))
+            ->create();
+
+        $existing = $video->comments()->get();
+
+        $expected = $existing->take(2)->push(
+            Comment::factory()->create()
+        );
+
+        $this->repository->update($video)->withCount('comments')->store([
+            'comments' => $expected->map(fn(Comment $comment) => [
+                'type' => 'comments',
+                'id' => (string) $comment->getRouteKey(),
+            ])->all(),
+        ]);
+
+        $this->assertEquals(count($expected), $video->comments_count);
+    }
 }

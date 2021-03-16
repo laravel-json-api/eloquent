@@ -130,4 +130,27 @@ class UpdateTest extends TestCase
             'user_id' => null,
         ]);
     }
+
+    public function testWithCount(): void
+    {
+        /** @var User $user */
+        $user = User::factory()
+            ->has(Comment::factory()->count(3))
+            ->create();
+
+        $existing = $user->comments()->get();
+
+        $expected = $existing->take(2)->push(
+            Comment::factory()->create()
+        );
+
+        $this->repository->update($user)->withCount('comments')->store([
+            'comments' => $expected->map(fn(Comment $comment) => [
+                'type' => 'comments',
+                'id' => (string) $comment->getRouteKey(),
+            ])->all(),
+        ]);
+
+        $this->assertEquals(count($expected), $user->comments_count);
+    }
 }

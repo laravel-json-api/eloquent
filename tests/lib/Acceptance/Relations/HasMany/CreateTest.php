@@ -101,4 +101,20 @@ class CreateTest extends TestCase
             ]);
         }
     }
+
+    public function testWithCount(): void
+    {
+        $comments = Comment::factory()->count(2)->create();
+
+        $user = $this->repository->create()->withCount('comments')->store([
+            'comments' => $comments->map(fn(Comment $comment) => [
+                'type' => 'comments',
+                'id' => (string) $comment->getRouteKey(),
+            ])->all(),
+            'email' => 'john.doe@example.com',
+            'name' => 'John Doe',
+        ]);
+
+        $this->assertEquals(count($comments), $user->comments_count);
+    }
 }
