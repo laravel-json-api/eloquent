@@ -30,25 +30,16 @@ class ExtendedQueryParameters extends QueryParameters
 {
 
     /**
+     * The `withCount` parameter key.
+     *
      * @var string
      */
-    private static string $withCount = 'withCount';
+    public static string $withCount = 'withCount';
 
     /**
      * @var CountablePaths|null
      */
     private ?CountablePaths $countable;
-
-    /**
-     * Set the `withCount` parameter key.
-     *
-     * @param string $key
-     * @return void
-     */
-    public static function withCount(string $key): void
-    {
-        self::$withCount = $key;
-    }
 
     /**
      * ExtendedQueryParameters constructor.
