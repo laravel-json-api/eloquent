@@ -108,4 +108,22 @@ class CreateTest extends TestCase
             ]);
         }
     }
+
+    public function testWithCount(): void
+    {
+        $roles = Role::factory()->count(2)->create();
+
+        $this->actingAs(User::factory()->create(['admin' => true]));
+
+        $user = $this->repository->create()->withCount('roles')->store([
+            'email' => 'john.doe@example.com',
+            'name' => 'John Doe',
+            'roles' => $roles->map(fn(Role $role) => [
+                'type' => 'roles',
+                'id' => (string) $role->getRouteKey(),
+            ])->all(),
+        ]);
+
+        $this->assertEquals(count($roles), $user->roles_count);
+    }
 }

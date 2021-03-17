@@ -136,6 +136,29 @@ class MorphToMany extends ToMany implements PolymorphicRelation, IteratorAggrega
     }
 
     /**
+     * @param object $model
+     * @return int|null
+     */
+    public function count(object $model): ?int
+    {
+        $hasValue = false;
+        $count = 0;
+
+        foreach ($this as $relation) {
+            if ($relation instanceof ToMany) {
+                $value = $model->{$relation->keyForCount()};
+
+                if (!is_null($value)) {
+                    $hasValue = true;
+                    $count += intval($value);
+                }
+            }
+        }
+
+        return $hasValue ? $count : null;
+    }
+
+    /**
      * @inheritDoc
      */
     public function fill(Model $model, $value): void

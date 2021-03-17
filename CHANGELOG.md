@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file. This projec
 
 ## Unreleased
 
+### Added
+
+- *To-many* relationships are now countable. This allows a client to specify, via a query parameter, which relationships
+  it wants to be counted. These are used by the implementation to load counts on the Eloquent model, so that the count
+  values can be added to the relationship's `meta` member. Refer to documentation for implementation details.
+
 ### Changed
 
 - Made improvements to the eager loading implementation. All classes in the `EagerLoading` namespace are now marked as

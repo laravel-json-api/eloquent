@@ -24,7 +24,9 @@ use Illuminate\Database\Eloquent\Model;
 use InvalidArgumentException;
 use LaravelJsonApi\Contracts\Schema\Container;
 use LaravelJsonApi\Core\Query\IncludePaths;
+use LaravelJsonApi\Eloquent\Aggregates\CountableLoader;
 use LaravelJsonApi\Eloquent\EagerLoading\EagerLoader;
+use LaravelJsonApi\Core\Query\Custom\CountablePaths;
 
 class ModelLoader
 {
@@ -66,9 +68,9 @@ class ModelLoader
      * Eager load relations using JSON:API include paths.
      *
      * @param $includePaths
-     * @return void
+     * @return $this
      */
-    public function load($includePaths): void
+    public function load($includePaths): self
     {
         $loader = new EagerLoader(
             $this->schemas,
@@ -83,15 +85,17 @@ class ModelLoader
         foreach ($loader->getMorphs() as $relation => $map) {
             $this->target->loadMorph($relation, $map);
         }
+
+        return $this;
     }
 
     /**
      * Eager load relations using JSON:API include paths, if they are not already loaded.
      *
      * @param $includePaths
-     * @return void
+     * @return $this
      */
-    public function loadMissing($includePaths): void
+    public function loadMissing($includePaths): self
     {
         $loader = new EagerLoader(
             $this->schemas,
@@ -106,6 +110,26 @@ class ModelLoader
         foreach ($loader->getMorphs() as $relation => $map) {
             $this->target->loadMorph($relation, $map);
         }
+
+        return $this;
+    }
+
+    /**
+     * Eager load relation counts.
+     *
+     * @param $countable
+     * @return $this
+     */
+    public function loadCount($countable): self
+    {
+        $counter = new CountableLoader(
+            $this->schema,
+            $countable = CountablePaths::cast($countable)
+        );
+
+        $this->target->loadCount($counter->getRelations());
+
+        return $this;
     }
 
 }

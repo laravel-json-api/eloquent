@@ -42,6 +42,9 @@ class QueryTest extends TestCase
             ->cursor();
 
         $this->assertRoles($user->roles()->get(), $actual);
+
+        // as the relationship is countable, we expect the count to be loaded so the relationship meta is complete.
+        $this->assertEquals(count($actual), $user->roles_count);
     }
 
     public function testWithIncludePaths(): void

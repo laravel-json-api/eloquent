@@ -21,6 +21,7 @@ namespace LaravelJsonApi\Eloquent\Tests\Acceptance\Relations\BelongsTo;
 
 use App\Models\Country;
 use App\Models\Phone;
+use App\Models\Role;
 use App\Models\User;
 use App\Schemas\UserSchema;
 
@@ -177,6 +178,42 @@ class QueryTest extends TestCase
 
         $this->assertNotSame($expected, $actual);
         $this->assertTrue($expected->is($actual));
+    }
+
+    public function testWithCount(): void
+    {
+        $user = User::factory()
+            ->has(Role::factory()->count(2))
+            ->create();
+
+        $phone = Phone::factory()->create(['user_id' => $user]);
+
+        $actual = $this->repository
+            ->queryToOne($phone, 'user')
+            ->withCount('roles')
+            ->first();
+
+        $this->assertTrue($user->is($actual));
+        $this->assertEquals(2, $actual->roles_count);
+    }
+
+    public function testAlreadyLoadedWithCount(): void
+    {
+        $user = User::factory()
+            ->has(Role::factory()->count(2))
+            ->create();
+
+        $phone = Phone::factory()->create(['user_id' => $user]);
+
+        $expected = $phone->user;
+
+        $actual = $this->repository
+            ->queryToOne($phone, 'user')
+            ->withCount('roles')
+            ->first();
+
+        $this->assertSame($expected, $actual);
+        $this->assertEquals(2, $actual->roles_count);
     }
 
 }

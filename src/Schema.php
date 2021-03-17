@@ -23,9 +23,9 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Http\Request;
+use LaravelJsonApi\Contracts\Implementations\Countable\CountableField;
+use LaravelJsonApi\Contracts\Implementations\Countable\CountableSchema;
 use LaravelJsonApi\Contracts\Store\Repository as RepositoryContract;
-use LaravelJsonApi\Core\Query\IncludePaths;
-use LaravelJsonApi\Core\Query\RelationshipPath;
 use LaravelJsonApi\Core\Schema\Schema as BaseSchema;
 use LaravelJsonApi\Eloquent\Contracts\Driver;
 use LaravelJsonApi\Eloquent\Contracts\Parser;
@@ -35,7 +35,7 @@ use LaravelJsonApi\Eloquent\Fields\Relations\ToOne;
 use LaravelJsonApi\Eloquent\Parsers\StandardParser;
 use LogicException;
 
-abstract class Schema extends BaseSchema
+abstract class Schema extends BaseSchema implements CountableSchema
 {
 
     /**
@@ -300,30 +300,33 @@ abstract class Schema extends BaseSchema
     }
 
     /**
-     * @param RelationshipPath $path
-     * @return bool
+     * @inheritDoc
      */
-    public function isIncludePath(RelationshipPath $path): bool
+    public function isCountable(string $fieldName): bool
     {
-        if (!$this->isRelationship($path->first())) {
-            return false;
+        $relation = null;
+
+        if ($this->isRelationship($fieldName)) {
+            $relation = $this->relationship($fieldName);
         }
 
-        return $this
-            ->relationship($path->first())
-            ->isIncludePath();
+        if ($relation instanceof CountableField) {
+            return $relation->isCountable();
+        }
+
+        return false;
     }
 
     /**
-     * Get acceptable include paths for the schema.
-     *
-     * @param $paths
-     * @return IncludePaths
+     * @inheritDoc
      */
-    public function acceptableIncludePaths($paths): IncludePaths
+    public function countable(): iterable
     {
-        return IncludePaths::cast($paths)
-            ->filter(fn ($path) => $this->isIncludePath($path));
+        foreach ($this->relationships() as $relation) {
+            if ($relation instanceof CountableField && $relation->isCountable()) {
+                yield $relation->name();
+            }
+        }
     }
 
     /**

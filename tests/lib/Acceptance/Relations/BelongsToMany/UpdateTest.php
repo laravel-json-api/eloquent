@@ -134,4 +134,29 @@ class UpdateTest extends TestCase
             'user_id' => $user->getKey(),
         ]);
     }
+
+    public function testWithCount(): void
+    {
+        $this->actingAs(User::factory()->create(['admin' => true]));
+
+        /** @var User $user */
+        $user = User::factory()
+            ->has(Role::factory()->count(3))
+            ->create();
+
+        $existing = $user->roles()->get();
+
+        $expected = $existing->take(2)->push(
+            Role::factory()->create()
+        );
+
+        $this->repository->update($user)->withCount('roles')->store([
+            'roles' => $expected->map(fn(Role $role) => [
+                'type' => 'roles',
+                'id' => (string) $role->getRouteKey(),
+            ])->all(),
+        ]);
+
+        $this->assertEquals(count($expected), $user->roles_count);
+    }
 }

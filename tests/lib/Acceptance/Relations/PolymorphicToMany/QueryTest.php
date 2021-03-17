@@ -32,7 +32,7 @@ class QueryTest extends TestCase
     {
         $post = Post::factory()
             ->has(Image::factory()->count(3))
-            ->has(Video::factory()->count(3))
+            ->has(Video::factory()->count(2))
             ->create();
 
         $expected = $post->images()->get()->merge(
@@ -43,8 +43,12 @@ class QueryTest extends TestCase
             ->queryToMany($post, 'media')
             ->cursor();
 
-        $this->assertCount(6, $actual);
+        $this->assertCount(5, $actual);
         $this->assertMedia($expected, $actual);
+
+        // as the relationship is countable, we expect the count to be loaded so the relationship meta is complete.
+        $this->assertEquals(3, $post->images_count);
+        $this->assertEquals(2, $post->videos_count);
     }
 
     public function testWithIncludePaths(): void

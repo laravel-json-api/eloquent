@@ -39,6 +39,9 @@ class QueryTest extends TestCase
             ->cursor();
 
         $this->assertComments($video->comments()->get(), $actual);
+
+        // as the relationship is countable, we expect the count to be loaded so the relationship meta is complete.
+        $this->assertEquals(count($actual), $video->comments_count);
     }
 
     public function testWithIncludePaths(): void

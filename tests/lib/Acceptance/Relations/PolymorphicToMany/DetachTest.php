@@ -62,6 +62,10 @@ class DetachTest extends TestCase
         $this->assertInstanceOf(MorphMany::class, $actual);
         $this->assertMedia($detach, $actual);
 
+        // as the relationship is countable, we expect the count to be loaded so the relationship meta is complete.
+        $this->assertEquals(count($existingImages) - count($removeImages), $post->images_count);
+        $this->assertEquals(count($existingVideos) - count($removeVideos), $post->videos_count);
+
         $this->assertDatabaseCount('image_post', count($existingImages) - count($removeImages));
         $this->assertDatabaseCount('post_video', count($existingVideos) - count($removeVideos));
 

@@ -22,14 +22,44 @@ namespace LaravelJsonApi\Eloquent\Resources;
 use LaravelJsonApi\Core\Resources\Relation as BaseRelation;
 use LaravelJsonApi\Eloquent\Fields\Relations\MorphToMany;
 use LaravelJsonApi\Eloquent\Fields\Relations\Relation as SchemaRelation;
+use LaravelJsonApi\Eloquent\Fields\Relations\ToMany;
+use function intval;
+use function is_null;
 
 class Relation extends BaseRelation
 {
 
     /**
+     * The meta key for the `count` value.
+     *
+     * @var string
+     */
+    private static string $countAs = 'count';
+
+    /**
+     * Get or set the meta key for the count value.
+     *
+     * @param string|null $key
+     * @return string
+     */
+    public static function withCount(string $key = null): string
+    {
+        if (empty($key)) {
+            return self::$countAs;
+        }
+
+        return self::$countAs = $key;
+    }
+
+    /**
      * @var SchemaRelation
      */
     private SchemaRelation $field;
+
+    /**
+     * @var array|null
+     */
+    private ?array $cachedMeta = null;
 
     /**
      * Relation constructor.
@@ -52,6 +82,23 @@ class Relation extends BaseRelation
     }
 
     /**
+     * @return array|null
+     */
+    public function meta(): ?array
+    {
+        if (is_array($this->cachedMeta)) {
+            return $this->cachedMeta ?: null;
+        }
+
+        $this->cachedMeta = array_replace(
+            $this->defaultMeta(),
+            parent::meta() ?: [],
+        );
+
+        return $this->cachedMeta ?: null;
+    }
+
+    /**
      * @inheritDoc
      */
     protected function value()
@@ -63,5 +110,36 @@ class Relation extends BaseRelation
         return $this->field->parse(
             parent::value()
         );
+    }
+
+    /**
+     * Get default relationship meta.
+     *
+     * @return array
+     */
+    private function defaultMeta(): array
+    {
+        return array_filter([
+            self::withCount() => $this->count(),
+        ], fn($value) => !is_null($value));
+    }
+
+    /**
+     * Get the relationship count.
+     *
+     * @return int|null
+     */
+    private function count(): ?int
+    {
+        if ($this->field instanceof MorphToMany) {
+            return $this->field->count($this->resource);
+        }
+
+        if ($this->field instanceof ToMany) {
+            $value = $this->resource->{$this->field->keyForCount()};
+            return !is_null($value) ? intval($value) : null;
+        }
+
+        return null;
     }
 }

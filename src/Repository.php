@@ -207,14 +207,15 @@ class Repository implements
         $relation = $this->schema->toMany($fieldName);
 
         if ($relation instanceof MorphToMany) {
-            return new QueryMorphToMany($model, $relation);
+            return new QueryMorphToMany($this->schema, $model, $relation);
         }
 
-        return new QueryToMany($model, $relation);
+        return new QueryToMany($this->schema, $model, $relation);
     }
 
     /**
      * @inheritDoc
+     * @return ModelHydrator
      */
     public function create(): ResourceBuilder
     {
@@ -228,6 +229,7 @@ class Repository implements
 
     /**
      * @inheritDoc
+     * @return ModelHydrator
      */
     public function update($modelOrResourceId): ResourceBuilder
     {
@@ -253,6 +255,7 @@ class Repository implements
 
     /**
      * @inheritDoc
+     * @return ToOneHydrator
      */
     public function modifyToOne($modelOrResourceId, string $fieldName): ToOneBuilder
     {
@@ -264,10 +267,12 @@ class Repository implements
 
     /**
      * @inheritDoc
+     * @return ToManyHydrator
      */
     public function modifyToMany($modelOrResourceId, string $fieldName): ToManyBuilder
     {
         return new ToManyHydrator(
+            $this->schema,
             $this->retrieve($modelOrResourceId),
             $this->schema->toMany($fieldName)
         );
