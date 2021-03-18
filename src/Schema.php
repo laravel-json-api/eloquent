@@ -67,18 +67,6 @@ abstract class Schema extends BaseSchema implements CountableSchema
     /**
      * @inheritDoc
      */
-    public static function model(): string
-    {
-        if (isset(static::$model)) {
-            return static::$model;
-        }
-
-        throw new LogicException('The model class name must be set.');
-    }
-
-    /**
-     * @inheritDoc
-     */
     public function repository(): RepositoryContract
     {
         return new Repository(
