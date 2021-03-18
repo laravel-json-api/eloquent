@@ -20,6 +20,7 @@ declare(strict_types=1);
 namespace LaravelJsonApi\Eloquent\Fields\Concerns;
 
 use InvalidArgumentException;
+use LaravelJsonApi\Core\Support\Str;
 use function is_bool;
 
 trait Countable
@@ -136,6 +137,6 @@ trait Countable
             return $this->countAs;
         }
 
-        return $this->relationName() . '_count';
+        return Str::snake($this->relationName()) . '_count';
     }
 }

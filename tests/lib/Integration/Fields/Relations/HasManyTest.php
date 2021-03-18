@@ -143,4 +143,41 @@ class HasManyTest extends TestCase
         $this->assertTrue($attr->isHidden($mock));
     }
 
+    public function testCountable(): void
+    {
+        $relation = HasMany::make('tags');
+
+        $this->assertTrue($relation->isCountable());
+        $this->assertTrue($relation->isCountableInRelationship());
+
+        $this->assertSame('tags', $relation->withCountName());
+        $this->assertSame('tags_count', $relation->keyForCount());
+
+        $relation = HasMany::make('tags', 'blogTags');
+
+        $this->assertSame('blogTags', $relation->withCountName());
+        $this->assertSame('blog_tags_count', $relation->keyForCount());
+    }
+
+    public function testCountAs(): void
+    {
+        $relation = HasMany::make('tags')->countAs('total_tags');
+
+        $this->assertSame('tags as total_tags', $relation->withCountName());
+        $this->assertSame('total_tags', $relation->keyForCount());
+    }
+
+    public function testNotCountable(): void
+    {
+        $relation = HasMany::make('tags')->cannotCount();
+
+        $this->assertFalse($relation->isCountable());
+        $this->assertFalse($relation->isCountableInRelationship());
+
+        $relation = HasMany::make('tags')->dontCountInRelationship();
+
+        $this->assertTrue($relation->isCountable());
+        $this->assertFalse($relation->isCountableInRelationship());
+    }
+
 }
