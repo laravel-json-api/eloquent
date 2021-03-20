@@ -269,7 +269,7 @@ abstract class Relation implements RelationContract, SchemaAwareContract, Serial
     /**
      * @inheritDoc
      */
-    public function serialize(object $model, string $baseUri): JsonApiRelation
+    public function serialize(object $model, ?string $baseUri): JsonApiRelation
     {
         $relation = new ResourceRelation(
             $model,

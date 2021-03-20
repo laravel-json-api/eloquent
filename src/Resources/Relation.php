@@ -65,10 +65,10 @@ class Relation extends BaseRelation
      * Relation constructor.
      *
      * @param object $resource
-     * @param string $baseUri
+     * @param string|null $baseUri
      * @param SchemaRelation $field
      */
-    public function __construct(object $resource, string $baseUri, SchemaRelation $field)
+    public function __construct(object $resource, ?string $baseUri, SchemaRelation $field)
     {
         parent::__construct(
             $resource,
