@@ -25,7 +25,7 @@ use LaravelJsonApi\Eloquent\Fields\DateTime;
 use LaravelJsonApi\Eloquent\Fields\ID;
 use LaravelJsonApi\Eloquent\Fields\Relations\BelongsToMany;
 use LaravelJsonApi\Eloquent\Fields\Str;
-use LaravelJsonApi\Eloquent\Filters\WhereIn;
+use LaravelJsonApi\Eloquent\Filters\WhereIdIn;
 use LaravelJsonApi\Eloquent\Schema;
 
 class RoleSchema extends Schema
@@ -62,7 +62,7 @@ class RoleSchema extends Schema
     public function filters(): array
     {
         return [
-            WhereIn::make('id', $this->idColumn()),
+            WhereIdIn::make($this),
         ];
     }
 

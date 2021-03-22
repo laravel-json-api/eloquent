@@ -103,7 +103,7 @@ class FilterTest extends TestCase
     {
         $expected = Post::factory()->count(3)->create()[1];
 
-        $filter = ['id' => [$expected->getRouteKey()]];
+        $filter = ['id' => [(string) $expected->getRouteKey()]];
 
         $this->posts
             ->expects($this->once())
@@ -125,7 +125,7 @@ class FilterTest extends TestCase
     {
         $expected = Post::factory()->count(3)->create()[1];
 
-        $filter = ['id' => [$expected->getRouteKey()]];
+        $filter = ['id' => [(string) $expected->getRouteKey()]];
 
         $this->posts
             ->expects($this->once())

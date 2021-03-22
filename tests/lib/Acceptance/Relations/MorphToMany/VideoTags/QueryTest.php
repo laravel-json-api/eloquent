@@ -70,7 +70,7 @@ class QueryTest extends TestCase
         $tags = $video->tags()->get();
 
         $expected = $tags->take(2);
-        $ids = $expected->map(fn (Tag $tag) => $tag->getRouteKey())->all();
+        $ids = $expected->map(fn (Tag $tag) => (string) $tag->getRouteKey())->all();
 
         $actual = $this->repository
             ->queryToMany($video, 'tags')

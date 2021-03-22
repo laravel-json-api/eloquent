@@ -68,7 +68,7 @@ class QueryTest extends TestCase
             ->create(['commentable_id' => $video->getKey(), 'commentable_type' => Video::class]);
 
         $expected = $comments->take(2);
-        $ids = $expected->map(fn (Comment $comment) => $comment->getRouteKey())->all();
+        $ids = $expected->map(fn (Comment $comment) => (string) $comment->getRouteKey())->all();
 
         $actual = $this->repository
             ->queryToMany($video, 'comments')

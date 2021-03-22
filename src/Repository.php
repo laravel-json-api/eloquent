@@ -134,13 +134,13 @@ class Repository implements
         $ids = collect($resourceIds)
             ->filter(fn($resourceId) => $field->match($resourceId));
 
-        if ($ids->isEmpty()) {
-            return $ids;
+        if ($ids->isNotEmpty()) {
+            return $this->parser->parseMany(
+                $this->query()->whereResourceId($ids->all())->get()
+            );
         }
 
-        return $this->parser->parseMany(
-            $this->query()->whereResourceId($ids->all())->get()
-        );
+        return [];
     }
 
     /**

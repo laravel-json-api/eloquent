@@ -26,7 +26,7 @@ use LaravelJsonApi\Eloquent\Fields\ID;
 use LaravelJsonApi\Eloquent\Fields\Relations\BelongsTo;
 use LaravelJsonApi\Eloquent\Fields\Relations\MorphTo;
 use LaravelJsonApi\Eloquent\Fields\Str;
-use LaravelJsonApi\Eloquent\Filters\WhereIn;
+use LaravelJsonApi\Eloquent\Filters\WhereIdIn;
 use LaravelJsonApi\Eloquent\Pagination\PagePagination;
 use LaravelJsonApi\Eloquent\Schema;
 
@@ -61,7 +61,7 @@ class CommentSchema extends Schema
     public function filters(): iterable
     {
         return [
-            WhereIn::make('id', $this->idColumn()),
+            WhereIdIn::make($this),
         ];
     }
 

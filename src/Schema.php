@@ -132,14 +132,8 @@ abstract class Schema extends BaseSchema implements CountableSchema
     }
 
     /**
-     * @return string|null
-     */
-    public function idKeyName(): ?string
-    {
-        return $this->idColumn();
-    }
-
-    /**
+     * Get the column for the model's JSON:API resource id.
+     *
      * @return string
      */
     public function idColumn(): string
@@ -148,7 +142,7 @@ abstract class Schema extends BaseSchema implements CountableSchema
             return $this->idColumn;
         }
 
-        if ($key = $this->id()->key()) {
+        if ($key = $this->idKeyName()) {
             return $this->idColumn = $key;
         }
 

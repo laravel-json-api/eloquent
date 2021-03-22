@@ -26,6 +26,7 @@ use LaravelJsonApi\Eloquent\Fields\ID;
 use LaravelJsonApi\Eloquent\Fields\Relations\BelongsTo;
 use LaravelJsonApi\Eloquent\Fields\Str;
 use LaravelJsonApi\Eloquent\Filters\Scope;
+use LaravelJsonApi\Eloquent\Filters\WhereIdIn;
 use LaravelJsonApi\Eloquent\Filters\WhereIn;
 use LaravelJsonApi\Eloquent\Schema;
 
@@ -60,7 +61,7 @@ class PhoneSchema extends Schema
     public function filters(): iterable
     {
         return [
-            WhereIn::make('id', $this->idColumn()),
+            WhereIdIn::make($this),
             Scope::make('number', 'whereNumberLike'),
         ];
     }

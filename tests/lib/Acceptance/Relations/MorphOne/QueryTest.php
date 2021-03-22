@@ -61,7 +61,7 @@ class QueryTest extends TestCase
 
         $actual = $this->repository
             ->queryToOne($image->imageable, 'image')
-            ->filter(['id' => [$image->getRouteKey()]])
+            ->filter(['id' => [(string) $image->getRouteKey()]])
             ->first();
 
         $this->assertTrue($image->is($actual));

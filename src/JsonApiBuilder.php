@@ -30,6 +30,7 @@ use LaravelJsonApi\Contracts\Pagination\Page;
 use LaravelJsonApi\Contracts\Query\QueryParameters as QueryParametersContract;
 use LaravelJsonApi\Contracts\Schema\Container;
 use LaravelJsonApi\Contracts\Schema\Relation as SchemaRelation;
+use LaravelJsonApi\Core\Query\Custom\CountablePaths;
 use LaravelJsonApi\Core\Query\Custom\ExtendedQueryParameters;
 use LaravelJsonApi\Core\Query\FilterParameters;
 use LaravelJsonApi\Core\Query\IncludePaths;
@@ -37,12 +38,12 @@ use LaravelJsonApi\Core\Query\QueryParameters;
 use LaravelJsonApi\Core\Query\RelationshipPath;
 use LaravelJsonApi\Core\Query\SortField;
 use LaravelJsonApi\Core\Query\SortFields;
+use LaravelJsonApi\Core\Schema\IdParser;
 use LaravelJsonApi\Eloquent\Aggregates\CountableLoader;
 use LaravelJsonApi\Eloquent\Contracts\Filter;
 use LaravelJsonApi\Eloquent\Contracts\Paginator;
 use LaravelJsonApi\Eloquent\Contracts\Sortable;
 use LaravelJsonApi\Eloquent\EagerLoading\EagerLoader;
-use LaravelJsonApi\Core\Query\Custom\CountablePaths;
 use LogicException;
 use RuntimeException;
 
@@ -305,14 +306,15 @@ class JsonApiBuilder
     public function whereResourceId($resourceId): self
     {
         $column = $this->qualifiedIdColumn();
+        $parser = IdParser::make($this->schema->id());
 
         if (is_string($resourceId)) {
-            $this->query->where($column, '=', $resourceId);
+            $this->query->where($column, '=', $parser->decodeIfMatch($resourceId) ?? '');
             return $this;
         }
 
         if (is_array($resourceId) || $resourceId instanceof Arrayable) {
-            $this->query->whereIn($column, $resourceId);
+            $this->query->whereIn($column, $parser->decodeIds($resourceId));
             return $this;
         }
 

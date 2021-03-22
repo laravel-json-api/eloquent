@@ -52,9 +52,9 @@ class QueryOne implements QueryOneBuilderContract
     private ?Model $model;
 
     /**
-     * @var string
+     * @var string|null
      */
-    private string $resourceId;
+    private ?string $resourceId;
 
     /**
      * QueryOne constructor.
@@ -68,7 +68,7 @@ class QueryOne implements QueryOneBuilderContract
     {
         if ($modelOrResourceId instanceof Model) {
             $model = $modelOrResourceId;
-            $resourceId = strval($model->{$schema->idColumn()});
+            $resourceId = null;
         } else if (is_string($modelOrResourceId) && !empty($modelOrResourceId)) {
             $model = null;
             $resourceId = $modelOrResourceId;
@@ -89,9 +89,17 @@ class QueryOne implements QueryOneBuilderContract
      */
     public function query(): JsonApiBuilder
     {
-        return $this->schema
-            ->newQuery($this->driver->query())
-            ->withQueryParameters($this->queryParameters);
+        $query = $this->schema->newQuery(
+            $this->driver->query()
+        );
+
+        if ($this->model) {
+            $query->whereKey($this->model->getKey());
+        } else {
+            $query->whereResourceId($this->resourceId);
+        }
+
+        return $query->withQueryParameters($this->queryParameters);
     }
 
     /**
@@ -119,7 +127,7 @@ class QueryOne implements QueryOneBuilderContract
         }
 
         return $this->parser->parseNullable(
-            $this->query()->whereResourceId($this->resourceId)->first()
+            $this->query()->first()
         );
     }
 

@@ -32,6 +32,7 @@ use LaravelJsonApi\Eloquent\Fields\SoftDelete;
 use LaravelJsonApi\Eloquent\Fields\Str;
 use LaravelJsonApi\Eloquent\Filters\OnlyTrashed;
 use LaravelJsonApi\Eloquent\Filters\Where;
+use LaravelJsonApi\Eloquent\Filters\WhereIdIn;
 use LaravelJsonApi\Eloquent\Filters\WhereIn;
 use LaravelJsonApi\Eloquent\Filters\WithTrashed;
 use LaravelJsonApi\Eloquent\Pagination\PagePagination;
@@ -85,7 +86,7 @@ class PostSchema extends Schema
     public function filters(): iterable
     {
         return [
-            WhereIn::make('id', $this->idColumn()),
+            WhereIdIn::make($this),
             OnlyTrashed::make('trashed'),
             Where::make('slug')->singular(),
             WhereIn::make('slugs')->delimiter(','),

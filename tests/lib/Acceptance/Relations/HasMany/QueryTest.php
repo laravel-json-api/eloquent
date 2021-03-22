@@ -110,7 +110,7 @@ class QueryTest extends TestCase
             ->create(['user_id' => $user]);
 
         $expected = $comments->take(2);
-        $ids = $expected->map(fn (Comment $comment) => $comment->getRouteKey())->all();
+        $ids = $expected->map(fn (Comment $comment) => (string) $comment->getRouteKey())->all();
 
         $actual = $this->repository
             ->queryToMany($user, 'comments')

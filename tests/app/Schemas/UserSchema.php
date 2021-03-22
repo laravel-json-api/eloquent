@@ -29,7 +29,7 @@ use LaravelJsonApi\Eloquent\Fields\Relations\HasMany;
 use LaravelJsonApi\Eloquent\Fields\Relations\HasOne;
 use LaravelJsonApi\Eloquent\Fields\Str;
 use LaravelJsonApi\Eloquent\Filters\Where;
-use LaravelJsonApi\Eloquent\Filters\WhereIn;
+use LaravelJsonApi\Eloquent\Filters\WhereIdIn;
 use LaravelJsonApi\Eloquent\Schema;
 
 class UserSchema extends Schema
@@ -67,7 +67,7 @@ class UserSchema extends Schema
     public function filters(): array
     {
         return [
-            WhereIn::make('id', $this->idColumn()),
+            WhereIdIn::make($this),
             Where::make('email'),
         ];
     }
