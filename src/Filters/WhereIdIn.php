@@ -19,10 +19,12 @@ declare(strict_types=1);
 
 namespace LaravelJsonApi\Eloquent\Filters;
 
+use Illuminate\Database\Eloquent\Model;
 use LaravelJsonApi\Contracts\Schema\ID;
 use LaravelJsonApi\Contracts\Schema\Schema;
 use LaravelJsonApi\Core\Schema\IdParser;
 use LaravelJsonApi\Eloquent\Contracts\Filter;
+use LaravelJsonApi\Eloquent\Schema as EloquentSchema;
 
 class WhereIdIn implements Filter
 {
@@ -53,7 +55,15 @@ class WhereIdIn implements Filter
      */
     public static function make(Schema $schema, string $key = null): self
     {
-        return new self(
+        if ($schema instanceof EloquentSchema) {
+            return new static(
+                $schema->id(),
+                $schema->idColumn(),
+                $key,
+            );
+        }
+
+        return new static(
             $schema->id(),
             $schema->idKeyName(),
             $key,
@@ -87,14 +97,9 @@ class WhereIdIn implements Filter
      */
     public function apply($query, $value)
     {
-        $model = $query->getModel();
-        $column = $this->column ?? $model->getRouteKeyName();
-
         return $query->whereIn(
-            $model->qualifyColumn($column),
-            IdParser::make($this->field)->decodeIds(
-                $this->toArray($value),
-            ),
+            $this->qualifyColumn($query->getModel()),
+            $this->deserialize($value),
         );
     }
 
@@ -104,6 +109,46 @@ class WhereIdIn implements Filter
     public function isSingular(): bool
     {
         return false;
+    }
+
+    /**
+     * Get the column for the ID.
+     *
+     * @return string|null
+     */
+    protected function column(): ?string
+    {
+        return $this->column;
+    }
+
+    /**
+     * Get the qualified column for the supplied model.
+     *
+     * @param Model $model
+     * @return string
+     */
+    protected function qualifyColumn(Model $model): string
+    {
+        if ($column = $this->column()) {
+            return $model->qualifyColumn($column);
+        }
+
+        return $model->qualifyColumn(
+            $model->getRouteKeyName(),
+        );
+    }
+
+    /**
+     * Deserialize the resource ids.
+     *
+     * @param $value
+     * @return array
+     */
+    protected function deserialize($value): array
+    {
+        return IdParser::make($this->field)->decodeIds(
+            $this->toArray($value),
+        );
     }
 
 }
