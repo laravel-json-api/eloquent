@@ -25,6 +25,11 @@ All notable changes to this project will be documented in this file. This projec
 - The `JsonApiBuilder` class now expects the schema container as its first argument. To construct a new `JsonApiBuilder`
   instance, the `Schema::newQuery()` and `Relation::newQuery()` methods should be used.
 
+### Removed
+
+- **BREAKING** Deleted the `Pagination\Concerns\HasPageMeta` trait as the trait is now in the `laravel-json-api/core`
+  package as `LaravelJsonApi\Core\Pagination\Concerns\HasPageMeta`.
+
 ## [1.0.0-alpha.5] - 2021-03-12
 
 ### Added

@@ -19,15 +19,16 @@ declare(strict_types=1);
 
 namespace LaravelJsonApi\Eloquent;
 
-use Illuminate\Support\Collection;
 use Illuminate\Support\LazyCollection;
 use LaravelJsonApi\Contracts\Pagination\Page;
-use LaravelJsonApi\Contracts\Store\QueryAllBuilder;
+use LaravelJsonApi\Contracts\Store\HasPagination;
+use LaravelJsonApi\Contracts\Store\HasSingularFilters;
+use LaravelJsonApi\Contracts\Store\QueryManyBuilder;
 use LaravelJsonApi\Core\Query\Custom\ExtendedQueryParameters;
 use LaravelJsonApi\Eloquent\Contracts\Driver;
 use LaravelJsonApi\Eloquent\Contracts\Parser;
 
-class QueryAll implements QueryAllBuilder
+class QueryAll implements QueryManyBuilder, HasPagination, HasSingularFilters
 {
 
     use HasQueryParameters;
@@ -97,7 +98,7 @@ class QueryAll implements QueryAllBuilder
     }
 
     /**
-     * @inheritDoc
+     * @return object|null
      */
     public function first(): ?object
     {
@@ -127,21 +128,15 @@ class QueryAll implements QueryAllBuilder
     /**
      * @inheritDoc
      */
-    public function get(): Collection
+    public function get(): iterable
     {
-        $value = $this->parser->parseMany(
+        return $this->parser->parseMany(
             $this->query()->get()
         );
-
-        if ($value instanceof Collection) {
-            return $value;
-        }
-
-        return Collection::make($value);
     }
 
     /**
-     * @inheritDoc
+     * @return LazyCollection
      */
     public function cursor(): LazyCollection
     {

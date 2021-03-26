@@ -21,6 +21,7 @@ namespace LaravelJsonApi\Eloquent\Pagination;
 
 use InvalidArgumentException;
 use LaravelJsonApi\Contracts\Pagination\Page;
+use LaravelJsonApi\Core\Pagination\Concerns\HasPageMeta;
 use LaravelJsonApi\Eloquent\Contracts\Paginator;
 use LaravelJsonApi\Eloquent\Pagination\Cursor\Cursor;
 use LaravelJsonApi\Eloquent\Pagination\Cursor\CursorBuilder;
@@ -28,7 +29,7 @@ use LaravelJsonApi\Eloquent\Pagination\Cursor\CursorBuilder;
 class CursorPagination implements Paginator
 {
 
-    use Concerns\HasPageMeta;
+    use HasPageMeta;
 
     /**
      * @var string

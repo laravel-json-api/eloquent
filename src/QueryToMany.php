@@ -25,9 +25,9 @@ use Illuminate\Database\Eloquent\Relations\HasMany as EloquentHasMany;
 use Illuminate\Database\Eloquent\Relations\HasManyThrough as EloquentHasManyThrough;
 use Illuminate\Database\Eloquent\Relations\MorphMany as EloquentMorphMany;
 use Illuminate\Database\Eloquent\Relations\Relation as EloquentRelation;
-use Illuminate\Support\Collection;
 use Illuminate\Support\LazyCollection;
 use LaravelJsonApi\Contracts\Pagination\Page;
+use LaravelJsonApi\Contracts\Store\HasPagination;
 use LaravelJsonApi\Contracts\Store\QueryManyBuilder;
 use LaravelJsonApi\Core\Query\Custom\ExtendedQueryParameters;
 use LaravelJsonApi\Eloquent\Fields\Relations\ToMany;
@@ -35,7 +35,7 @@ use LogicException;
 use function get_class;
 use function sprintf;
 
-class QueryToMany implements QueryManyBuilder
+class QueryToMany implements QueryManyBuilder, HasPagination
 {
 
     use HasQueryParameters;
@@ -93,21 +93,15 @@ class QueryToMany implements QueryManyBuilder
     /**
      * @inheritDoc
      */
-    public function get(): Collection
+    public function get(): iterable
     {
-        $value = $this->relation->parse(
+        return $this->relation->parse(
             $this->query()->get()
         );
-
-        if ($value instanceof Collection) {
-            return $value;
-        }
-
-        return Collection::make($value);
     }
 
     /**
-     * @inheritDoc
+     * @return LazyCollection
      */
     public function cursor(): LazyCollection
     {

@@ -28,7 +28,6 @@ use LaravelJsonApi\Contracts\Store\QueriesAll;
 use LaravelJsonApi\Contracts\Store\QueriesOne;
 use LaravelJsonApi\Contracts\Store\QueriesToMany;
 use LaravelJsonApi\Contracts\Store\QueriesToOne;
-use LaravelJsonApi\Contracts\Store\QueryAllBuilder;
 use LaravelJsonApi\Contracts\Store\QueryManyBuilder;
 use LaravelJsonApi\Contracts\Store\QueryOneBuilder;
 use LaravelJsonApi\Contracts\Store\Repository as RepositoryContract;
@@ -161,7 +160,7 @@ class Repository implements
     /**
      * @inheritDoc
      */
-    public function queryAll(): QueryAllBuilder
+    public function queryAll(): QueryManyBuilder
     {
         return new QueryAll($this->schema, $this->driver, $this->parser);
     }
