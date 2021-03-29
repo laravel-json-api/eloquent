@@ -86,12 +86,14 @@ class TestCase extends BaseTestCase
     protected function assertMedia($expected, $actual): void
     {
         $expected = collect($expected)
-            ->sortBy($sort = fn(Model $model) => $model->getKey())
-            ->map($map = fn(Model $model) => [get_class($model), $model->getKey()])
-            ->values()
-            ->all();
+            ->groupBy(fn ($model) => get_class($model))
+            ->map(fn ($models) => collect($models)->map(fn(Model $model) => $model->getKey())->sort()->values())
+            ->toArray();
 
-        $actual = collect($actual)->sortBy($sort)->map($map)->values()->all();
+        $actual = collect($actual)
+            ->groupBy(fn ($model) => get_class($model))
+            ->map(fn ($models) => collect($models)->map(fn(Model $model) => $model->getKey())->sort()->values())
+            ->toArray();
 
         $this->assertSame($expected, $actual);
     }
