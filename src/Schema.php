@@ -25,7 +25,6 @@ use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Http\Request;
 use LaravelJsonApi\Contracts\Implementations\Countable\CountableField;
 use LaravelJsonApi\Contracts\Implementations\Countable\CountableSchema;
-use LaravelJsonApi\Contracts\Store\Repository as RepositoryContract;
 use LaravelJsonApi\Core\Schema\Schema as BaseSchema;
 use LaravelJsonApi\Eloquent\Contracts\Driver;
 use LaravelJsonApi\Eloquent\Contracts\Parser;
@@ -67,7 +66,7 @@ abstract class Schema extends BaseSchema implements CountableSchema
     /**
      * @inheritDoc
      */
-    public function repository(): RepositoryContract
+    public function repository(): Repository
     {
         return new Repository(
             $this,

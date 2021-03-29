@@ -31,9 +31,6 @@ use LaravelJsonApi\Contracts\Store\QueriesToOne;
 use LaravelJsonApi\Contracts\Store\QueryManyBuilder;
 use LaravelJsonApi\Contracts\Store\QueryOneBuilder;
 use LaravelJsonApi\Contracts\Store\Repository as RepositoryContract;
-use LaravelJsonApi\Contracts\Store\ResourceBuilder;
-use LaravelJsonApi\Contracts\Store\ToManyBuilder;
-use LaravelJsonApi\Contracts\Store\ToOneBuilder;
 use LaravelJsonApi\Contracts\Store\UpdatesResources;
 use LaravelJsonApi\Eloquent\Contracts\Driver;
 use LaravelJsonApi\Eloquent\Contracts\Parser;
@@ -160,7 +157,7 @@ class Repository implements
     /**
      * @inheritDoc
      */
-    public function queryAll(): QueryManyBuilder
+    public function queryAll(): QueryAll
     {
         return new QueryAll($this->schema, $this->driver, $this->parser);
     }
@@ -168,7 +165,7 @@ class Repository implements
     /**
      * @inheritDoc
      */
-    public function queryOne($modelOrResourceId): QueryOneBuilder
+    public function queryOne($modelOrResourceId): QueryOne
     {
         if ($modelOrResourceId instanceof ProxyContract) {
             $modelOrResourceId = $modelOrResourceId->toBase();
@@ -214,9 +211,8 @@ class Repository implements
 
     /**
      * @inheritDoc
-     * @return ModelHydrator
      */
-    public function create(): ResourceBuilder
+    public function create(): ModelHydrator
     {
         return new ModelHydrator(
             $this->schema,
@@ -228,9 +224,8 @@ class Repository implements
 
     /**
      * @inheritDoc
-     * @return ModelHydrator
      */
-    public function update($modelOrResourceId): ResourceBuilder
+    public function update($modelOrResourceId): ModelHydrator
     {
         return new ModelHydrator(
             $this->schema,
@@ -254,9 +249,8 @@ class Repository implements
 
     /**
      * @inheritDoc
-     * @return ToOneHydrator
      */
-    public function modifyToOne($modelOrResourceId, string $fieldName): ToOneBuilder
+    public function modifyToOne($modelOrResourceId, string $fieldName): ToOneHydrator
     {
         return new ToOneHydrator(
             $this->retrieve($modelOrResourceId),
@@ -266,9 +260,8 @@ class Repository implements
 
     /**
      * @inheritDoc
-     * @return ToManyHydrator
      */
-    public function modifyToMany($modelOrResourceId, string $fieldName): ToManyBuilder
+    public function modifyToMany($modelOrResourceId, string $fieldName): ToManyHydrator
     {
         return new ToManyHydrator(
             $this->schema,
