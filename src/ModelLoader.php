@@ -23,10 +23,10 @@ use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Database\Eloquent\Model;
 use InvalidArgumentException;
 use LaravelJsonApi\Contracts\Schema\Container;
+use LaravelJsonApi\Core\Query\Custom\CountablePaths;
 use LaravelJsonApi\Core\Query\IncludePaths;
 use LaravelJsonApi\Eloquent\Aggregates\CountableLoader;
 use LaravelJsonApi\Eloquent\EagerLoading\EagerLoader;
-use LaravelJsonApi\Core\Query\Custom\CountablePaths;
 
 class ModelLoader
 {
