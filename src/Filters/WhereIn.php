@@ -19,12 +19,8 @@ declare(strict_types=1);
 
 namespace LaravelJsonApi\Eloquent\Filters;
 
-use InvalidArgumentException;
 use LaravelJsonApi\Core\Support\Str;
 use LaravelJsonApi\Eloquent\Contracts\Filter;
-use LogicException;
-use function explode;
-use function is_string;
 
 class WhereIn implements Filter
 {
