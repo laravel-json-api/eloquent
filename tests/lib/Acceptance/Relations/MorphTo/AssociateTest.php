@@ -21,6 +21,7 @@ namespace LaravelJsonApi\Eloquent\Tests\Acceptance\Relations\MorphTo;
 
 use App\Models\Image;
 use App\Models\Post;
+use App\Models\Tag;
 use App\Models\User;
 use App\Schemas\PostSchema;
 
@@ -100,7 +101,7 @@ class AssociateTest extends TestCase
         $image = Image::factory()->create();
         $post = Post::factory()->create();
 
-        $actual = $this->repository->modifyToOne($image, 'imageable')->with('author')->associate([
+        $actual = $this->repository->modifyToOne($image, 'imageable')->with('author,roles')->associate([
             'type' => 'posts',
             'id' => (string) $post->getRouteKey(),
         ]);
@@ -127,4 +128,20 @@ class AssociateTest extends TestCase
         $this->assertTrue($post->user->is($actual->getRelation('user')));
     }
 
+    public function testWithCount(): void
+    {
+        $image = Image::factory()->create();
+
+        $post = Post::factory()
+            ->has(Tag::factory()->count(2))
+            ->create();
+
+        $actual = $this->repository->modifyToOne($image, 'imageable')->withCount('tags,roles')->associate([
+            'type' => 'posts',
+            'id' => (string) $post->getRouteKey(),
+        ]);
+
+        $this->assertTrue($post->is($actual));
+        $this->assertEquals(2, $actual->tags_count);
+    }
 }

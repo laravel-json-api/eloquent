@@ -101,12 +101,12 @@ class PagePaginationTest extends TestCase
 
         $links = [
             'first' => [
-                'href' => $first = 'http://localhost/api/v1/posts?' . Arr::query([
+                'href' => 'http://localhost/api/v1/posts?' . Arr::query([
                         'page' => ['number' => '1', 'size' => '15']
                     ]),
             ],
             'last' => [
-                'href' => $first = 'http://localhost/api/v1/posts?' . Arr::query([
+                'href' => 'http://localhost/api/v1/posts?' . Arr::query([
                         'page' => ['number' => '1', 'size' => '15']
                     ]),
             ],
@@ -249,17 +249,17 @@ class PagePaginationTest extends TestCase
 
         $links = [
             'first' => [
-                'href' => $first = 'http://localhost/api/v1/posts?' . Arr::query([
+                'href' => 'http://localhost/api/v1/posts?' . Arr::query([
                         'page' => ['number' => '1', 'size' => '3']
                     ]),
             ],
             'last' => [
-                'href' => $first = 'http://localhost/api/v1/posts?' . Arr::query([
+                'href' => 'http://localhost/api/v1/posts?' . Arr::query([
                         'page' => ['number' => '2', 'size' => '3']
                     ]),
             ],
             'next' => [
-                'href' => $first = 'http://localhost/api/v1/posts?' . Arr::query([
+                'href' => 'http://localhost/api/v1/posts?' . Arr::query([
                         'page' => ['number' => '2', 'size' => '3']
                     ]),
             ],
@@ -289,17 +289,17 @@ class PagePaginationTest extends TestCase
 
         $links = [
             'first' => [
-                'href' => $first = 'http://localhost/api/v1/posts?' . Arr::query([
+                'href' => 'http://localhost/api/v1/posts?' . Arr::query([
                         'page' => ['number' => '1', 'size' => '3']
                     ]),
             ],
             'last' => [
-                'href' => $first = 'http://localhost/api/v1/posts?' . Arr::query([
+                'href' => 'http://localhost/api/v1/posts?' . Arr::query([
                         'page' => ['number' => '2', 'size' => '3']
                     ]),
             ],
             'prev' => [
-                'href' => $first = 'http://localhost/api/v1/posts?' . Arr::query([
+                'href' => 'http://localhost/api/v1/posts?' . Arr::query([
                         'page' => ['number' => '1', 'size' => '3']
                     ]),
             ],
@@ -331,17 +331,17 @@ class PagePaginationTest extends TestCase
 
         $links = [
             'first' => [
-                'href' => $first = 'http://localhost/api/v1/posts?' . Arr::query([
+                'href' => 'http://localhost/api/v1/posts?' . Arr::query([
                     'page' => ['number' => '1', 'size' => $expected]
                 ]),
             ],
             'last' => [
-                'href' => $first = 'http://localhost/api/v1/posts?' . Arr::query([
+                'href' => 'http://localhost/api/v1/posts?' . Arr::query([
                     'page' => ['number' => '2', 'size' => $expected]
                 ]),
             ],
             'next' => [
-                'href' => $first = 'http://localhost/api/v1/posts?' . Arr::query([
+                'href' => 'http://localhost/api/v1/posts?' . Arr::query([
                     'page' => ['number' => '2', 'size' => $expected]
                 ]),
             ],
@@ -376,17 +376,17 @@ class PagePaginationTest extends TestCase
 
         $links = [
             'first' => [
-                'href' => $first = 'http://localhost/api/v1/posts?' . Arr::query([
+                'href' => 'http://localhost/api/v1/posts?' . Arr::query([
                         'page' => ['number' => '1', 'size' => $expected]
                     ]),
             ],
             'last' => [
-                'href' => $first = 'http://localhost/api/v1/posts?' . Arr::query([
+                'href' => 'http://localhost/api/v1/posts?' . Arr::query([
                         'page' => ['number' => '2', 'size' => $expected]
                     ]),
             ],
             'next' => [
-                'href' => $first = 'http://localhost/api/v1/posts?' . Arr::query([
+                'href' => 'http://localhost/api/v1/posts?' . Arr::query([
                         'page' => ['number' => '2', 'size' => $expected]
                     ]),
             ],
@@ -453,17 +453,17 @@ class PagePaginationTest extends TestCase
 
         $links = [
             'first' => [
-                'href' => $first = 'http://localhost/api/v1/posts?' . Arr::query([
+                'href' => 'http://localhost/api/v1/posts?' . Arr::query([
                         'page' => ['limit' => '3', 'page' => '1']
                     ]),
             ],
             'last' => [
-                'href' => $first = 'http://localhost/api/v1/posts?' . Arr::query([
+                'href' => 'http://localhost/api/v1/posts?' . Arr::query([
                         'page' => ['limit' => '3', 'page' => '2']
                     ]),
             ],
             'next' => [
-                'href' => $first = 'http://localhost/api/v1/posts?' . Arr::query([
+                'href' => 'http://localhost/api/v1/posts?' . Arr::query([
                         'page' => ['limit' => '3', 'page' => '2']
                     ]),
             ],
@@ -489,12 +489,12 @@ class PagePaginationTest extends TestCase
 
         $links = [
             'first' => [
-                'href' => $first = 'http://localhost/api/v1/posts?' . Arr::query([
+                'href' => 'http://localhost/api/v1/posts?' . Arr::query([
                         'page' => ['number' => '1', 'size' => '3']
                     ]),
             ],
             'next' => [
-                'href' => $first = 'http://localhost/api/v1/posts?' . Arr::query([
+                'href' => 'http://localhost/api/v1/posts?' . Arr::query([
                         'page' => ['number' => '2', 'size' => '3']
                     ]),
             ],
@@ -525,7 +525,7 @@ class PagePaginationTest extends TestCase
 
         $links = [
             'first' => [
-                'href' => $first = 'http://localhost/api/v1/posts?' . Arr::query([
+                'href' => 'http://localhost/api/v1/posts?' . Arr::query([
                         'page' => ['number' => '1', 'size' => '3']
                     ]),
             ],
@@ -608,17 +608,17 @@ class PagePaginationTest extends TestCase
 
         $links = [
             'first' => [
-                'href' => $first = 'http://localhost/api/v1/posts?' . Arr::query([
+                'href' => 'http://localhost/api/v1/posts?' . Arr::query([
                     'page' => ['number' => '1', 'size' => '3']
                 ]),
             ],
             'last' => [
-                'href' => $first = 'http://localhost/api/v1/posts?' . Arr::query([
+                'href' => 'http://localhost/api/v1/posts?' . Arr::query([
                     'page' => ['number' => '2', 'size' => '3']
                 ]),
             ],
             'next' => [
-                'href' => $first = 'http://localhost/api/v1/posts?' . Arr::query([
+                'href' => 'http://localhost/api/v1/posts?' . Arr::query([
                     'page' => ['number' => '2', 'size' => '3']
                 ]),
             ],

@@ -21,6 +21,7 @@ namespace LaravelJsonApi\Eloquent\Fields;
 
 use Illuminate\Database\Eloquent\Model;
 use LaravelJsonApi\Contracts\Schema\ID as IDContract;
+use LaravelJsonApi\Core\Schema\Concerns\ClientIds;
 use LaravelJsonApi\Core\Schema\Concerns\MatchesIds;
 use LaravelJsonApi\Core\Schema\Concerns\Sortable;
 use LaravelJsonApi\Eloquent\Contracts\Fillable;
@@ -28,6 +29,7 @@ use LaravelJsonApi\Eloquent\Contracts\Fillable;
 class ID implements IDContract, Fillable
 {
 
+    use ClientIds;
     use MatchesIds;
     use Sortable;
 
@@ -37,19 +39,14 @@ class ID implements IDContract, Fillable
     private ?string $column;
 
     /**
-     * @var bool
-     */
-    private bool $clientIds = false;
-
-    /**
      * Create an id field.
      *
      * @param string|null $column
-     * @return ID
+     * @return static
      */
     public static function make(string $column = null): self
     {
-        return new self($column);
+        return new static($column);
     }
 
     /**
@@ -93,27 +90,6 @@ class ID implements IDContract, Fillable
     public function isSparseField(): bool
     {
         return false;
-    }
-
-    /**
-     * Mark the ID as accepting client-generated ids.
-     *
-     * @param bool $bool
-     * @return $this
-     */
-    public function clientIds(bool $bool = true): self
-    {
-        $this->clientIds = $bool;
-
-        return $this;
-    }
-
-    /**
-     * @inheritDoc
-     */
-    public function acceptsClientIds(): bool
-    {
-        return $this->clientIds;
     }
 
     /**

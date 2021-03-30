@@ -41,6 +41,9 @@ class QueryTest extends TestCase
             ->cursor();
 
         $this->assertTags($video->tags()->get(), $actual);
+
+        // as the relationship is countable, we expect the count to be loaded so the relationship meta is complete.
+        $this->assertEquals(count($actual), $video->tags_count);
     }
 
     public function testWithIncludePaths(): void
@@ -67,7 +70,7 @@ class QueryTest extends TestCase
         $tags = $video->tags()->get();
 
         $expected = $tags->take(2);
-        $ids = $expected->map(fn (Tag $tag) => $tag->getRouteKey())->all();
+        $ids = $expected->map(fn (Tag $tag) => (string) $tag->getRouteKey())->all();
 
         $actual = $this->repository
             ->queryToMany($video, 'tags')

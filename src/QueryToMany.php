@@ -25,20 +25,25 @@ use Illuminate\Database\Eloquent\Relations\HasMany as EloquentHasMany;
 use Illuminate\Database\Eloquent\Relations\HasManyThrough as EloquentHasManyThrough;
 use Illuminate\Database\Eloquent\Relations\MorphMany as EloquentMorphMany;
 use Illuminate\Database\Eloquent\Relations\Relation as EloquentRelation;
-use Illuminate\Support\Collection;
 use Illuminate\Support\LazyCollection;
 use LaravelJsonApi\Contracts\Pagination\Page;
+use LaravelJsonApi\Contracts\Store\HasPagination;
 use LaravelJsonApi\Contracts\Store\QueryManyBuilder;
-use LaravelJsonApi\Core\Query\QueryParameters;
+use LaravelJsonApi\Core\Query\Custom\ExtendedQueryParameters;
 use LaravelJsonApi\Eloquent\Fields\Relations\ToMany;
 use LogicException;
 use function get_class;
 use function sprintf;
 
-class QueryToMany implements QueryManyBuilder
+class QueryToMany implements QueryManyBuilder, HasPagination
 {
 
     use HasQueryParameters;
+
+    /**
+     * @var Schema
+     */
+    private Schema $schema;
 
     /**
      * @var Model
@@ -53,14 +58,16 @@ class QueryToMany implements QueryManyBuilder
     /**
      * QueryToMany constructor.
      *
+     * @param Schema $schema
      * @param Model $model
      * @param ToMany $relation
      */
-    public function __construct(Model $model, ToMany $relation)
+    public function __construct(Schema $schema, Model $model, ToMany $relation)
     {
+        $this->schema = $schema;
         $this->model = $model;
         $this->relation = $relation;
-        $this->queryParameters = new QueryParameters();
+        $this->queryParameters = new ExtendedQueryParameters();
     }
 
     /**
@@ -86,21 +93,15 @@ class QueryToMany implements QueryManyBuilder
     /**
      * @inheritDoc
      */
-    public function get(): Collection
+    public function get(): iterable
     {
-        $value = $this->relation->parse(
+        return $this->relation->parse(
             $this->query()->get()
         );
-
-        if ($value instanceof Collection) {
-            return $value;
-        }
-
-        return Collection::make($value);
     }
 
     /**
-     * @inheritDoc
+     * @return LazyCollection
      */
     public function cursor(): LazyCollection
     {
@@ -146,17 +147,15 @@ class QueryToMany implements QueryManyBuilder
      */
     public function query(): JsonApiBuilder
     {
-        $schema = $this->relation->schema();
+        $this->prepareModel();
 
-        $query = new JsonApiBuilder(
-            $schema,
-            $schema->relatableQuery($this->request, $this->getRelation()),
-            $this->relation
+        $base = $this->relation->schema()->relatableQuery(
+            $this->request, $this->getRelation()
         );
 
-        return $query->withQueryParameters(
-            $this->queryParameters
-        );
+        return $this->relation
+            ->newQuery($base)
+            ->withQueryParameters($this->queryParameters);
     }
 
     /**
@@ -189,6 +188,20 @@ class QueryToMany implements QueryManyBuilder
             $name,
             get_class($this->model)
         ));
+    }
+
+    /**
+     * @return $this
+     */
+    private function prepareModel(): self
+    {
+        if ($this->relation->isCountableInRelationship()) {
+            $this->model->loadCount(
+                $this->relation->withCountName(),
+            );
+        }
+
+        return $this;
     }
 
 }

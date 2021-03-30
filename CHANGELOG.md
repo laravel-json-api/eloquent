@@ -3,6 +3,33 @@
 All notable changes to this project will be documented in this file. This project adheres to
 [Semantic Versioning](http://semver.org/) and [this changelog format](http://keepachangelog.com/).
 
+## [1.0.0-beta.1] - 2021-03-30
+
+### Added
+
+- *To-many* relationships are now countable. This allows a client to specify, via a query parameter, which relationships
+  it wants to be counted. These are used by the implementation to load counts on the Eloquent model, so that the count
+  values can be added to the relationship's `meta` member. Refer to documentation for implementation details.
+- Package now supports encoding of resource IDs. Resource IDs are correctly decoded when querying the database for
+  matching models.
+- To support ID encoding, the following filters have been added specifically for filtering by resource ids:
+    - `WhereIdIn`
+    - `WhereIdNotIn`
+
+### Changed
+
+- Made improvements to the eager loading implementation. All classes in the `EagerLoading` namespace are now marked as
+  internal, as they are not intended for use outside of this package. The public API is `JsonApiBuilder::with()`,
+  `ModelLoader::load()` and `ModelLoader::loadMissing()`.
+- Refactored the Eloquent Schema `loader()` method to `loaderFor($modelOrModels)`.
+- The `JsonApiBuilder` class now expects the schema container as its first argument. To construct a new `JsonApiBuilder`
+  instance, the `Schema::newQuery()` and `Relation::newQuery()` methods should be used.
+
+### Removed
+
+- **BREAKING** Deleted the `Pagination\Concerns\HasPageMeta` trait as the trait is now in the `laravel-json-api/core`
+  package as `LaravelJsonApi\Core\Pagination\Concerns\HasPageMeta`.
+
 ## [1.0.0-alpha.5] - 2021-03-12
 
 ### Added

@@ -28,13 +28,9 @@ use LaravelJsonApi\Contracts\Store\QueriesAll;
 use LaravelJsonApi\Contracts\Store\QueriesOne;
 use LaravelJsonApi\Contracts\Store\QueriesToMany;
 use LaravelJsonApi\Contracts\Store\QueriesToOne;
-use LaravelJsonApi\Contracts\Store\QueryAllBuilder;
 use LaravelJsonApi\Contracts\Store\QueryManyBuilder;
 use LaravelJsonApi\Contracts\Store\QueryOneBuilder;
 use LaravelJsonApi\Contracts\Store\Repository as RepositoryContract;
-use LaravelJsonApi\Contracts\Store\ResourceBuilder;
-use LaravelJsonApi\Contracts\Store\ToManyBuilder;
-use LaravelJsonApi\Contracts\Store\ToOneBuilder;
 use LaravelJsonApi\Contracts\Store\UpdatesResources;
 use LaravelJsonApi\Eloquent\Contracts\Driver;
 use LaravelJsonApi\Eloquent\Contracts\Parser;
@@ -134,13 +130,13 @@ class Repository implements
         $ids = collect($resourceIds)
             ->filter(fn($resourceId) => $field->match($resourceId));
 
-        if ($ids->isEmpty()) {
-            return $ids;
+        if ($ids->isNotEmpty()) {
+            return $this->parser->parseMany(
+                $this->query()->whereResourceId($ids->all())->get()
+            );
         }
 
-        return $this->parser->parseMany(
-            $this->query()->whereResourceId($ids->all())->get()
-        );
+        return [];
     }
 
     /**
@@ -161,7 +157,7 @@ class Repository implements
     /**
      * @inheritDoc
      */
-    public function queryAll(): QueryAllBuilder
+    public function queryAll(): QueryAll
     {
         return new QueryAll($this->schema, $this->driver, $this->parser);
     }
@@ -169,7 +165,7 @@ class Repository implements
     /**
      * @inheritDoc
      */
-    public function queryOne($modelOrResourceId): QueryOneBuilder
+    public function queryOne($modelOrResourceId): QueryOne
     {
         if ($modelOrResourceId instanceof ProxyContract) {
             $modelOrResourceId = $modelOrResourceId->toBase();
@@ -207,16 +203,16 @@ class Repository implements
         $relation = $this->schema->toMany($fieldName);
 
         if ($relation instanceof MorphToMany) {
-            return new QueryMorphToMany($model, $relation);
+            return new QueryMorphToMany($this->schema, $model, $relation);
         }
 
-        return new QueryToMany($model, $relation);
+        return new QueryToMany($this->schema, $model, $relation);
     }
 
     /**
      * @inheritDoc
      */
-    public function create(): ResourceBuilder
+    public function create(): ModelHydrator
     {
         return new ModelHydrator(
             $this->schema,
@@ -229,7 +225,7 @@ class Repository implements
     /**
      * @inheritDoc
      */
-    public function update($modelOrResourceId): ResourceBuilder
+    public function update($modelOrResourceId): ModelHydrator
     {
         return new ModelHydrator(
             $this->schema,
@@ -254,7 +250,7 @@ class Repository implements
     /**
      * @inheritDoc
      */
-    public function modifyToOne($modelOrResourceId, string $fieldName): ToOneBuilder
+    public function modifyToOne($modelOrResourceId, string $fieldName): ToOneHydrator
     {
         return new ToOneHydrator(
             $this->retrieve($modelOrResourceId),
@@ -265,9 +261,10 @@ class Repository implements
     /**
      * @inheritDoc
      */
-    public function modifyToMany($modelOrResourceId, string $fieldName): ToManyBuilder
+    public function modifyToMany($modelOrResourceId, string $fieldName): ToManyHydrator
     {
         return new ToManyHydrator(
+            $this->schema,
             $this->retrieve($modelOrResourceId),
             $this->schema->toMany($fieldName)
         );
@@ -278,9 +275,8 @@ class Repository implements
      */
     private function query(): JsonApiBuilder
     {
-        return new JsonApiBuilder(
-            $this->schema,
-            $this->driver->query()
+        return $this->schema->newQuery(
+            $this->driver->query(),
         );
     }
 

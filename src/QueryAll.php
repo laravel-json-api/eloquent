@@ -19,15 +19,16 @@ declare(strict_types=1);
 
 namespace LaravelJsonApi\Eloquent;
 
-use Illuminate\Support\Collection;
 use Illuminate\Support\LazyCollection;
 use LaravelJsonApi\Contracts\Pagination\Page;
-use LaravelJsonApi\Contracts\Store\QueryAllBuilder;
-use LaravelJsonApi\Core\Query\QueryParameters;
+use LaravelJsonApi\Contracts\Store\HasPagination;
+use LaravelJsonApi\Contracts\Store\HasSingularFilters;
+use LaravelJsonApi\Contracts\Store\QueryManyBuilder;
+use LaravelJsonApi\Core\Query\Custom\ExtendedQueryParameters;
 use LaravelJsonApi\Eloquent\Contracts\Driver;
 use LaravelJsonApi\Eloquent\Contracts\Parser;
 
-class QueryAll implements QueryAllBuilder
+class QueryAll implements QueryManyBuilder, HasPagination, HasSingularFilters
 {
 
     use HasQueryParameters;
@@ -59,7 +60,7 @@ class QueryAll implements QueryAllBuilder
         $this->schema = $schema;
         $this->driver = $driver;
         $this->parser = $parser;
-        $this->queryParameters = new QueryParameters();
+        $this->queryParameters = new ExtendedQueryParameters();
     }
 
     /**
@@ -87,20 +88,17 @@ class QueryAll implements QueryAllBuilder
      */
     public function query(): JsonApiBuilder
     {
-        $base = $this->driver->queryAll();
-
-        $query = new JsonApiBuilder(
-            $this->schema,
-            $this->schema->indexQuery($this->request, $base)
+        $base = $this->schema->indexQuery(
+            $this->request, $this->driver->queryAll()
         );
 
-        return $query->withQueryParameters(
-            $this->queryParameters
-        );
+        return $this->schema
+            ->newQuery($base)
+            ->withQueryParameters($this->queryParameters);
     }
 
     /**
-     * @inheritDoc
+     * @return object|null
      */
     public function first(): ?object
     {
@@ -130,21 +128,15 @@ class QueryAll implements QueryAllBuilder
     /**
      * @inheritDoc
      */
-    public function get(): Collection
+    public function get(): iterable
     {
-        $value = $this->parser->parseMany(
+        return $this->parser->parseMany(
             $this->query()->get()
         );
-
-        if ($value instanceof Collection) {
-            return $value;
-        }
-
-        return Collection::make($value);
     }
 
     /**
-     * @inheritDoc
+     * @return LazyCollection
      */
     public function cursor(): LazyCollection
     {

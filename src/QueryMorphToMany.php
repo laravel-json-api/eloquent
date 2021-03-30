@@ -25,19 +25,23 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\LazyCollection;
 use LaravelJsonApi\Contracts\Pagination\Page;
 use LaravelJsonApi\Contracts\Store\QueryManyBuilder;
-use LaravelJsonApi\Core\Query\QueryParameters;
+use LaravelJsonApi\Core\Query\Custom\ExtendedQueryParameters;
 use LaravelJsonApi\Eloquent\Fields\Relations\MorphTo;
 use LaravelJsonApi\Eloquent\Fields\Relations\MorphToMany;
 use LaravelJsonApi\Eloquent\Fields\Relations\Relation;
 use LaravelJsonApi\Eloquent\Fields\Relations\ToMany;
 use LaravelJsonApi\Eloquent\Fields\Relations\ToOne;
-use LaravelJsonApi\Eloquent\Polymorphism\MorphParameters;
 use LogicException;
 
 class QueryMorphToMany implements QueryManyBuilder, \IteratorAggregate
 {
 
     use HasQueryParameters;
+
+    /**
+     * @var Schema
+     */
+    private Schema $schema;
 
     /**
      * @var Model
@@ -52,14 +56,16 @@ class QueryMorphToMany implements QueryManyBuilder, \IteratorAggregate
     /**
      * QueryMorphToMany constructor.
      *
+     * @param Schema $schema
      * @param Model $model
      * @param MorphToMany $relation
      */
-    public function __construct(Model $model, MorphToMany $relation)
+    public function __construct(Schema $schema, Model $model, MorphToMany $relation)
     {
+        $this->schema = $schema;
         $this->model = $model;
         $this->relation = $relation;
-        $this->queryParameters = new QueryParameters();
+        $this->queryParameters = new ExtendedQueryParameters();
     }
 
     /**
@@ -129,10 +135,9 @@ class QueryMorphToMany implements QueryManyBuilder, \IteratorAggregate
             $query = $this->toQuery($relation);
             $this->request ? $query->withRequest($this->request) : null;
 
-            yield $query->withQuery(new MorphParameters(
-                $relation->schema(),
-                $this->queryParameters,
-            ));
+            yield $query->withQuery(
+                $this->queryParameters->forSchema($relation->schema())
+            );
         }
     }
 
@@ -151,7 +156,7 @@ class QueryMorphToMany implements QueryManyBuilder, \IteratorAggregate
         }
 
         if ($relation instanceof ToMany) {
-            return new QueryToMany($this->model, $relation);
+            return new QueryToMany($this->schema, $this->model, $relation);
         }
 
         throw new LogicException(sprintf(

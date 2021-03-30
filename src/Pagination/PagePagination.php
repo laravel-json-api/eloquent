@@ -23,23 +23,16 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Pagination\AbstractPaginator;
 use LaravelJsonApi\Contracts\Pagination\Page as PageContract;
+use LaravelJsonApi\Core\Pagination\Concerns\HasPageMeta;
+use LaravelJsonApi\Core\Pagination\Concerns\HasPageNumbers;
 use LaravelJsonApi\Core\Pagination\Page;
 use LaravelJsonApi\Eloquent\Contracts\Paginator;
 
 class PagePagination implements Paginator
 {
 
-    use Concerns\HasPageMeta;
-
-    /**
-     * @var string
-     */
-    private string $pageKey;
-
-    /**
-     * @var string
-     */
-    private string $perPageKey;
+    use HasPageMeta;
+    use HasPageNumbers;
 
     /**
      * @var array|null
@@ -55,11 +48,6 @@ class PagePagination implements Paginator
      * @var string|null
      */
     private ?string $primaryKey = null;
-
-    /**
-     * @var int|null
-     */
-    private ?int $defaultPerPage = null;
 
     /**
      * Fluent constructor.
@@ -85,58 +73,11 @@ class PagePagination implements Paginator
     }
 
     /**
-     * PagePagination constructor.
-     */
-    public function __construct()
-    {
-        $this->pageKey = 'number';
-        $this->perPageKey = 'size';
-        $this->metaKey = 'page';
-    }
-
-    /**
-     * @inheritDoc
-     */
-    public function keys(): array
-    {
-        return [
-            $this->pageKey,
-            $this->perPageKey,
-        ];
-    }
-
-    /**
      * @inheritDoc
      */
     public function withKeyName(string $column): self
     {
         $this->primaryKey = $column;
-
-        return $this;
-    }
-
-    /**
-     * Set the key name for the page number.
-     *
-     * @param string $key
-     * @return $this
-     */
-    public function withPageKey(string $key): self
-    {
-        $this->pageKey = $key;
-
-        return $this;
-    }
-
-    /**
-     * Set the key name for the per-page amount.
-     *
-     * @param string $key
-     * @return $this
-     */
-    public function withPerPageKey(string $key): self
-    {
-        $this->perPageKey = $key;
 
         return $this;
     }
@@ -171,22 +112,6 @@ class PagePagination implements Paginator
     public function withLengthAwarePagination(): self
     {
         $this->simplePagination = false;
-
-        return $this;
-    }
-
-    /**
-     * Use the provided number as the default items per-page.
-     *
-     * If null, Laravel automatically uses the default set on the model
-     * class.
-     *
-     * @param int|null $perPage
-     * @return $this
-     */
-    public function withDefaultPerPage(?int $perPage): self
-    {
-        $this->defaultPerPage = $perPage;
 
         return $this;
     }

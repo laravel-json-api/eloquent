@@ -22,17 +22,16 @@ namespace LaravelJsonApi\Eloquent\EagerLoading;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 use IteratorAggregate;
-use LaravelJsonApi\Contracts\Schema\Container;
 use LaravelJsonApi\Core\Query\IncludePaths;
 use LaravelJsonApi\Eloquent\Schema;
 
+/**
+ * Class EagerLoadIterator
+ *
+ * @internal
+ */
 class EagerLoadIterator implements IteratorAggregate
 {
-
-    /**
-     * @var Container
-     */
-    private Container $schemas;
 
     /**
      * @var Schema
@@ -45,17 +44,27 @@ class EagerLoadIterator implements IteratorAggregate
     private IncludePaths $paths;
 
     /**
-     * DefaultEagerLoadIterator constructor.
+     * Fluent constructor.
      *
-     * @param Container $schemas
      * @param Schema $schema
      * @param mixed $paths
+     * @return static
      */
-    public function __construct(Container $schemas, Schema $schema, $paths)
+    public static function make(Schema $schema, IncludePaths $paths): self
     {
-        $this->schemas = $schemas;
+        return new self($schema, $paths);
+    }
+
+    /**
+     * EagerLoadIterator constructor.
+     *
+     * @param Schema $schema
+     * @param IncludePaths $paths
+     */
+    public function __construct(Schema $schema, IncludePaths $paths)
+    {
         $this->schema = $schema;
-        $this->paths = IncludePaths::cast($paths);
+        $this->paths = $paths;
     }
 
     /**

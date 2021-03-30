@@ -27,7 +27,7 @@ use Illuminate\Database\Eloquent\Relations\MorphOne as EloquentMorphOne;
 use Illuminate\Database\Eloquent\Relations\Relation as EloquentRelation;
 use LaravelJsonApi\Contracts\Store\QueryOneBuilder;
 use LaravelJsonApi\Contracts\Store\QueryOneBuilder as QueryOneBuilderContract;
-use LaravelJsonApi\Core\Query\QueryParameters;
+use LaravelJsonApi\Core\Query\Custom\ExtendedQueryParameters;
 use LaravelJsonApi\Eloquent\Fields\Relations\ToOne;
 use LogicException;
 use function sprintf;
@@ -57,7 +57,7 @@ class QueryToOne implements QueryOneBuilder
     {
         $this->model = $model;
         $this->relation = $relation;
-        $this->queryParameters = new QueryParameters();
+        $this->queryParameters = new ExtendedQueryParameters();
     }
 
     /**
@@ -91,15 +91,9 @@ class QueryToOne implements QueryOneBuilder
      */
     public function query(): JsonApiBuilder
     {
-        $query = new JsonApiBuilder(
-            $this->relation->schema(),
-            $this->getRelation(),
-            $this->relation
-        );
-
-        $query->withQueryParameters($this->queryParameters);
-
-        return $query;
+        return $this->relation
+            ->newQuery($this->getRelation())
+            ->withQueryParameters($this->queryParameters);
     }
 
     /**
@@ -142,10 +136,11 @@ class QueryToOne implements QueryOneBuilder
     private function related(): ?Model
     {
         if ($related = $this->model->getRelation($this->relation->relationName())) {
-            $this->relation->schema()
-                ->loader()
-                ->forModel($related)
-                ->loadMissing($this->queryParameters->includePaths());
+            $this->relation
+                ->schema()
+                ->loaderFor($related)
+                ->loadMissing($this->queryParameters->includePaths())
+                ->loadCount($this->queryParameters->countable());
 
             return $related;
         }

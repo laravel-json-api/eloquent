@@ -42,6 +42,9 @@ class QueryTest extends TestCase
             ->cursor();
 
         $this->assertRoles($user->roles()->get(), $actual);
+
+        // as the relationship is countable, we expect the count to be loaded so the relationship meta is complete.
+        $this->assertEquals(count($actual), $user->roles_count);
     }
 
     public function testWithIncludePaths(): void
@@ -84,7 +87,7 @@ class QueryTest extends TestCase
         $roles = $user->roles()->get();
 
         $expected = $roles->take(2);
-        $ids = $expected->map(fn (Role $role) => $role->getRouteKey())->all();
+        $ids = $expected->map(fn (Role $role) => (string) $role->getRouteKey())->all();
 
         $actual = $this->repository
             ->queryToMany($user, 'roles')

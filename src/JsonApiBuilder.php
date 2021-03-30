@@ -21,22 +21,29 @@ namespace LaravelJsonApi\Eloquent;
 
 use Illuminate\Contracts\Support\Arrayable;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\MorphTo as EloquentMorphTo;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Support\LazyCollection;
 use Illuminate\Support\Traits\ForwardsCalls;
 use InvalidArgumentException;
 use LaravelJsonApi\Contracts\Pagination\Page;
 use LaravelJsonApi\Contracts\Query\QueryParameters as QueryParametersContract;
+use LaravelJsonApi\Contracts\Schema\Container;
 use LaravelJsonApi\Contracts\Schema\Relation as SchemaRelation;
+use LaravelJsonApi\Core\Query\Custom\CountablePaths;
+use LaravelJsonApi\Core\Query\Custom\ExtendedQueryParameters;
+use LaravelJsonApi\Core\Query\FilterParameters;
 use LaravelJsonApi\Core\Query\IncludePaths;
 use LaravelJsonApi\Core\Query\QueryParameters;
 use LaravelJsonApi\Core\Query\RelationshipPath;
 use LaravelJsonApi\Core\Query\SortField;
 use LaravelJsonApi\Core\Query\SortFields;
+use LaravelJsonApi\Core\Schema\IdParser;
+use LaravelJsonApi\Eloquent\Aggregates\CountableLoader;
 use LaravelJsonApi\Eloquent\Contracts\Filter;
 use LaravelJsonApi\Eloquent\Contracts\Paginator;
 use LaravelJsonApi\Eloquent\Contracts\Sortable;
+use LaravelJsonApi\Eloquent\EagerLoading\EagerLoader;
 use LogicException;
 use RuntimeException;
 
@@ -49,6 +56,11 @@ class JsonApiBuilder
 {
 
     use ForwardsCalls;
+
+    /**
+     * @var Container
+     */
+    private Container $schemas;
 
     /**
      * @var Schema
@@ -66,9 +78,9 @@ class JsonApiBuilder
     private ?SchemaRelation $relation;
 
     /**
-     * @var QueryParameters
+     * @var ExtendedQueryParameters
      */
-    private QueryParameters $parameters;
+    private ExtendedQueryParameters $parameters;
 
     /**
      * @var bool
@@ -83,16 +95,13 @@ class JsonApiBuilder
     /**
      * JsonApiBuilder constructor.
      *
+     * @param Container $schemas
      * @param Schema $schema
-     * @param Builder|Relation|Model $query
+     * @param Builder|Relation $query
      * @param SchemaRelation|null $relation
      */
-    public function __construct(Schema $schema, $query, SchemaRelation $relation = null)
+    public function __construct(Container $schemas, Schema $schema, $query, SchemaRelation $relation = null)
     {
-        if ($query instanceof Model) {
-            $query = $query->newQuery();
-        }
-
         if ($query instanceof Relation && !$relation) {
             throw new InvalidArgumentException('Expecting a schema relation when querying an Eloquent relation.');
         }
@@ -101,10 +110,11 @@ class JsonApiBuilder
             throw new InvalidArgumentException('Expecting an Eloquent relation when querying a schema relation.');
         }
 
+        $this->schemas = $schemas;
         $this->schema = $schema;
         $this->query = $query;
         $this->relation = $relation;
-        $this->parameters = new QueryParameters();
+        $this->parameters = new ExtendedQueryParameters();
     }
 
     /**
@@ -131,9 +141,12 @@ class JsonApiBuilder
      */
     public function withQueryParameters(QueryParametersContract $query): self
     {
+        $query = ExtendedQueryParameters::cast($query);
+
         $this->filter($query->filter())
             ->sort($query->sortFields())
-            ->with($query->includePaths());
+            ->with($query->includePaths())
+            ->withCount($query->countable());
 
         return $this;
     }
@@ -141,24 +154,25 @@ class JsonApiBuilder
     /**
      * Apply the supplied JSON API filters.
      *
-     * @param array|null $filters
+     * @param FilterParameters|array|mixed|null $filters
      * @return $this
      */
-    public function filter(?array $filters): self
+    public function filter($filters): self
     {
         if (is_null($filters)) {
             $this->parameters->withoutFilters();
             return $this;
         }
 
+        $filters = FilterParameters::cast($filters);
         $keys = [];
 
         foreach ($this->filters() as $filter) {
             if ($filter instanceof Filter) {
                 $keys[] = $key = $filter->key();
 
-                if (array_key_exists($key, $filters)) {
-                    $filter->apply($this->query, $value = $filters[$key]);
+                if ($filters->exists($key)) {
+                    $filter->apply($this->query, $value = $filters->get($key)->value());
                     $actual[$key] = $value;
 
                     if ($filter->isSingular()) {
@@ -174,7 +188,7 @@ class JsonApiBuilder
             ));
         }
 
-        $unrecognised = collect($filters)->keys()->diff($keys);
+        $unrecognised = $filters->collect()->keys()->diff($keys);
 
         if ($unrecognised->isNotEmpty()) {
             throw new RuntimeException(sprintf(
@@ -184,7 +198,7 @@ class JsonApiBuilder
             ));
         }
 
-        if (true === $this->schema->isSingular($filters)) {
+        if (true === $this->schema->isSingular($filters->toArray())) {
             $this->singular = true;
         }
 
@@ -244,12 +258,41 @@ class JsonApiBuilder
     {
         $includePaths = IncludePaths::cast($includePaths);
 
-        $this->eagerLoading = $this->schema
-            ->loader()
-            ->using($this->query)
-            ->with($includePaths);
+        $loader = new EagerLoader(
+            $this->schemas,
+            $this->schema,
+            $includePaths,
+        );
 
+        $this->query->with($paths = $loader->getRelations());
+
+        foreach ($morphs = $loader->getMorphs() as $name => $map) {
+            $this->query->with($name, static function(EloquentMorphTo $morphTo) use ($map) {
+                $morphTo->morphWith($map);
+            });
+        }
+
+        $this->eagerLoading = (!empty($paths) || !empty($map));
         $this->parameters->setIncludePaths($includePaths);
+
+        return $this;
+    }
+
+    /**
+     * Add queries to count the provided JSON:API relations.
+     *
+     * @param $countable
+     * @return $this
+     */
+    public function withCount($countable): self
+    {
+        $loader = new CountableLoader(
+            $this->schema,
+            $countable = CountablePaths::cast($countable)
+        );
+
+        $this->query->withCount($loader->getRelations());
+        $this->parameters->setCountable($countable);
 
         return $this;
     }
@@ -263,14 +306,15 @@ class JsonApiBuilder
     public function whereResourceId($resourceId): self
     {
         $column = $this->qualifiedIdColumn();
+        $parser = IdParser::make($this->schema->id());
 
         if (is_string($resourceId)) {
-            $this->query->where($column, '=', $resourceId);
+            $this->query->where($column, '=', $parser->decodeIfMatch($resourceId) ?? '');
             return $this;
         }
 
         if (is_array($resourceId) || $resourceId instanceof Arrayable) {
-            $this->query->whereIn($column, $resourceId);
+            $this->query->whereIn($column, $parser->decodeIds($resourceId));
             return $this;
         }
 

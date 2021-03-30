@@ -23,10 +23,14 @@ use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Support\Collection;
 use LaravelJsonApi\Contracts\Pagination\Page;
 use LaravelJsonApi\Core\Support\Str;
+use LaravelJsonApi\Eloquent\Contracts\Countable as CountableContract;
 use LaravelJsonApi\Eloquent\Contracts\Proxy;
+use LaravelJsonApi\Eloquent\Fields\Concerns\Countable;
 
-abstract class ToMany extends Relation
+abstract class ToMany extends Relation implements CountableContract
 {
+
+    use Countable;
 
     /**
      * Should the relationship use the schema's default pagination?

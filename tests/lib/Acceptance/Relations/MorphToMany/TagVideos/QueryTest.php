@@ -41,6 +41,9 @@ class QueryTest extends TestCase
             ->cursor();
 
         $this->assertVideos($tag->videos()->get(), $actual);
+
+        // as the relationship is countable, we expect the count to be loaded so the relationship meta is complete.
+        $this->assertEquals(count($actual), $tag->videos_count);
     }
 
     public function testWithIncludePaths(): void

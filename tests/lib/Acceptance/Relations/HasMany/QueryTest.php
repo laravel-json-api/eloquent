@@ -40,6 +40,8 @@ class QueryTest extends TestCase
             ->cursor();
 
         $this->assertComments($user->comments()->get(), $actual);
+        // as the relationship is countable, we expect the count to be loaded so the relationship meta is complete.
+        $this->assertEquals(3, $user->comments_count);
     }
 
     public function testWithIncludePaths(): void
@@ -108,7 +110,7 @@ class QueryTest extends TestCase
             ->create(['user_id' => $user]);
 
         $expected = $comments->take(2);
-        $ids = $expected->map(fn (Comment $comment) => $comment->getRouteKey())->all();
+        $ids = $expected->map(fn (Comment $comment) => (string) $comment->getRouteKey())->all();
 
         $actual = $this->repository
             ->queryToMany($user, 'comments')

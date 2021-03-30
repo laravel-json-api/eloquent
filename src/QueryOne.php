@@ -22,7 +22,7 @@ namespace LaravelJsonApi\Eloquent;
 use Illuminate\Database\Eloquent\Model;
 use InvalidArgumentException;
 use LaravelJsonApi\Contracts\Store\QueryOneBuilder as QueryOneBuilderContract;
-use LaravelJsonApi\Core\Query\QueryParameters;
+use LaravelJsonApi\Core\Query\Custom\ExtendedQueryParameters;
 use LaravelJsonApi\Eloquent\Contracts\Driver;
 use LaravelJsonApi\Eloquent\Contracts\Parser;
 
@@ -52,9 +52,9 @@ class QueryOne implements QueryOneBuilderContract
     private ?Model $model;
 
     /**
-     * @var string
+     * @var string|null
      */
-    private string $resourceId;
+    private ?string $resourceId;
 
     /**
      * QueryOne constructor.
@@ -68,7 +68,7 @@ class QueryOne implements QueryOneBuilderContract
     {
         if ($modelOrResourceId instanceof Model) {
             $model = $modelOrResourceId;
-            $resourceId = strval($model->{$schema->idColumn()});
+            $resourceId = null;
         } else if (is_string($modelOrResourceId) && !empty($modelOrResourceId)) {
             $model = null;
             $resourceId = $modelOrResourceId;
@@ -81,7 +81,7 @@ class QueryOne implements QueryOneBuilderContract
         $this->parser = $parser;
         $this->model = $model;
         $this->resourceId = $resourceId;
-        $this->queryParameters = new QueryParameters();
+        $this->queryParameters = new ExtendedQueryParameters();
     }
 
     /**
@@ -89,14 +89,17 @@ class QueryOne implements QueryOneBuilderContract
      */
     public function query(): JsonApiBuilder
     {
-        $query = new JsonApiBuilder(
-            $this->schema,
-            $this->driver->query(),
+        $query = $this->schema->newQuery(
+            $this->driver->query()
         );
 
-        return $query->withQueryParameters(
-            $this->queryParameters
-        );
+        if ($this->model) {
+            $query->whereKey($this->model->getKey());
+        } else {
+            $query->whereResourceId($this->resourceId);
+        }
+
+        return $query->withQueryParameters($this->queryParameters);
     }
 
     /**
@@ -115,15 +118,16 @@ class QueryOne implements QueryOneBuilderContract
     public function first(): ?object
     {
         if ($this->model && empty($this->queryParameters->filter())) {
-            $this->schema->loader()
-                ->forModel($this->model)
-                ->loadMissing($this->queryParameters->includePaths());
+            $this->schema
+                ->loaderFor($this->model)
+                ->loadMissing($this->queryParameters->includePaths())
+                ->loadCount($this->queryParameters->countable());
 
             return $this->parser->parseOne($this->model);
         }
 
         return $this->parser->parseNullable(
-            $this->query()->whereResourceId($this->resourceId)->first()
+            $this->query()->first()
         );
     }
 

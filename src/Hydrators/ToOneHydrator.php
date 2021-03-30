@@ -21,7 +21,7 @@ namespace LaravelJsonApi\Eloquent\Hydrators;
 
 use Illuminate\Database\Eloquent\Model;
 use LaravelJsonApi\Contracts\Store\ToOneBuilder;
-use LaravelJsonApi\Core\Query\QueryParameters;
+use LaravelJsonApi\Core\Query\Custom\ExtendedQueryParameters;
 use LaravelJsonApi\Core\Support\Str;
 use LaravelJsonApi\Eloquent\Contracts\FillableToOne;
 use LaravelJsonApi\Eloquent\Fields\Relations\MorphTo;
@@ -61,7 +61,7 @@ class ToOneHydrator implements ToOneBuilder
 
         $this->model = $model;
         $this->relation = $relation;
-        $this->queryParameters = new QueryParameters();
+        $this->queryParameters = new ExtendedQueryParameters();
     }
 
     /**
@@ -93,19 +93,19 @@ class ToOneHydrator implements ToOneBuilder
             return null;
         }
 
+        $parameters = $this->queryParameters;
+
         if ($this->relation instanceof MorphTo) {
-            $loader = $this->relation
-                ->schemaFor($related)
-                ->loader();
+            $schema = $this->relation->schemaFor($related);
+            $parameters = $parameters->forSchema($schema);
         } else {
-            $loader = $this->relation
-                ->schema()
-                ->loader();
+            $schema = $this->relation->schema();
         }
 
-        $loader->forModel($related)->loadMissing(
-            $this->queryParameters->includePaths()
-        );
+        $schema
+            ->loaderFor($related)
+            ->loadMissing($parameters->includePaths())
+            ->loadCount($parameters->countable());
 
         return $related;
     }

@@ -22,9 +22,8 @@ namespace LaravelJsonApi\Eloquent;
 use Illuminate\Database\Eloquent\Model;
 use LaravelJsonApi\Contracts\Schema\Filter;
 use LaravelJsonApi\Contracts\Store\QueryOneBuilder;
-use LaravelJsonApi\Core\Query\QueryParameters;
+use LaravelJsonApi\Core\Query\Custom\ExtendedQueryParameters;
 use LaravelJsonApi\Eloquent\Fields\Relations\MorphTo;
-use LaravelJsonApi\Eloquent\Polymorphism\MorphParameters;
 use function is_null;
 
 class QueryMorphTo implements QueryOneBuilder
@@ -52,7 +51,7 @@ class QueryMorphTo implements QueryOneBuilder
     {
         $this->model = $model;
         $this->relation = $relation;
-        $this->queryParameters = new QueryParameters();
+        $this->queryParameters = new ExtendedQueryParameters();
     }
 
     /**
@@ -71,7 +70,7 @@ class QueryMorphTo implements QueryOneBuilder
     public function first(): ?object
     {
         /** @var Model|null $related */
-        $related = $related = $this->model->{$this->relation->relationName()};
+        $related = $this->model->{$this->relation->relationName()};
         $filters = $this->queryParameters->filter();
 
         /**
@@ -103,7 +102,8 @@ class QueryMorphTo implements QueryOneBuilder
          * Otherwise we need to re-query this specific model to see if
          * it matches our filters or not.
          */
-        $result = (new JsonApiBuilder($schema, $related))
+        $result = $schema
+            ->newQuery($related->newQuery())
             ->whereKey($related->getKey())
             ->filter($filters)
             ->first();
@@ -122,15 +122,13 @@ class QueryMorphTo implements QueryOneBuilder
     private function prepareResult(?Model $related): ?Model
     {
         if ($related) {
-            $parameters = new MorphParameters(
-                $schema = $this->relation->schemaFor($related),
-                $this->queryParameters,
-            );
+            $schema = $this->relation->schemaFor($related);
+            $parameters = $this->queryParameters->forSchema($schema);
 
             $schema
-                ->loader()
-                ->forModel($related)
-                ->loadMissing($parameters->includePaths());
+                ->loaderFor($related)
+                ->loadMissing($parameters->includePaths())
+                ->loadCount($parameters->countable());
         }
 
         return $related;

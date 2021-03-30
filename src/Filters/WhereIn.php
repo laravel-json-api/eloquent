@@ -19,17 +19,14 @@ declare(strict_types=1);
 
 namespace LaravelJsonApi\Eloquent\Filters;
 
-use InvalidArgumentException;
 use LaravelJsonApi\Core\Support\Str;
 use LaravelJsonApi\Eloquent\Contracts\Filter;
-use LogicException;
-use function explode;
-use function is_string;
 
 class WhereIn implements Filter
 {
 
     use Concerns\DeserializesValue;
+    use Concerns\HasDelimiter;
 
     /**
      * @var string
@@ -40,11 +37,6 @@ class WhereIn implements Filter
      * @var string
      */
     private string $column;
-
-    /**
-     * @var string|null
-     */
-    private ?string $delimiter = null;
 
     /**
      * Create a new filter.
@@ -68,23 +60,6 @@ class WhereIn implements Filter
     {
         $this->name = $name;
         $this->column = $column ?: $this->guessColumn();
-    }
-
-    /**
-     * If the filter accepts a string value, the delimiter to use to extract values.
-     *
-     * @param string $delimiter
-     * @return $this
-     */
-    public function delimiter(string $delimiter): self
-    {
-        if (empty($delimiter)) {
-            throw new InvalidArgumentException('Expecting a non-empty string delimiter.');
-        }
-
-        $this->delimiter = $delimiter;
-
-        return $this;
     }
 
     /**
@@ -134,15 +109,7 @@ class WhereIn implements Filter
             return ($this->deserializer)($value);
         }
 
-        if ($this->delimiter && is_string($value)) {
-            return explode($this->delimiter, $value);
-        }
-
-        if (is_array($value)) {
-            return $value;
-        }
-
-        throw new LogicException('Expecting where in filter value to be an array, or a string if a string delimiter is set.');
+        return $this->toArray($value);
     }
 
     /**

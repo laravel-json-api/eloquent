@@ -23,19 +23,18 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Http\Request;
-use LaravelJsonApi\Contracts\Store\Repository as RepositoryContract;
-use LaravelJsonApi\Core\Query\RelationshipPath;
+use LaravelJsonApi\Contracts\Implementations\Countable\CountableField;
+use LaravelJsonApi\Contracts\Implementations\Countable\CountableSchema;
 use LaravelJsonApi\Core\Schema\Schema as BaseSchema;
 use LaravelJsonApi\Eloquent\Contracts\Driver;
 use LaravelJsonApi\Eloquent\Contracts\Parser;
 use LaravelJsonApi\Eloquent\Drivers\StandardDriver;
-use LaravelJsonApi\Eloquent\EagerLoading\EagerLoader;
 use LaravelJsonApi\Eloquent\Fields\Relations\ToMany;
 use LaravelJsonApi\Eloquent\Fields\Relations\ToOne;
 use LaravelJsonApi\Eloquent\Parsers\StandardParser;
 use LogicException;
 
-abstract class Schema extends BaseSchema
+abstract class Schema extends BaseSchema implements CountableSchema
 {
 
     /**
@@ -67,19 +66,7 @@ abstract class Schema extends BaseSchema
     /**
      * @inheritDoc
      */
-    public static function model(): string
-    {
-        if (isset(static::$model)) {
-            return static::$model;
-        }
-
-        throw new LogicException('The model class name must be set.');
-    }
-
-    /**
-     * @inheritDoc
-     */
-    public function repository(): RepositoryContract
+    public function repository(): Repository
     {
         return new Repository(
             $this,
@@ -144,14 +131,8 @@ abstract class Schema extends BaseSchema
     }
 
     /**
-     * @return string|null
-     */
-    public function idKeyName(): ?string
-    {
-        return $this->idColumn();
-    }
-
-    /**
+     * Get the column for the model's JSON:API resource id.
+     *
      * @return string
      */
     public function idColumn(): string
@@ -160,7 +141,7 @@ abstract class Schema extends BaseSchema
             return $this->idColumn;
         }
 
-        if ($key = $this->id()->key()) {
+        if ($key = $this->idKeyName()) {
             return $this->idColumn = $key;
         }
 
@@ -208,11 +189,39 @@ abstract class Schema extends BaseSchema
     }
 
     /**
-     * @return EagerLoader
+     * Create a model loader for the supplied model or models.
+     *
+     * The model loader is a convenience class that allows us to call methods
+     * such as `loadMissing` with JSON:API query parameter values, e.g.
+     * include paths. The model loader converts the JSON:API parameters to
+     * Eloquent equivalents (e.g. eager load paths) and then calls the relevant
+     * method or methods on the model or Eloquent collection.
+     *
+     * @param $modelOrModels
+     * @return ModelLoader
      */
-    public function loader(): EagerLoader
+    public function loaderFor($modelOrModels): ModelLoader
     {
-        return new EagerLoader($this->server->schemas(), $this);
+        return new ModelLoader(
+            $this->server->schemas(),
+            $this,
+            $modelOrModels,
+        );
+    }
+
+    /**
+     * Create a new database query.
+     *
+     * @param Builder|null $query
+     * @return JsonApiBuilder
+     */
+    public function newQuery($query = null): JsonApiBuilder
+    {
+        return new JsonApiBuilder(
+            $this->server->schemas(),
+            $this,
+            $query ?: $this->newInstance()->newQuery(),
+        );
     }
 
     /**
@@ -272,18 +281,33 @@ abstract class Schema extends BaseSchema
     }
 
     /**
-     * @param RelationshipPath $path
-     * @return bool
+     * @inheritDoc
      */
-    public function isIncludePath(RelationshipPath $path): bool
+    public function isCountable(string $fieldName): bool
     {
-        if (!$this->isRelationship($path->first())) {
-            return false;
+        $relation = null;
+
+        if ($this->isRelationship($fieldName)) {
+            $relation = $this->relationship($fieldName);
         }
 
-        return $this
-            ->relationship($path->first())
-            ->isIncludePath();
+        if ($relation instanceof CountableField) {
+            return $relation->isCountable();
+        }
+
+        return false;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function countable(): iterable
+    {
+        foreach ($this->relationships() as $relation) {
+            if ($relation instanceof CountableField && $relation->isCountable()) {
+                yield $relation->name();
+            }
+        }
     }
 
     /**

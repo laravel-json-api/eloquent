@@ -26,6 +26,11 @@ use LaravelJsonApi\Eloquent\Fields\Relations\Relation;
 use LaravelJsonApi\Eloquent\Schema;
 use LogicException;
 
+/**
+ * Class EagerLoadPath
+ *
+ * @internal
+ */
 class EagerLoadPath implements IteratorAggregate
 {
 

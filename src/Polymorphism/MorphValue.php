@@ -24,9 +24,11 @@ use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Enumerable;
 use IteratorAggregate;
+use LaravelJsonApi\Core\Query\IncludePaths;
 use LaravelJsonApi\Eloquent\Fields\Relations\Relation;
 use LaravelJsonApi\Eloquent\Fields\Relations\ToMany;
 use LaravelJsonApi\Eloquent\Fields\Relations\ToOne;
+use LaravelJsonApi\Eloquent\Query\ExtendedQueryParameters;
 
 class MorphValue implements IteratorAggregate, Countable
 {
@@ -60,11 +62,12 @@ class MorphValue implements IteratorAggregate, Countable
     public function load($includePaths): self
     {
         if ($this->isNotEmpty()) {
-            $this->relation
-                ->schema()
-                ->loader()
-                ->forModelOrModels($this->value)
-                ->loadIfExists($includePaths);
+            $schema = $this->relation->schema();
+            $includePaths = IncludePaths::cast($includePaths)->forSchema($schema);
+
+            $schema
+                ->loaderFor($this->value)
+                ->load($includePaths);
         }
 
         return $this;
@@ -77,11 +80,12 @@ class MorphValue implements IteratorAggregate, Countable
     public function loadMissing($includePaths): self
     {
         if ($this->isNotEmpty()) {
-            $this->relation
-                ->schema()
-                ->loader()
-                ->forModelOrModels($this->value)
-                ->loadMissingIfExists($includePaths);
+            $schema = $this->relation->schema();
+            $includePaths = IncludePaths::cast($includePaths)->forSchema($schema);
+
+            $schema
+                ->loaderFor($this->value)
+                ->loadMissing($includePaths);
         }
 
         return $this;

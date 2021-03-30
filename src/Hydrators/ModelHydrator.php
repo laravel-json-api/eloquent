@@ -23,7 +23,7 @@ use Illuminate\Database\Eloquent\Model;
 use LaravelJsonApi\Contracts\Schema\Attribute;
 use LaravelJsonApi\Contracts\Schema\Field;
 use LaravelJsonApi\Contracts\Store\ResourceBuilder;
-use LaravelJsonApi\Core\Query\QueryParameters;
+use LaravelJsonApi\Core\Query\Custom\ExtendedQueryParameters;
 use LaravelJsonApi\Eloquent\Contracts\Driver;
 use LaravelJsonApi\Eloquent\Contracts\Fillable;
 use LaravelJsonApi\Eloquent\Contracts\FillableToMany;
@@ -79,7 +79,7 @@ class ModelHydrator implements ResourceBuilder
         $this->driver = $driver;
         $this->parser = $parser;
         $this->model = $model;
-        $this->queryParameters = new QueryParameters();
+        $this->queryParameters = new ExtendedQueryParameters();
     }
 
     /**
@@ -93,9 +93,10 @@ class ModelHydrator implements ResourceBuilder
          * Always do eager loading, as we may have default eager
          * load paths.
          */
-        $this->schema->loader()->forModel($model)->loadMissing(
-            $this->queryParameters->includePaths()
-        );
+        $this->schema
+            ->loaderFor($model)
+            ->loadMissing($this->queryParameters->includePaths())
+            ->loadCount($this->queryParameters->countable());
 
         return $this->parser->parseOne($model);
     }

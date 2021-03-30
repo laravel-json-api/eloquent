@@ -25,6 +25,7 @@ use InvalidArgumentException;
 use IteratorAggregate;
 use LaravelJsonApi\Contracts\Schema\Container;
 use LaravelJsonApi\Contracts\Schema\PolymorphicRelation;
+use LaravelJsonApi\Eloquent\Contracts\Countable;
 use LaravelJsonApi\Eloquent\Contracts\FillableToMany;
 use LaravelJsonApi\Eloquent\Fields\Concerns\ReadOnly;
 use LaravelJsonApi\Eloquent\Polymorphism\MorphMany;
@@ -133,6 +134,29 @@ class MorphToMany extends ToMany implements PolymorphicRelation, IteratorAggrega
         }
 
         return $values;
+    }
+
+    /**
+     * @param object $model
+     * @return int|null
+     */
+    public function count(object $model): ?int
+    {
+        $hasValue = false;
+        $count = 0;
+
+        foreach ($this as $relation) {
+            if ($relation instanceof Countable && $relation->isCountable()) {
+                $value = $model->{$relation->keyForCount()};
+
+                if (!is_null($value)) {
+                    $hasValue = true;
+                    $count += intval($value);
+                }
+            }
+        }
+
+        return $hasValue ? $count : null;
     }
 
     /**

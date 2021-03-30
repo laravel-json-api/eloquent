@@ -97,4 +97,21 @@ class CreateTest extends TestCase
             ]);
         }
     }
+
+    public function testWithCount(): void
+    {
+        $videos = Video::factory()->count(2)->create();
+
+        $this->actingAs(User::factory()->create(['admin' => true]));
+
+        $tag = $this->repository->create()->withCount('videos')->store([
+            'name' => 'My Tag',
+            'videos' => $videos->map(fn(Video $video) => [
+                'type' => 'videos',
+                'id' => (string) $video->getRouteKey(),
+            ])->all(),
+        ]);
+
+        $this->assertEquals(count($videos), $tag->videos_count);
+    }
 }

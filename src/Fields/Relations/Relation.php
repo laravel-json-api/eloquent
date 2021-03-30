@@ -20,6 +20,8 @@ declare(strict_types=1);
 namespace LaravelJsonApi\Eloquent\Fields\Relations;
 
 use Closure;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Relations\Relation as EloquentRelation;
 use InvalidArgumentException;
 use LaravelJsonApi\Contracts\Resources\JsonApiRelation;
 use LaravelJsonApi\Contracts\Resources\Serializer\Relation as SerializableContract;
@@ -33,6 +35,7 @@ use LaravelJsonApi\Core\Schema\Concerns\SchemaAware;
 use LaravelJsonApi\Core\Schema\Concerns\SparseField;
 use LaravelJsonApi\Core\Support\Str;
 use LaravelJsonApi\Eloquent\Fields\Concerns\Hideable;
+use LaravelJsonApi\Eloquent\JsonApiBuilder;
 use LaravelJsonApi\Eloquent\Resources\Relation as ResourceRelation;
 use LaravelJsonApi\Eloquent\Schema;
 use LogicException;
@@ -266,7 +269,7 @@ abstract class Relation implements RelationContract, SchemaAwareContract, Serial
     /**
      * @inheritDoc
      */
-    public function serialize(object $model, string $baseUri): JsonApiRelation
+    public function serialize(object $model, ?string $baseUri): JsonApiRelation
     {
         $relation = new ResourceRelation(
             $model,
@@ -279,6 +282,20 @@ abstract class Relation implements RelationContract, SchemaAwareContract, Serial
         }
 
         return $relation;
+    }
+
+    /**
+     * @param Builder|EloquentRelation $relation
+     * @return JsonApiBuilder
+     */
+    public function newQuery($relation): JsonApiBuilder
+    {
+        return new JsonApiBuilder(
+            $this->schemas(),
+            $this->schema(),
+            $relation,
+            $this,
+        );
     }
 
     /**

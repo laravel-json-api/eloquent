@@ -21,6 +21,7 @@ namespace LaravelJsonApi\Eloquent\Tests\Acceptance\Relations\BelongsTo;
 
 use App\Models\Country;
 use App\Models\Phone;
+use App\Models\Role;
 use App\Models\User;
 use App\Schemas\UserSchema;
 
@@ -135,4 +136,21 @@ class AssociateTest extends TestCase
         $this->assertTrue($actual->relationLoaded('phone'));
     }
 
+
+    public function testWithCount(): void
+    {
+        $user = User::factory()
+            ->has(Role::factory()->count(2))
+            ->create();
+
+        $phone = Phone::factory()->create(['user_id' => null]);
+
+        $actual = $this->repository->modifyToOne($phone, 'user')->withCount('roles')->associate([
+            'type' => 'users',
+            'id' => (string) $user->getRouteKey(),
+        ]);
+
+        $this->assertTrue($user->is($actual));
+        $this->assertEquals(2, $actual->roles_count);
+    }
 }
