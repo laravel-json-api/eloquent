@@ -95,7 +95,7 @@ class ArrayListTest extends TestCase
         $model = new Role();
         $attr = ArrayList::make('permissions');
 
-        $attr->fill($model, $value);
+        $attr->fill($model, $value, []);
         $this->assertSame($value, $model->permissions);
     }
 
@@ -125,7 +125,7 @@ class ArrayListTest extends TestCase
         $attr = ArrayList::make('permissions');
 
         $this->expectException(\UnexpectedValueException::class);
-        $attr->fill($model, $value);
+        $attr->fill($model, $value, []);
     }
 
     public function testFillRespectsMassAssignment(): void
@@ -133,7 +133,7 @@ class ArrayListTest extends TestCase
         $model = new Role();
         $attr = ArrayList::make('accessPermissions');
 
-        $attr->fill($model, ['foo']);
+        $attr->fill($model, ['foo'], []);
         $this->assertArrayNotHasKey('access_permissions', $model->getAttributes());
     }
 
@@ -142,7 +142,7 @@ class ArrayListTest extends TestCase
         $model = new Role();
         $attr = ArrayList::make('accessPermissions')->unguarded();
 
-        $attr->fill($model, ['foo']);
+        $attr->fill($model, ['foo'], []);
         $this->assertSame(['foo'], $model->access_permissions);
     }
 
@@ -155,7 +155,7 @@ class ArrayListTest extends TestCase
                 ->all()
         );
 
-        $attr->fill($model, ['foo', 'bar']);
+        $attr->fill($model, ['foo', 'bar'], []);
         $this->assertSame(['FOO', 'BAR'], $model->permissions);
     }
 
@@ -169,7 +169,7 @@ class ArrayListTest extends TestCase
             $model->permissions = ['foo', 'bar'];
         });
 
-        $attr->fill($role, ['foo']);
+        $attr->fill($role, ['foo'], []);
         $this->assertSame(['foo', 'bar'], $role->permissions);
     }
 
@@ -178,7 +178,7 @@ class ArrayListTest extends TestCase
         $model = new Role();
         $attr = ArrayList::make('permissions')->sorted();
 
-        $attr->fill($model, ['foo', 'bar']);
+        $attr->fill($model, ['foo', 'bar'], []);
         $this->assertSame(['bar', 'foo'], $model->permissions);
     }
 

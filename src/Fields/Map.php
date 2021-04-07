@@ -127,15 +127,15 @@ class Map implements AttributeContract, Selectable, Fillable, SerializableContra
     /**
      * @inheritDoc
      */
-    public function fill(Model $model, $value): void
+    public function fill(Model $model, $value, array $validatedData): void
     {
         if (is_null($value)) {
-            $this->nullable($model);
+            $this->nullable($model, $validatedData);
             return;
         }
 
         if (is_array($value)) {
-            $this->values($model, $value);
+            $this->values($model, $value, $validatedData);
             return;
         }
 
@@ -169,20 +169,20 @@ class Map implements AttributeContract, Selectable, Fillable, SerializableContra
         return $values;
     }
 
-
     /**
      * Set all values to null.
      *
      * @param Model $model
+     * @param array $validatedData
      * @return void
      */
-    private function nullable(Model $model): void
+    private function nullable(Model $model, array $validatedData): void
     {
         if (false === $this->ignoreNull) {
             /** @var AttributeContract $attribute */
             foreach ($this->map as $attribute) {
                 if ($attribute instanceof Fillable) {
-                    $attribute->fill($model, null);
+                    $attribute->fill($model, null, $validatedData);
                     continue;
                 }
 
@@ -200,14 +200,15 @@ class Map implements AttributeContract, Selectable, Fillable, SerializableContra
      *
      * @param Model $model
      * @param array $values
+     * @param array $validatedData
      */
-    private function values(Model $model, array $values): void
+    private function values(Model $model, array $values, array $validatedData): void
     {
         foreach ($values as $key => $value) {
             $attr = $this->map[$key] ?? null;
 
             if ($attr && $attr instanceof Fillable) {
-                $attr->fill($model, $value);
+                $attr->fill($model, $value, $validatedData);
                 continue;
             }
 

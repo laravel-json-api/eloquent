@@ -3,6 +3,18 @@
 All notable changes to this project will be documented in this file. This project adheres to
 [Semantic Versioning](http://semver.org/) and [this changelog format](http://keepachangelog.com/).
 
+## Unreleased
+
+### Added
+
+- When using the `Attribute::fillUsing()` method to customise filling an attribute value into a model, the closure now
+  receives the entire validated data as its fourth argument.  This allows the closure to use other attributes when
+  calculating the value to fill into the model.
+
+### Changed
+
+- **BREAKING** The `Contracts\Fillable::fill()` method now expects the entire validated data as its third argument.
+
 ## [1.0.0-beta.1] - 2021-03-30
 
 ### Added

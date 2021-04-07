@@ -189,21 +189,22 @@ abstract class Attribute implements AttributeContract, Fillable, Selectable, Sor
     /**
      * @inheritDoc
      */
-    public function fill(Model $model, $value): void
+    public function fill(Model $model, $value, array $validatedData): void
     {
+        $column = $this->column();
         $value = $this->deserialize($value);
 
         if ($this->hydrator) {
-            ($this->hydrator)($model, $this->column(), $value);
+            ($this->hydrator)($model, $column, $value, $validatedData);
             return;
         }
 
         if (false === $this->force) {
-            $model->fill([$this->column() => $value]);
+            $model->fill([$column => $value]);
             return;
         }
 
-        $model->{$this->column()} = $value;
+        $model->{$column} = $value;
     }
 
     /**

@@ -42,10 +42,11 @@ interface Fillable
     public function isNotReadOnly(?Request $request): bool;
 
     /**
-     * Fill the model with the value of the JSON API field.
+     * Fill the model with the value of the JSON:API field.
      *
      * @param Model $model
      * @param mixed $value
+     * @param array $validatedData
      */
-    public function fill(Model $model, $value): void;
+    public function fill(Model $model, $value, array $validatedData): void;
 }

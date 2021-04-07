@@ -97,7 +97,7 @@ class BooleanTest extends TestCase
         $model = new User();
         $attr = Boolean::make('admin');
 
-        $attr->fill($model, $value);
+        $attr->fill($model, $value, []);
         $this->assertSame($value, $model->admin);
     }
 
@@ -126,7 +126,7 @@ class BooleanTest extends TestCase
         $attr = Boolean::make('admin');
 
         $this->expectException(\UnexpectedValueException::class);
-        $attr->fill($model, $value);
+        $attr->fill($model, $value, []);
     }
 
     public function testFillRespectsMassAssignment(): void
@@ -134,7 +134,7 @@ class BooleanTest extends TestCase
         $model = new User();
         $attr = Boolean::make('superUser');
 
-        $attr->fill($model, true);
+        $attr->fill($model, true, []);
         $this->assertArrayNotHasKey('super_user', $model->getAttributes());
     }
 
@@ -143,7 +143,7 @@ class BooleanTest extends TestCase
         $model = new User();
         $attr = Boolean::make('superUser')->unguarded();
 
-        $attr->fill($model, true);
+        $attr->fill($model, true, []);
         $this->assertTrue($model->super_user);
     }
 
@@ -154,7 +154,7 @@ class BooleanTest extends TestCase
             fn($value) => !$value
         );
 
-        $attr->fill($model, true);
+        $attr->fill($model, true, []);
         $this->assertFalse($model->admin);
     }
 
@@ -168,7 +168,7 @@ class BooleanTest extends TestCase
             $model->admin = false;
         });
 
-        $attr->fill($user, true);
+        $attr->fill($user, true, []);
         $this->assertFalse($user->admin);
     }
 

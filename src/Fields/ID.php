@@ -115,7 +115,7 @@ class ID implements IDContract, Fillable
     /**
      * @inheritDoc
      */
-    public function fill(Model $model, $value): void
+    public function fill(Model $model, $value, array $validatedData): void
     {
         $column = $this->column() ?: $model->getRouteKeyName();
 

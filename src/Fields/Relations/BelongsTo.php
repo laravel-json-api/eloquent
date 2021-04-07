@@ -65,7 +65,29 @@ class BelongsTo extends ToOne implements FillableToOne
     /**
      * @inheritDoc
      */
-    public function fill(Model $model, $value): void
+    public function fill(Model $model, $value, array $validatedData): void
+    {
+        $this->setRelation($model, $value);
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function associate(Model $model, ?array $value): ?Model
+    {
+        $this->setRelation($model, $value);
+        $model->save();
+
+        return $model->getRelation($this->relationName());
+    }
+
+    /**
+     * Set the relation using the provided JSON:API value.
+     *
+     * @param Model $model
+     * @param $value
+     */
+    private function setRelation(Model $model, $value): void
     {
         $relation = $model->{$this->relationName()}();
 
@@ -78,17 +100,6 @@ class BelongsTo extends ToOne implements FillableToOne
         } else {
             $relation->disassociate();
         }
-    }
-
-    /**
-     * @inheritDoc
-     */
-    public function associate(Model $model, ?array $value): ?Model
-    {
-        $this->fill($model, $value);
-        $model->save();
-
-        return $model->getRelation($this->relationName());
     }
 
 }

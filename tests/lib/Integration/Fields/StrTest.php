@@ -96,7 +96,7 @@ class StrTest extends TestCase
         $model = new Post();
         $attr = Str::make('title');
 
-        $attr->fill($model, $value);
+        $attr->fill($model, $value, []);
         $this->assertSame($value, $model->title);
     }
 
@@ -124,7 +124,7 @@ class StrTest extends TestCase
         $attr = Str::make('title');
 
         $this->expectException(\UnexpectedValueException::class);
-        $attr->fill($model, $value);
+        $attr->fill($model, $value, []);
     }
 
     public function testFillRespectsMassAssignment(): void
@@ -132,7 +132,7 @@ class StrTest extends TestCase
         $model = new Post();
         $attr = Str::make('displayName');
 
-        $attr->fill($model, 'Hello World');
+        $attr->fill($model, 'Hello World', []);
         $this->assertArrayNotHasKey('display_name', $model->getAttributes());
     }
 
@@ -141,7 +141,7 @@ class StrTest extends TestCase
         $model = new Post();
         $attr = Str::make('displayName')->unguarded();
 
-        $attr->fill($model, 'Hello World');
+        $attr->fill($model, 'Hello World', []);
         $this->assertSame('Hello World', $model->display_name);
     }
 
@@ -152,21 +152,25 @@ class StrTest extends TestCase
             fn($value) => strtoupper($value)
         );
 
-        $attr->fill($model, 'Hello World');
+        $attr->fill($model, 'Hello World', []);
         $this->assertSame('HELLO WORLD', $model->title);
     }
 
     public function testFillUsing(): void
     {
-        $post = new Post();
-        $attr = Str::make('displayName')->fillUsing(function ($model, $column, $value) use ($post) {
-            $this->assertSame($post, $model);
-            $this->assertSame('display_name', $column);
-            $this->assertSame('Hello World', $value);
-            $model->title = 'Hello World!!!';
-        });
+        $data = ['foo' => 'bar'];
 
-        $attr->fill($post, 'Hello World');
+        $post = new Post();
+        $attr = Str::make('displayName')
+            ->fillUsing(function ($model, $column, $value, array $validatedData) use ($post, $data) {
+                $this->assertSame($post, $model);
+                $this->assertSame('display_name', $column);
+                $this->assertSame('Hello World', $value);
+                $this->assertSame($data, $validatedData);
+                $model->title = 'Hello World!!!';
+            });
+
+        $attr->fill($post, 'Hello World', $data);
         $this->assertSame('Hello World!!!', $post->title);
     }
 

@@ -141,7 +141,7 @@ class ModelHydrator implements ResourceBuilder
         $field = $this->schema->id();
 
         if ($this->mustFill($field, $validatedData)) {
-            $field->fill($this->model, $validatedData[$field->name()]);
+            $field->fill($this->model, $validatedData[$field->name()], $validatedData);
         }
     }
 
@@ -156,7 +156,7 @@ class ModelHydrator implements ResourceBuilder
         /** @var Attribute|Fillable $attribute */
         foreach ($this->schema->attributes() as $attribute) {
             if ($this->mustFill($attribute, $validatedData)) {
-                $attribute->fill($this->model, $validatedData[$attribute->name()]);
+                $attribute->fill($this->model, $validatedData[$attribute->name()], $validatedData);
             }
         }
     }
@@ -209,7 +209,7 @@ class ModelHydrator implements ResourceBuilder
             }
 
             if ($this->mustFill($field, $validatedData)) {
-                $field->fill($this->model, $validatedData[$field->name()]);
+                $field->fill($this->model, $validatedData[$field->name()], $validatedData);
             }
         }
 
@@ -227,7 +227,7 @@ class ModelHydrator implements ResourceBuilder
         /** @var Relation|Fillable $field */
         foreach ($deferred as $field) {
             if ($this->mustFill($field, $validatedData)) {
-                $field->fill($this->model, $validatedData[$field->name()]);
+                $field->fill($this->model, $validatedData[$field->name()], $validatedData);
             }
         }
     }

@@ -96,7 +96,7 @@ class DateTimeTest extends TestCase
 
         $attr = DateTime::make('publishedAt')->retainTimezone();
 
-        $attr->fill($model, null);
+        $attr->fill($model, null, []);
     }
 
     public function testAppTimezone(): void
@@ -112,7 +112,7 @@ class DateTimeTest extends TestCase
 
         $attr = DateTime::make('publishedAt');
 
-        $attr->fill($model, '2020-11-23T11:48:17.000000-05:00');
+        $attr->fill($model, '2020-11-23T11:48:17.000000-05:00', []);
     }
 
     public function testSpecifiedTimezone(): void
@@ -129,7 +129,7 @@ class DateTimeTest extends TestCase
         $attr = DateTime::make('publishedAt')->useTimezone('America/New_York');
 
         // 10 hours ahead of New York. (5 ahead of UTC, then New York is 5 behind UTC)
-        $attr->fill($model, '2020-11-23T11:48:17.000000+05:00');
+        $attr->fill($model, '2020-11-23T11:48:17.000000+05:00', []);
     }
 
     public function testRetainTimezone(): void
@@ -145,7 +145,7 @@ class DateTimeTest extends TestCase
 
         $attr = DateTime::make('publishedAt')->retainTimezone();
 
-        $attr->fill($model, '2020-11-23T11:48:17.000000-05:00');
+        $attr->fill($model, '2020-11-23T11:48:17.000000-05:00', []);
     }
 
     /**
@@ -173,7 +173,7 @@ class DateTimeTest extends TestCase
         $attr = DateTime::make('publishedAt');
 
         $this->expectException(\UnexpectedValueException::class);
-        $attr->fill($model, $value);
+        $attr->fill($model, $value, []);
     }
 
     public function testFillRespectsMassAssignment(): void
@@ -181,7 +181,7 @@ class DateTimeTest extends TestCase
         $model = new Post();
         $attr = DateTime::make('createdAt');
 
-        $attr->fill($model, '2020-11-23T11:48:17.238552Z');
+        $attr->fill($model, '2020-11-23T11:48:17.238552Z', []);
         $this->assertArrayNotHasKey('created_at', $model->getAttributes());
     }
 
@@ -190,7 +190,7 @@ class DateTimeTest extends TestCase
         $model = new Post();
         $attr = DateTime::make('createdAt')->unguarded();
 
-        $attr->fill($model, '2020-11-23T11:48:17.000000Z');
+        $attr->fill($model, '2020-11-23T11:48:17.000000Z', []);
         $this->assertEquals(Carbon::parse('2020-11-23T11:48:17.000000Z'), $model->created_at);
     }
 
@@ -201,7 +201,7 @@ class DateTimeTest extends TestCase
             fn($value) => Carbon::parse($value)->addHour()
         );
 
-        $attr->fill($model, '2020-11-23T11:48:17.000000Z');
+        $attr->fill($model, '2020-11-23T11:48:17.000000Z', []);
         $this->assertEquals(Carbon::parse('2020-11-23T12:48:17.000000Z'), $model->published_at);
     }
 
@@ -215,7 +215,7 @@ class DateTimeTest extends TestCase
             $model->published_at = $value->subDay();
         });
 
-        $attr->fill($post, '2020-11-23T11:48:17.000000Z');
+        $attr->fill($post, '2020-11-23T11:48:17.000000Z', []);
         $this->assertSame('2020-11-22T11:48:17.000000Z', $post->published_at->toJSON());
     }
 

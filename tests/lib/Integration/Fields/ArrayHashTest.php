@@ -95,7 +95,7 @@ class ArrayHashTest extends TestCase
         $model = new Role();
         $attr = ArrayHash::make('permissions');
 
-        $attr->fill($model, $value);
+        $attr->fill($model, $value, []);
         $this->assertSame($value, $model->permissions);
     }
 
@@ -125,7 +125,7 @@ class ArrayHashTest extends TestCase
         $attr = ArrayHash::make('permissions');
 
         $this->expectException(\UnexpectedValueException::class);
-        $attr->fill($model, $value);
+        $attr->fill($model, $value, []);
     }
 
     public function testFillRespectsMassAssignment(): void
@@ -133,7 +133,7 @@ class ArrayHashTest extends TestCase
         $model = new Role();
         $attr = ArrayHash::make('accessPermissions');
 
-        $attr->fill($model, ['foo' => 'bar']);
+        $attr->fill($model, ['foo' => 'bar'], []);
         $this->assertArrayNotHasKey('access_permissions', $model->getAttributes());
     }
 
@@ -142,7 +142,7 @@ class ArrayHashTest extends TestCase
         $model = new Role();
         $attr = ArrayHash::make('accessPermissions')->unguarded();
 
-        $attr->fill($model, ['foo' => 'bar']);
+        $attr->fill($model, ['foo' => 'bar'], []);
         $this->assertSame(['foo' => 'bar'], $model->access_permissions);
     }
 
@@ -155,7 +155,7 @@ class ArrayHashTest extends TestCase
                 ->all()
         );
 
-        $attr->fill($model, ['a' => 'foo', 'b' => 'bar']);
+        $attr->fill($model, ['a' => 'foo', 'b' => 'bar'], []);
         $this->assertSame(['a' => 'FOO', 'b' => 'BAR'], $model->permissions);
     }
 
@@ -169,7 +169,7 @@ class ArrayHashTest extends TestCase
             $model->permissions = ['foo', 'bar'];
         });
 
-        $attr->fill($role, ['foo' => 'bar']);
+        $attr->fill($role, ['foo' => 'bar'], []);
         $this->assertSame(['foo', 'bar'], $role->permissions);
     }
 
@@ -178,7 +178,7 @@ class ArrayHashTest extends TestCase
         $model = new Role();
         $attr = ArrayHash::make('permissions')->sorted();
 
-        $attr->fill($model, ['bar' => 'foobar', 'foo' => 'bazbat']);
+        $attr->fill($model, ['bar' => 'foobar', 'foo' => 'bazbat'], []);
         $this->assertSame(['foo' => 'bazbat', 'bar' => 'foobar'], $model->permissions);
     }
 
@@ -187,7 +187,7 @@ class ArrayHashTest extends TestCase
         $model = new Role();
         $attr = ArrayHash::make('permissions')->sortKeys();
 
-        $attr->fill($model, ['foo' => 'bar', 'baz' => 'bat']);
+        $attr->fill($model, ['foo' => 'bar', 'baz' => 'bat'], []);
         $this->assertSame(['baz' => 'bat', 'foo' => 'bar'], $model->permissions);
     }
 
@@ -202,7 +202,7 @@ class ArrayHashTest extends TestCase
         $attr->fill($model, $json = [
             'foo_bar' => 'foobar',
             'baz_bat' => 'bazbat',
-        ]);
+        ], []);
 
         $this->assertSame([
             'fooBar' => 'foobar',
@@ -223,7 +223,7 @@ class ArrayHashTest extends TestCase
         $attr->fill($model, $json = [
             'foo_bar' => 'foobar',
             'baz_bat' => 'bazbat',
-        ]);
+        ], []);
 
         $this->assertSame([
             'foo-bar' => 'foobar',
@@ -244,7 +244,7 @@ class ArrayHashTest extends TestCase
         $attr->fill($model, $json = [
             'foo_bar' => 'foobar',
             'baz_bat' => 'bazbat',
-        ]);
+        ], []);
 
         $this->assertSame([
             'fooBar' => 'foobar',
@@ -265,7 +265,7 @@ class ArrayHashTest extends TestCase
         $attr->fill($model, $json = [
             'foo_bar' => 'foobar',
             'baz_bat' => 'bazbat',
-        ]);
+        ], []);
 
         $this->assertSame([
             'foo-bar' => 'foobar',
@@ -286,7 +286,7 @@ class ArrayHashTest extends TestCase
         $attr->fill($model, $json = [
             'foo-bar' => 'foobar',
             'baz-bat' => 'bazbat',
-        ]);
+        ], []);
 
         $this->assertSame([
             'fooBar' => 'foobar',
@@ -307,7 +307,7 @@ class ArrayHashTest extends TestCase
         $attr->fill($model, $json = [
             'foo-bar' => 'foobar',
             'baz-bat' => 'bazbat',
-        ]);
+        ], []);
 
         $this->assertSame([
             'foo_bar' => 'foobar',
@@ -328,7 +328,7 @@ class ArrayHashTest extends TestCase
         $attr->fill($model, $json = [
             'foo-bar' => 'foobar',
             'baz-bat' => 'bazbat',
-        ]);
+        ], []);
 
         $this->assertSame([
             'foo_bar' => 'foobar',
@@ -349,7 +349,7 @@ class ArrayHashTest extends TestCase
         $attr->fill($model, $json = [
             'fooBar' => 'foobar',
             'bazBat' => 'bazbat',
-        ]);
+        ], []);
 
         $this->assertSame([
             'foo_bar' => 'foobar',
@@ -370,7 +370,7 @@ class ArrayHashTest extends TestCase
         $attr->fill($model, $json = [
             'fooBar' => 'foobar',
             'bazBat' => 'bazbat',
-        ]);
+        ], []);
 
         $this->assertSame([
             'foo_bar' => 'foobar',
@@ -391,7 +391,7 @@ class ArrayHashTest extends TestCase
         $attr->fill($model, $json = [
             'fooBar' => 'foobar',
             'bazBat' => 'bazbat',
-        ]);
+        ], []);
 
         $this->assertSame([
             'foo-bar' => 'foobar',

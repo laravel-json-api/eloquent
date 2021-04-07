@@ -109,7 +109,7 @@ class SoftDeleteTest extends TestCase
 
         $attr = SoftDelete::make('deletedAt')->retainTimezone();
 
-        $attr->fill($model, null);
+        $attr->fill($model, null, []);
     }
 
     public function testAppTimezone(): void
@@ -124,7 +124,7 @@ class SoftDeleteTest extends TestCase
 
         $attr = SoftDelete::make('deletedAt');
 
-        $attr->fill($model, '2020-11-23T11:48:17.000000-05:00');
+        $attr->fill($model, '2020-11-23T11:48:17.000000-05:00', []);
     }
 
     public function testSpecifiedTimezone(): void
@@ -140,7 +140,7 @@ class SoftDeleteTest extends TestCase
         $attr = SoftDelete::make('deletedAt')->useTimezone('America/New_York');
 
         // 10 hours ahead of New York. (5 ahead of UTC, then New York is 5 behind UTC)
-        $attr->fill($model, '2020-11-23T11:48:17.000000+05:00');
+        $attr->fill($model, '2020-11-23T11:48:17.000000+05:00', []);
     }
 
     public function testRetainTimezone(): void
@@ -155,7 +155,7 @@ class SoftDeleteTest extends TestCase
 
         $attr = SoftDelete::make('deletedAt')->retainTimezone();
 
-        $attr->fill($model, '2020-11-23T11:48:17.000000-05:00');
+        $attr->fill($model, '2020-11-23T11:48:17.000000-05:00', []);
     }
 
     /**
@@ -183,7 +183,7 @@ class SoftDeleteTest extends TestCase
         $attr = SoftDelete::make('deletedAt');
 
         $this->expectException(\UnexpectedValueException::class);
-        $attr->fill($model, $value);
+        $attr->fill($model, $value, []);
     }
 
     public function testBooleanIsTrue(): void
@@ -197,7 +197,7 @@ class SoftDeleteTest extends TestCase
             return true;
         }))->willReturnSelf();
 
-        $attr->fill($model, true);
+        $attr->fill($model, true, []);
     }
 
     public function testBooleanIsFalse(): void
@@ -210,7 +210,7 @@ class SoftDeleteTest extends TestCase
             return true;
         }))->willReturnSelf();
 
-        $attr->fill($model, false);
+        $attr->fill($model, false, []);
     }
 
     public function testBooleanIsNull(): void
@@ -223,7 +223,7 @@ class SoftDeleteTest extends TestCase
             return true;
         }))->willReturnSelf();
 
-        $attr->fill($model, null);
+        $attr->fill($model, null, []);
     }
 
     /**
@@ -251,7 +251,7 @@ class SoftDeleteTest extends TestCase
         $attr = SoftDelete::make('archived', 'deleted_at')->asBoolean();
 
         $this->expectException(\UnexpectedValueException::class);
-        $attr->fill($model, $value);
+        $attr->fill($model, $value, []);
     }
 
     public function testDeserializeUsing(): void
@@ -261,7 +261,7 @@ class SoftDeleteTest extends TestCase
             fn($value) => Carbon::parse($value)->addHour()
         );
 
-        $attr->fill($model, '2020-11-23T11:48:17.000000Z');
+        $attr->fill($model, '2020-11-23T11:48:17.000000Z', []);
         $this->assertEquals(Carbon::parse('2020-11-23T12:48:17.000000Z'), $model->deleted_at);
     }
 
@@ -275,7 +275,7 @@ class SoftDeleteTest extends TestCase
             $model->deleted_at = $value->subDay();
         });
 
-        $attr->fill($post, '2020-11-23T11:48:17.000000Z');
+        $attr->fill($post, '2020-11-23T11:48:17.000000Z', []);
         $this->assertSame('2020-11-22T11:48:17.000000Z', $post->deleted_at->toJSON());
     }
 

@@ -96,7 +96,7 @@ class NumberTest extends TestCase
         $model = new Post();
         $attr = Number::make('title');
 
-        $attr->fill($model, $value);
+        $attr->fill($model, $value, []);
         $this->assertSame($value, $model->title);
     }
 
@@ -125,7 +125,7 @@ class NumberTest extends TestCase
         $attr = Number::make('title');
 
         $this->expectException(\UnexpectedValueException::class);
-        $attr->fill($model, $value);
+        $attr->fill($model, $value, []);
     }
 
     public function testFillRespectsMassAssignment(): void
@@ -133,7 +133,7 @@ class NumberTest extends TestCase
         $model = new Post();
         $attr = Number::make('views');
 
-        $attr->fill($model, 200);
+        $attr->fill($model, 200, []);
         $this->assertArrayNotHasKey('views', $model->getAttributes());
     }
 
@@ -142,7 +142,7 @@ class NumberTest extends TestCase
         $model = new Post();
         $attr = Number::make('views')->unguarded();
 
-        $attr->fill($model, 200);
+        $attr->fill($model, 200, []);
         $this->assertSame(200, $model->views);
     }
 
@@ -153,7 +153,7 @@ class NumberTest extends TestCase
             fn($value) => $value + 200
         );
 
-        $attr->fill($model, 100);
+        $attr->fill($model, 100, []);
         $this->assertSame(300, $model->title);
     }
 
@@ -167,7 +167,7 @@ class NumberTest extends TestCase
             $model->views = 300;
         });
 
-        $attr->fill($post, 200);
+        $attr->fill($post, 200, []);
         $this->assertSame(300, $post->views);
     }
 

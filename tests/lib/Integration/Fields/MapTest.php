@@ -53,7 +53,7 @@ class MapTest extends TestCase
             Number::make('bar', 'option_bar')->unguarded(),
         ]);
 
-        $map->fill($model, null);
+        $map->fill($model, null, []);
 
         $this->assertEquals([
             'option_foo' => null,
@@ -74,7 +74,7 @@ class MapTest extends TestCase
             Number::make('bar', 'option_bar')->unguarded(),
         ])->ignoreNull();
 
-        $map->fill($model, null);
+        $map->fill($model, null, []);
 
         $this->assertEquals($expected, $model->getAttributes());
     }
@@ -91,7 +91,7 @@ class MapTest extends TestCase
         $map->fill($model, [
             'foo' => 'foobar',
             'bar' => 123,
-        ]);
+        ], []);
 
         $this->assertEquals([
             'option_foo' => 'foobar',
@@ -115,7 +115,7 @@ class MapTest extends TestCase
         $map->fill($model, [
             'bar' => 123,
             'bazbat' => 'blah!',
-        ]);
+        ], []);
     }
 
     public function testReadOnly(): void

@@ -49,7 +49,7 @@ class HasMany extends ToMany implements FillableToMany
     /**
      * @inheritDoc
      */
-    public function fill(Model $model, $value): void
+    public function fill(Model $model, $value, array $validatedData): void
     {
         if (is_array($value)) {
             $this->sync($model, $value);
