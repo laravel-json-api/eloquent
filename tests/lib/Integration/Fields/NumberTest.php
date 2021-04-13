@@ -20,6 +20,7 @@ declare(strict_types=1);
 namespace LaravelJsonApi\Eloquent\Tests\Integration\Fields;
 
 use App\Models\Post;
+use App\Models\User;
 use Illuminate\Http\Request;
 use LaravelJsonApi\Eloquent\Fields\Number;
 use LaravelJsonApi\Eloquent\Tests\Integration\TestCase;
@@ -96,7 +97,9 @@ class NumberTest extends TestCase
         $model = new Post();
         $attr = Number::make('title');
 
-        $attr->fill($model, $value, []);
+        $result = $attr->fill($model, $value, []);
+
+        $this->assertNull($result);
         $this->assertSame($value, $model->title);
     }
 
@@ -169,6 +172,17 @@ class NumberTest extends TestCase
 
         $attr->fill($post, 200, []);
         $this->assertSame(300, $post->views);
+    }
+
+    public function testFillRelated(): void
+    {
+        $user = new User();
+
+        $attr = Number::make('views')->on('profile')->unguarded();
+
+        $attr->fill($user, 99, []);
+
+        $this->assertSame(99, $user->profile->views);
     }
 
     public function testReadOnly(): void
@@ -245,6 +259,19 @@ class NumberTest extends TestCase
         );
 
         $this->assertSame(200, $attr->serialize($post));
+    }
+
+    public function testSerializeRelated(): void
+    {
+        $user = new User();
+
+        $attr = Number::make('views')->on('profile');
+
+        $this->assertNull($attr->serialize($user));
+
+        $user->profile->views = 99;
+
+        $this->assertSame(99, $attr->serialize($user));
     }
 
     public function testHidden(): void

@@ -17,34 +17,30 @@
 
 declare(strict_types=1);
 
-namespace LaravelJsonApi\Eloquent\Contracts;
+namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-interface FillableToOne extends ReadOnly
+class UserProfile extends Model
 {
 
-    /**
-     * Does the model need to exist in the database before the relation is filled?
-     *
-     * @return bool
-     */
-    public function mustExist(): bool;
+    use HasFactory;
 
     /**
-     * Fill the model with the value of the JSON:API to-one relation.
-     *
-     * @param Model $model
-     * @param mixed $identifier
+     * @var string[]
      */
-    public function fill(Model $model, ?array $identifier): void;
+    protected $fillable = [
+        'description',
+        'image',
+    ];
 
     /**
-     * Replace the relationship.
-     *
-     * @param Model $model
-     * @param array|null $identifier
-     * @return Model|null
+     * @return BelongsTo
      */
-    public function associate(Model $model, ?array $identifier): ?Model;
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
+    }
 }

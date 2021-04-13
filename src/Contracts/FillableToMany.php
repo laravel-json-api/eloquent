@@ -23,8 +23,16 @@ use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Database\Eloquent\Model;
 use LaravelJsonApi\Eloquent\Polymorphism\MorphMany;
 
-interface FillableToMany extends Fillable
+interface FillableToMany extends ReadOnly
 {
+
+    /**
+     * Fill the model with the value of the JSON:API to-many relation.
+     *
+     * @param Model $model
+     * @param array $identifiers
+     */
+    public function fill(Model $model, array $identifiers): void;
 
     /**
      * Completely replace every member of the relationship with the specified members.

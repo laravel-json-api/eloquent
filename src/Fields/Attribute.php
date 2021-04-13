@@ -30,12 +30,16 @@ use LaravelJsonApi\Core\Support\Str;
 use LaravelJsonApi\Eloquent\Contracts\Fillable;
 use LaravelJsonApi\Eloquent\Contracts\Selectable;
 use LaravelJsonApi\Eloquent\Contracts\Sortable as SortableContract;
+use LaravelJsonApi\Eloquent\Fields\Concerns\Hideable;
+use LaravelJsonApi\Eloquent\Fields\Concerns\OnRelated;
+use LaravelJsonApi\Eloquent\Fields\Concerns\ReadOnly;
 
 abstract class Attribute implements AttributeContract, Fillable, Selectable, SortableContract, SerializableContract
 {
 
-    use Concerns\Hideable;
-    use Concerns\ReadOnly;
+    use Hideable;
+    use OnRelated;
+    use ReadOnly;
     use Sortable;
     use SparseField;
 
@@ -199,12 +203,14 @@ abstract class Attribute implements AttributeContract, Fillable, Selectable, Sor
             return;
         }
 
+        $owner = $this->owner($model);
+
         if (false === $this->force) {
-            $model->fill([$column => $value]);
+            $owner->fill([$column => $value]);
             return;
         }
 
-        $model->{$column} = $value;
+        $owner->{$column} = $value;
     }
 
     /**
@@ -223,7 +229,8 @@ abstract class Attribute implements AttributeContract, Fillable, Selectable, Sor
      */
     public function serialize(object $model)
     {
-        $value = $model->{$this->column()};
+        $owner = $this->related ? $model->{$this->related} : $model;
+        $value = $owner->{$this->column()};
 
         if ($this->serializer) {
             return ($this->serializer)($value);

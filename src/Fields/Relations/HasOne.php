@@ -54,26 +54,7 @@ class HasOne extends ToOne implements FillableToOne
     /**
      * @inheritDoc
      */
-    public function fill(Model $model, $value, array $validatedData): void
-    {
-        $this->setRelation($model, $value);
-    }
-
-    /**
-     * @inheritDoc
-     */
-    public function associate(Model $model, $value): ?Model
-    {
-        $this->setRelation($model, $value);
-
-        return $model->getRelation($this->relationName());
-    }
-
-    /**
-     * @param Model $model
-     * @param $value
-     */
-    private function setRelation(Model $model, $value): void
+    public function fill(Model $model, ?array $identifier): void
     {
         $relation = $model->{$this->relationName()}();
 
@@ -83,13 +64,23 @@ class HasOne extends ToOne implements FillableToOne
 
         /** @var Model|null $current */
         $current = $model->{$this->relationName()};
-        $related = $this->find($value);
+        $related = $this->find($identifier);
 
         if ($this->willChange($current, $related)) {
-            $current ? $this->clear($relation, $current) : null;
-            $related ? $relation->save($related) : null;
+            if ($current) $this->clear($relation, $current);
+            if ($related) $relation->save($related);
             $model->setRelation($this->relationName(), $related);
         }
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function associate(Model $model, ?array $identifier): ?Model
+    {
+        $this->fill($model, $identifier);
+
+        return $model->getRelation($this->relationName());
     }
 
     /**

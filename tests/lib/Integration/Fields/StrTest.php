@@ -20,6 +20,9 @@ declare(strict_types=1);
 namespace LaravelJsonApi\Eloquent\Tests\Integration\Fields;
 
 use App\Models\Post;
+use App\Models\User;
+use App\Models\UserProfile;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
 use LaravelJsonApi\Eloquent\Fields\Str;
 use LaravelJsonApi\Eloquent\Tests\Integration\TestCase;
@@ -96,8 +99,10 @@ class StrTest extends TestCase
         $model = new Post();
         $attr = Str::make('title');
 
-        $attr->fill($model, $value, []);
+        $result = $attr->fill($model, $value, []);
+
         $this->assertSame($value, $model->title);
+        $this->assertNull($result);
     }
 
     /**
@@ -174,6 +179,17 @@ class StrTest extends TestCase
         $this->assertSame('Hello World!!!', $post->title);
     }
 
+    public function testFillRelated(): void
+    {
+        $user = new User();
+
+        $attr = Str::make('description')->on('profile');
+
+        $attr->fill($user, $expected = 'This is a description.', []);
+
+        $this->assertEquals($expected, $user->profile->description);
+    }
+
     public function testReadOnly(): void
     {
         $request = $this->createMock(Request::class);
@@ -247,6 +263,19 @@ class StrTest extends TestCase
         );
 
         $this->assertSame('HELLO WORLD', $attr->serialize($post));
+    }
+
+    public function testSerializeRelated(): void
+    {
+        $user = new User();
+
+        $attr = Str::make('description')->on('profile');
+
+        $this->assertNull($attr->serialize($user));
+
+        $user->profile->description = $expected = 'This is a description.';
+
+        $this->assertSame($expected, $attr->serialize($user));
     }
 
     public function testHidden(): void

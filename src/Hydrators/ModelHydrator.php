@@ -20,8 +20,10 @@ declare(strict_types=1);
 namespace LaravelJsonApi\Eloquent\Hydrators;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Collection;
 use LaravelJsonApi\Contracts\Schema\Attribute;
 use LaravelJsonApi\Contracts\Schema\Field;
+use LaravelJsonApi\Contracts\Schema\Relation as RelationContract;
 use LaravelJsonApi\Contracts\Store\ResourceBuilder;
 use LaravelJsonApi\Core\Query\Custom\ExtendedQueryParameters;
 use LaravelJsonApi\Eloquent\Contracts\Driver;
@@ -121,10 +123,12 @@ class ModelHydrator implements ResourceBuilder
 
         $this->model->getConnection()->transaction(function () use ($validatedData) {
             $this->fillId($validatedData);
-            $this->fillAttributes($validatedData);
-            $deferred = $this->fillRelationships($validatedData);
+            $deferredAttributes = $this->fillAttributes($validatedData);
+            $deferredRelations = $this->fillRelationships($validatedData);
             $this->persist();
-            $this->fillDeferredRelationships($deferred, $validatedData);
+            $this->fillDeferredAttributes($deferredAttributes, $validatedData);
+            $this->persistAfterDeferredAttributes();
+            $this->fillDeferredRelationships($deferredRelations, $validatedData);
         });
 
         return $this->model;
@@ -140,7 +144,7 @@ class ModelHydrator implements ResourceBuilder
     {
         $field = $this->schema->id();
 
-        if ($this->mustFill($field, $validatedData)) {
+        if ($this->mustFillIdOrAttribute($field, $validatedData)) {
             $field->fill($this->model, $validatedData[$field->name()], $validatedData);
         }
     }
@@ -149,13 +153,39 @@ class ModelHydrator implements ResourceBuilder
      * Hydrate JSON API attributes into the model.
      *
      * @param array $validatedData
-     * @return void
+     * @return array
+     *      attributes that must be filled after the model is saved.
      */
-    private function fillAttributes(array $validatedData): void
+    private function fillAttributes(array $validatedData): array
     {
+        $defer = [];
+
         /** @var Attribute|Fillable $attribute */
         foreach ($this->schema->attributes() as $attribute) {
-            if ($this->mustFill($attribute, $validatedData)) {
+            if ($this->mustDeferAttribute($attribute)) {
+                $defer[] = $attribute;
+                continue;
+            }
+
+            if ($this->mustFillIdOrAttribute($attribute, $validatedData)) {
+                $attribute->fill($this->model, $validatedData[$attribute->name()], $validatedData);
+            }
+        }
+
+        return $defer;
+    }
+
+    /**
+     * Fill attributes that were deferred until after the model was saved.
+     *
+     * @param array $validatedData
+     * @return void
+     */
+    private function fillDeferredAttributes(iterable $deferred, array $validatedData): void
+    {
+        /** @var Attribute|Fillable $attribute */
+        foreach ($deferred as $attribute) {
+            if ($this->mustFillIdOrAttribute($attribute, $validatedData)) {
                 $attribute->fill($this->model, $validatedData[$attribute->name()], $validatedData);
             }
         }
@@ -164,20 +194,11 @@ class ModelHydrator implements ResourceBuilder
     /**
      * Should a value be filled into the supplied field?
      *
-     * Fields are only fillable if they implement the Eloquent fillable
-     * interface. When that is true, if a request has been set on the
-     * hydrator, the field is checked for whether it is read only.
-     *
-     * If no request has been set, we assume we are operating
-     * outside the context of a HTTP request; i.e. that the developer
-     * is passing through data intentionally. In these circumstances,
-     * we don't need to check if the field is read only.
-     *
      * @param Field $field
      * @param array $validatedData
      * @return bool
      */
-    private function mustFill(Field $field, array $validatedData): bool
+    private function mustFillIdOrAttribute(Field $field, array $validatedData): bool
     {
         if (!$field instanceof Fillable) {
             return false;
@@ -191,7 +212,39 @@ class ModelHydrator implements ResourceBuilder
     }
 
     /**
-     * Hydrate JSON API relationships into the model.
+     * Does filling the relation need to be deferred until after the model is persisted?
+     *
+     * Attributes *never* need to be deferred if the primary model already exists. This
+     * is because any relationships that use the `withDefault()` method will work if
+     * the primary model is already persisted (because the related key is properly
+     * set). So if the model already exists, we can just allow all attributes to be
+     * filled at once regardless of whether they are filled into the primary model or
+     * a related model.
+     *
+     * If the model is being created, a relationship that uses the `withDefault()` method
+     * cannot be filled *before* the primary model is saved. This is because the related
+     * key will not be set properly, as the primary model's primary key will be `null`
+     * before being created. In this scenario, we need to defer any attributes that
+     * need the primary model to exist, and fill them in a second pass.
+     *
+     * @param Field $field
+     * @return bool
+     */
+    private function mustDeferAttribute(Field $field): bool
+    {
+        if (true === $this->model->exists) {
+            return false;
+        }
+
+        if ($field instanceof Fillable) {
+            return $field->mustExist();
+        }
+
+        return false;
+    }
+
+    /**
+     * Hydrate JSON:API relationships into the model.
      *
      * @param array $validatedData
      * @return array
@@ -201,19 +254,58 @@ class ModelHydrator implements ResourceBuilder
     {
         $defer = [];
 
-        /** @var Relation|Fillable $field */
+        /** @var Relation|FillableToOne|FillableToMany $field */
         foreach ($this->schema->relationships() as $field) {
-            if ($field instanceof FillableToMany || ($field instanceof FillableToOne && $field->mustExist())) {
+            if ($this->mustDeferRelation($field)) {
                 $defer[] = $field;
                 continue;
             }
 
-            if ($this->mustFill($field, $validatedData)) {
-                $field->fill($this->model, $validatedData[$field->name()], $validatedData);
+            if ($this->mustFillRelation($field, $validatedData)) {
+                $field->fill($this->model, $validatedData[$field->name()]);
             }
         }
 
         return $defer;
+    }
+
+    /**
+     * Should a value be filled into the supplied field?
+     *
+     * @param RelationContract $field
+     * @param array $validatedData
+     * @return bool
+     */
+    private function mustFillRelation(RelationContract $field, array $validatedData): bool
+    {
+        if (!$field instanceof FillableToOne && !$field instanceof FillableToMany) {
+            return false;
+        }
+
+        if ($field->isReadOnly($this->request)) {
+            return false;
+        }
+
+        return array_key_exists($field->name(), $validatedData);
+    }
+
+    /**
+     * Does filling the relation need to be deferred until after the model is persisted?
+     *
+     * @param $relation
+     * @return bool
+     */
+    private function mustDeferRelation($relation): bool
+    {
+        if ($relation instanceof FillableToMany) {
+            return true;
+        }
+
+        if ($relation instanceof FillableToOne) {
+            return $relation->mustExist();
+        }
+
+        return false;
     }
 
     /**
@@ -224,10 +316,10 @@ class ModelHydrator implements ResourceBuilder
      */
     private function fillDeferredRelationships(iterable $deferred, array $validatedData): void
     {
-        /** @var Relation|Fillable $field */
+        /** @var Relation|FillableToOne|FillableToMany $field */
         foreach ($deferred as $field) {
-            if ($this->mustFill($field, $validatedData)) {
-                $field->fill($this->model, $validatedData[$field->name()], $validatedData);
+            if ($this->mustFillRelation($field, $validatedData)) {
+                $field->fill($this->model, $validatedData[$field->name()]);
             }
         }
     }
@@ -241,6 +333,42 @@ class ModelHydrator implements ResourceBuilder
     {
         if (true !== $this->driver->persist($this->model)) {
             throw new RuntimeException('Failed to save resource.');
+        }
+    }
+
+    /**
+     * Store any related models that are dirty as a result of filling attributes.
+     *
+     * @return void
+     */
+    private function persistAfterDeferredAttributes(): void
+    {
+        /**
+         * If deferred attributes have caused the model to become dirty, we will need to
+         * save it again. There are only very limited circumstances where this might occur.
+         * Primarily, if the `Map` field contains a mixture of attributes on the primary
+         * model and on related models, it will be deferred and will cause the primary model
+         * to become dirty when it is later filled. This will only occur on create -
+         * because the model hydrator *never* defers attributes if the model already exists.
+         *
+         * In the vast majority of cases, the primary model will not be dirty here, so we
+         * won't get another save.
+         */
+        if ($this->model->isDirty()) {
+            $this->persist();
+        }
+
+        foreach ($this->model->getRelations() as $key => $related) {
+            /** @var Model $model */
+            foreach (Collection::wrap($related) as $model) {
+                if ($model->isDirty() && true !== $model->save()) {
+                    throw new RuntimeException(sprintf(
+                        'Failed to save related model %s on relation %s.',
+                        get_class($model),
+                        $key,
+                    ));
+                }
+            }
         }
     }
 }

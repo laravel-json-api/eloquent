@@ -20,6 +20,7 @@ declare(strict_types=1);
 namespace LaravelJsonApi\Eloquent\Tests\Integration\Fields;
 
 use App\Models\Role;
+use App\Models\User;
 use Illuminate\Http\Request;
 use LaravelJsonApi\Eloquent\Fields\ArrayHash;
 use LaravelJsonApi\Eloquent\Tests\Integration\TestCase;
@@ -95,7 +96,9 @@ class ArrayHashTest extends TestCase
         $model = new Role();
         $attr = ArrayHash::make('permissions');
 
-        $attr->fill($model, $value, []);
+        $result = $attr->fill($model, $value, []);
+
+        $this->assertNull($result);
         $this->assertSame($value, $model->permissions);
     }
 
@@ -180,6 +183,17 @@ class ArrayHashTest extends TestCase
 
         $attr->fill($model, ['bar' => 'foobar', 'foo' => 'bazbat'], []);
         $this->assertSame(['foo' => 'bazbat', 'bar' => 'foobar'], $model->permissions);
+    }
+
+    public function testFillRelated(): void
+    {
+        $user = new User();
+
+        $attr = ArrayHash::make('permissions')->on('profile')->unguarded();
+
+        $attr->fill($user, ['foo' => 'bar'], []);
+
+        $this->assertEquals(['foo' => 'bar'], $user->profile->permissions);
     }
 
     public function testSortKeys(): void
@@ -505,6 +519,19 @@ class ArrayHashTest extends TestCase
             ['baz' => 'bat'],
             $attr->serialize($model)->jsonSerialize()
         );
+    }
+
+    public function testSerializeRelated(): void
+    {
+        $user = new User();
+
+        $attr = ArrayHash::make('permissions')->on('profile');
+
+        $this->assertNull($attr->serialize($user)->jsonSerialize());
+
+        $user->profile->permissions = ['foo' => 'bar'];
+
+        $this->assertEquals(['foo' => 'bar'], $attr->serialize($user)->jsonSerialize());
     }
 
     public function testSerializeSorted(): void

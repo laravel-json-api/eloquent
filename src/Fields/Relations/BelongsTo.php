@@ -65,29 +65,7 @@ class BelongsTo extends ToOne implements FillableToOne
     /**
      * @inheritDoc
      */
-    public function fill(Model $model, $value, array $validatedData): void
-    {
-        $this->setRelation($model, $value);
-    }
-
-    /**
-     * @inheritDoc
-     */
-    public function associate(Model $model, ?array $value): ?Model
-    {
-        $this->setRelation($model, $value);
-        $model->save();
-
-        return $model->getRelation($this->relationName());
-    }
-
-    /**
-     * Set the relation using the provided JSON:API value.
-     *
-     * @param Model $model
-     * @param $value
-     */
-    private function setRelation(Model $model, $value): void
+    public function fill(Model $model, ?array $identifier): void
     {
         $relation = $model->{$this->relationName()}();
 
@@ -95,11 +73,22 @@ class BelongsTo extends ToOne implements FillableToOne
             throw new LogicException('Expecting an Eloquent belongs-to relation.');
         }
 
-        if ($related = $this->find($value)) {
+        if ($related = $this->find($identifier)) {
             $relation->associate($related);
         } else {
             $relation->disassociate();
         }
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function associate(Model $model, ?array $identifier): ?Model
+    {
+        $this->fill($model, $identifier);
+        $model->save();
+
+        return $model->getRelation($this->relationName());
     }
 
 }

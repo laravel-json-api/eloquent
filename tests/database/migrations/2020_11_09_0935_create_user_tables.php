@@ -56,6 +56,14 @@ class CreateUserTables extends Migration
                 ->cascadeOnUpdate();
         });
 
+        Schema::create('user_profiles', function (Blueprint $table) {
+            $table->id();
+            $table->timestamps();
+            $table->unsignedBigInteger('user_id');
+            $table->text('description');
+            $table->string('image');
+        });
+
         Schema::create('phones', function (Blueprint $table) {
             $table->id();
             $table->timestamps();

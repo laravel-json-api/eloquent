@@ -96,6 +96,14 @@ class User extends Authenticatable
     }
 
     /**
+     * @return HasOne
+     */
+    public function profile(): HasOne
+    {
+        return $this->hasOne(UserProfile::class)->withDefault();
+    }
+
+    /**
      * @return BelongsToMany
      */
     public function roles(): BelongsToMany

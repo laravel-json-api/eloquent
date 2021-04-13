@@ -162,15 +162,11 @@ class MorphToMany extends ToMany implements PolymorphicRelation, IteratorAggrega
     /**
      * @inheritDoc
      */
-    public function fill(Model $model, $value, array $validatedData): void
+    public function fill(Model $model, array $identifiers): void
     {
-        if (!is_array($value)) {
-            throw new LogicException('Expecting value to be an array of identifiers.');
-        }
-
         /** @var Relation|FillableToMany $relation */
         foreach ($this->fillable() as $relation) {
-            $relation->fill($model, $this->identifiersFor($relation, $value), $validatedData);
+            $relation->fill($model, $this->identifiersFor($relation, $identifiers));
         }
     }
 

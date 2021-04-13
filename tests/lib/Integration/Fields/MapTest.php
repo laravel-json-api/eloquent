@@ -20,6 +20,7 @@ declare(strict_types=1);
 namespace LaravelJsonApi\Eloquent\Tests\Integration\Fields;
 
 use App\Models\Post;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
 use LaravelJsonApi\Eloquent\Fields\Map;
@@ -53,7 +54,9 @@ class MapTest extends TestCase
             Number::make('bar', 'option_bar')->unguarded(),
         ]);
 
-        $map->fill($model, null, []);
+        $result = $map->fill($model, null, []);
+
+        $this->assertNull($result);
 
         $this->assertEquals([
             'option_foo' => null,
@@ -116,6 +119,37 @@ class MapTest extends TestCase
             'bar' => 123,
             'bazbat' => 'blah!',
         ], []);
+    }
+
+    public function testFillRelated(): void
+    {
+        $user = new User();
+
+        $attr = Map::make('options', [
+            Str::make('foo', 'option_foo')->unguarded(),
+            Number::make('bar', 'option_bar')->unguarded(),
+        ])->on('profile');
+
+        $attr->fill($user, ['foo' => 'foobar', 'bar' => 99], []);
+
+        $this->assertSame('foobar', $user->profile->option_foo);
+        $this->assertSame(99, $user->profile->option_bar);
+    }
+
+    public function testFillPartialRelated(): void
+    {
+        $user = new User();
+
+        $attr = Map::make('options', [
+            Str::make('foo', 'option_foo')->on('profile')->unguarded(),
+            Number::make('bar', 'option_bar')->unguarded(),
+        ]);
+
+        $attr->fill($user, ['foo' => 'foobar', 'bar' => 99], []);
+
+        $this->assertSame('foobar', $user->profile->option_foo);
+        $this->assertFalse($user->profile->offsetExists('option_bar'));
+        $this->assertSame(99, $user->option_bar);
     }
 
     public function testReadOnly(): void
@@ -186,6 +220,39 @@ class MapTest extends TestCase
         $model->forceFill(['option_foo' => 'foobar', 'option_bar' => 'bazbat']);
 
         $this->assertSame(['bar' => 'bazbat', 'foo' => 'foobar'], $map->serialize($model));
+    }
+
+    public function testSerializeRelated(): void
+    {
+        $user = new User();
+
+        $map = Map::make('options', [
+            Str::make('foo', 'option_foo'),
+            Number::make('bar', 'option_bar'),
+        ])->on('profile');
+
+        $this->assertSame(['bar' => null, 'foo' => null], $map->serialize($user));
+
+        $user->profile->forceFill(['option_foo' => 'foobar', 'option_bar' => 'bazbat']);
+
+        $this->assertSame(['bar' => 'bazbat', 'foo' => 'foobar'], $map->serialize($user));
+    }
+
+    public function testSerializePartialRelated(): void
+    {
+        $user = new User();
+
+        $map = Map::make('options', [
+            Str::make('foo', 'option_foo'),
+            Number::make('bar', 'option_bar')->on('profile'),
+        ]);
+
+        $this->assertSame(['bar' => null, 'foo' => null], $map->serialize($user));
+
+        $user->option_foo = 'foobar';
+        $user->profile->option_bar = 'bazbat';
+
+        $this->assertSame(['bar' => 'bazbat', 'foo' => 'foobar'], $map->serialize($user));
     }
 
     public function testHidden(): void

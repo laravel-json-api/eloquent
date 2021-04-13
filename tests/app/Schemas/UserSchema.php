@@ -23,6 +23,7 @@ use App\Models\User;
 use LaravelJsonApi\Eloquent\Contracts\Paginator;
 use LaravelJsonApi\Eloquent\Fields\DateTime;
 use LaravelJsonApi\Eloquent\Fields\ID;
+use LaravelJsonApi\Eloquent\Fields\Map;
 use LaravelJsonApi\Eloquent\Fields\Relations\BelongsTo;
 use LaravelJsonApi\Eloquent\Fields\Relations\BelongsToMany;
 use LaravelJsonApi\Eloquent\Fields\Relations\HasMany;
@@ -56,6 +57,10 @@ class UserSchema extends Schema
             HasOne::make('image'),
             Str::make('name'),
             HasOne::make('phone'),
+            Map::make('profile', [
+                Str::make('description'),
+                Str::make('image'),
+            ])->on('profile'),
             BelongsToMany::make('roles')->fields(new ApprovedPivot()),
             DateTime::make('updatedAt')->readOnly(),
         ];
