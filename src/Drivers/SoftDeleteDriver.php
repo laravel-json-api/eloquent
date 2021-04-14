@@ -34,11 +34,27 @@ class SoftDeleteDriver extends StandardDriver
      */
     public function __construct($model)
     {
-        if (!method_exists($model, 'getDeletedAtColumn')) {
+        if (!$this->usesDeletedAt($model) && !$this->usesIsDeleted($model)) {
             throw new InvalidArgumentException('Expecting a model that is soft-deletable.');
         }
 
         parent::__construct($model);
+    }
+
+    /**
+     * @param Model $model
+     * @return bool
+     */
+    private function usesDeletedAt($model): bool{
+        return method_exists($model, 'getDeletedAtColumn');
+    }
+
+    /**
+     * @param Model $model
+     * @return bool
+     */
+    private function usesIsDeleted($model): bool{
+        return method_exists($model, 'getIsDeletedColumn');
     }
 
     /**
@@ -81,13 +97,24 @@ class SoftDeleteDriver extends StandardDriver
          * @see https://github.com/cloudcreativity/laravel-json-api/issues/371
          */
         if ($this->willSoftDelete($model)) {
-            $column = $model->getDeletedAtColumn();
-            // save the original date so we can put it back later on.
-            $deletedAt = $model->{$column};
-            // delete the record so that deleting and deleted events get fired.
-            $model->delete();
-            // apply the original date back before saving, so that we keep date provided by the client.
-            $model->{$column} = $deletedAt;
+            if($this->usesIsDeleted($model)){
+                $column = $model->getIsDeletedColumn();
+                // save the original boolean so we can put it back later on.
+                $isDeleted = $model->{$column};
+                // delete the record so that deleting and deleted events get fired.
+                $model->delete();
+                // apply the original boolean back before saving, so that we keep boolean provided by the client.
+                $model->{$column} = $isDeleted;
+            }
+            if($this->usesDeletedAt($model)){
+                $column = $model->getDeletedAtColumn();
+                // save the original date so we can put it back later on.
+                $deletedAt = $model->{$column};
+                // delete the record so that deleting and deleted events get fired.
+                $model->delete();
+                // apply the original date back before saving, so that we keep date provided by the client.
+                $model->{$column} = $deletedAt;
+            }
         }
 
         return (bool) $model->save();
@@ -122,9 +149,17 @@ class SoftDeleteDriver extends StandardDriver
             return false;
         }
 
-        $column = $model->getDeletedAtColumn();
+        if($this->usesDeletedAt($model)){
+            $column = $model->getDeletedAtColumn();
+            return $model->getOriginal($column) && !$model->{$column};
+        }
 
-        return null !== $model->getOriginal($column) && null === $model->{$column};
+        if($this->usesIsDeleted($model)){
+            $column = $model->getIsDeletedColumn();
+            return $model->getOriginal($column) && !$model->{$column};
+        }
+
+        return false;
     }
 
     /**
@@ -139,9 +174,17 @@ class SoftDeleteDriver extends StandardDriver
             return false;
         }
 
-        $column = $model->getDeletedAtColumn();
+        if($this->usesDeletedAt($model)){
+            $column = $model->getDeletedAtColumn();
+            return null === $model->getOriginal($column) && null !== $model->{$column};
+        }
 
-        return null === $model->getOriginal($column) && null !== $model->{$column};
+        if($this->usesIsDeleted($model)){
+            $column = $model->getIsDeletedColumn();
+            return !$model->getOriginal($column) && $model->{$column};
+        }
+
+        return false;
     }
 
 }
