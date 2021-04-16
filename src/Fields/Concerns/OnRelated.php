@@ -32,6 +32,16 @@ trait OnRelated
     private ?string $related = null;
 
     /**
+     * Get the default eager load path for the attribute.
+     *
+     * @return string|null
+     */
+    public function with(): ?string
+    {
+        return $this->related;
+    }
+
+    /**
      * Set the attribute as existing on a related model.
      *
      * @param string $related

@@ -23,6 +23,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use LaravelJsonApi\Contracts\Implementations\Countable\CountableField;
 use LaravelJsonApi\Contracts\Implementations\Countable\CountableSchema;
 use LaravelJsonApi\Core\Schema\Schema as BaseSchema;
@@ -57,6 +58,13 @@ abstract class Schema extends BaseSchema implements CountableSchema
      * @var Parser|null
      */
     protected ?Parser $parser = null;
+
+    /**
+     * The relationships that should always be eager loaded for attribute values.
+     *
+     * @var array|null
+     */
+    private ?array $withAttributes = null;
 
     /**
      * @var string|null
@@ -231,7 +239,20 @@ abstract class Schema extends BaseSchema implements CountableSchema
      */
     public function with(): array
     {
-        return $this->with;
+        if (is_null($this->withAttributes)) {
+            $this->withAttributes = [];
+            foreach ($this->attributes() as $field) {
+                if (method_exists($field, 'with') && $with = $field->with()) {
+                    $this->withAttributes[] = $with;
+                }
+            }
+        }
+
+        return Collection::make($this->with)
+            ->merge($this->withAttributes)
+            ->unique()
+            ->values()
+            ->all();
     }
 
     /**

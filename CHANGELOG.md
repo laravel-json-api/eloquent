@@ -14,6 +14,8 @@ All notable changes to this project will be documented in this file. This projec
   attributes rather than relationships. This is primarily intended for use with Eloquent `belongsTo`, `hasOne`,
   `hasOneThrough` and `morphOne` relations that can have default related models. As part of this feature, the model
   hydrator will now iterate through loaded relations on the model and save any models that are dirty.
+- Schemas that have attribute fields with values derived from related models will automatically eager load the
+  relationship by adding the relationship to the default eager load paths for the schema.
 
 ### Changed
 
