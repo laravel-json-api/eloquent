@@ -20,6 +20,9 @@ declare(strict_types=1);
 namespace LaravelJsonApi\Eloquent\Fields\Concerns;
 
 use Illuminate\Database\Eloquent\Model;
+use LogicException;
+use function get_class;
+use function sprintf;
 
 trait OnRelated
 {
@@ -59,8 +62,16 @@ trait OnRelated
      */
     protected function owner(Model $model): Model
     {
+        if ($this->related && $related = $model->{$this->related}) {
+            return $related;
+        }
+
         if ($this->related) {
-            return $model->{$this->related};
+            throw new LogicException(sprintf(
+                'Expecting relationship %s on %s to use `withDefault()` to ensure there is always a related model.',
+                $this->related,
+                get_class($model),
+            ));
         }
 
         return $model;

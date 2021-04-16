@@ -230,7 +230,7 @@ abstract class Attribute implements AttributeContract, Fillable, Selectable, Sor
     public function serialize(object $model)
     {
         $owner = $this->related ? $model->{$this->related} : $model;
-        $value = $owner->{$this->column()};
+        $value = $owner ? $owner->{$this->column()} : null;
 
         if ($this->serializer) {
             return ($this->serializer)($value);

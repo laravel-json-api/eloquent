@@ -21,7 +21,6 @@ namespace LaravelJsonApi\Eloquent\Fields;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Arr;
-use Illuminate\Support\Collection;
 use InvalidArgumentException;
 use LaravelJsonApi\Contracts\Resources\Serializer\Attribute as SerializableContract;
 use LaravelJsonApi\Contracts\Schema\Attribute as AttributeContract;
@@ -183,15 +182,17 @@ class Map implements AttributeContract, Selectable, Fillable, SerializableContra
         $values = [];
 
         /** We intentionally use a single loop for serialization efficiency. */
-        foreach ($this->map as $attr) {
-            if ($attr instanceof SerializableContract) {
-                $values[$attr->serializedFieldName()] = $attr->serialize($owner);
+        if ($owner) {
+            foreach ($this->map as $attr) {
+                if ($attr instanceof SerializableContract) {
+                    $values[$attr->serializedFieldName()] = $attr->serialize($owner);
+                }
             }
         }
 
         ksort($values);
 
-        return $values;
+        return $values ?: null;
     }
 
     /**
