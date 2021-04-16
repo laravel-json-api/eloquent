@@ -194,6 +194,7 @@ class ArrayListTest extends TestCase
         $attr->fill($user, ['foo', 'bar'], []);
 
         $this->assertEquals(['foo', 'bar'], $user->profile->permissions);
+        $this->assertSame('profile', $attr->with());
     }
 
     public function testReadOnly(): void

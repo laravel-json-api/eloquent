@@ -25,6 +25,7 @@ use InvalidArgumentException;
 use LaravelJsonApi\Contracts\Resources\Serializer\Attribute as SerializableContract;
 use LaravelJsonApi\Contracts\Schema\Attribute as AttributeContract;
 use LaravelJsonApi\Core\Schema\Concerns\SparseField;
+use LaravelJsonApi\Eloquent\Contracts\EagerLoadableField;
 use LaravelJsonApi\Eloquent\Contracts\Fillable;
 use LaravelJsonApi\Eloquent\Contracts\Selectable;
 use LaravelJsonApi\Eloquent\Fields\Concerns\Hideable;
@@ -32,7 +33,12 @@ use LaravelJsonApi\Eloquent\Fields\Concerns\OnRelated;
 use LaravelJsonApi\Eloquent\Fields\Concerns\ReadOnly;
 use LogicException;
 
-class Map implements AttributeContract, Selectable, Fillable, SerializableContract
+class Map implements
+    AttributeContract,
+    EagerLoadableField,
+    Fillable,
+    Selectable,
+    SerializableContract
 {
 
     use Hideable;
@@ -125,6 +131,28 @@ class Map implements AttributeContract, Selectable, Fillable, SerializableContra
         $this->ignoreNull = true;
 
         return $this;
+    }
+
+    /**
+     * Get the default eager load path for the attribute.
+     *
+     * @return string|string[]|null
+     */
+    public function with()
+    {
+       if ($this->related) {
+           return $this->related;
+       }
+
+       $all = [];
+
+       foreach ($this->map as $attribute) {
+           if ($attribute instanceof EagerLoadableField) {
+               $all = array_merge($all, Arr::wrap($attribute->with()));
+           }
+       }
+
+       return array_values(array_unique($all));
     }
 
     /**

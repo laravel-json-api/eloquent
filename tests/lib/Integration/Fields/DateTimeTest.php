@@ -232,6 +232,7 @@ class DateTimeTest extends TestCase
         $attr->fill($user, '2020-11-23T11:48:17.000000Z', []);
 
         $this->assertEquals(Carbon::parse('2020-11-23T11:48:17.000000Z'), $user->profile->published_at);
+        $this->assertSame('profile', $attr->with());
     }
 
     public function testReadOnly(): void

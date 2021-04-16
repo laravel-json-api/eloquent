@@ -27,6 +27,7 @@ use LaravelJsonApi\Contracts\Schema\Attribute as AttributeContract;
 use LaravelJsonApi\Core\Schema\Concerns\Sortable;
 use LaravelJsonApi\Core\Schema\Concerns\SparseField;
 use LaravelJsonApi\Core\Support\Str;
+use LaravelJsonApi\Eloquent\Contracts\EagerLoadableField;
 use LaravelJsonApi\Eloquent\Contracts\Fillable;
 use LaravelJsonApi\Eloquent\Contracts\Selectable;
 use LaravelJsonApi\Eloquent\Contracts\Sortable as SortableContract;
@@ -34,7 +35,13 @@ use LaravelJsonApi\Eloquent\Fields\Concerns\Hideable;
 use LaravelJsonApi\Eloquent\Fields\Concerns\OnRelated;
 use LaravelJsonApi\Eloquent\Fields\Concerns\ReadOnly;
 
-abstract class Attribute implements AttributeContract, Fillable, Selectable, SortableContract, SerializableContract
+abstract class Attribute implements
+    AttributeContract,
+    EagerLoadableField,
+    Fillable, 
+    Selectable,
+    SerializableContract,
+    SortableContract
 {
 
     use Hideable;

@@ -34,9 +34,9 @@ trait OnRelated
     /**
      * Get the default eager load path for the attribute.
      *
-     * @return string|null
+     * @return string|string[]|null
      */
-    public function with(): ?string
+    public function with()
     {
         return $this->related;
     }

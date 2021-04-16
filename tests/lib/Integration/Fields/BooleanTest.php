@@ -183,6 +183,7 @@ class BooleanTest extends TestCase
         $attr->fill($user, true, []);
 
         $this->assertTrue($user->profile->admin);
+        $this->assertSame('profile', $attr->with());
     }
 
     public function testReadOnly(): void

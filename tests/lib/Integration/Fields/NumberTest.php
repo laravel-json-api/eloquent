@@ -183,6 +183,7 @@ class NumberTest extends TestCase
         $attr->fill($user, 99, []);
 
         $this->assertSame(99, $user->profile->views);
+        $this->assertSame('profile', $attr->with());
     }
 
     public function testReadOnly(): void

@@ -134,6 +134,7 @@ class MapTest extends TestCase
 
         $this->assertSame('foobar', $user->profile->option_foo);
         $this->assertSame(99, $user->profile->option_bar);
+        $this->assertSame('profile', $attr->with());
     }
 
     public function testFillPartialRelated(): void
@@ -150,6 +151,20 @@ class MapTest extends TestCase
         $this->assertSame('foobar', $user->profile->option_foo);
         $this->assertFalse($user->profile->offsetExists('option_bar'));
         $this->assertSame(99, $user->option_bar);
+        $this->assertSame(['profile'], $attr->with());
+    }
+
+    public function testWithMultipleRelated(): void
+    {
+        $attr = Map::make('options', [
+            Str::make('foo', 'option_foo')->on('profile'),
+            Number::make('bar', 'option_bar'),
+            Str::make('foobar', 'option_foobar')->on('other'),
+            Str::make('bazbat', 'option_bazbat')->on('profile'),
+            Str::make('foobaz', 'option_foobaz'),
+        ]);
+
+        $this->assertSame(['profile', 'other'], $attr->with());
     }
 
     public function testReadOnly(): void

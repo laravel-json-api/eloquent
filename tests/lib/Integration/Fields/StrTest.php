@@ -188,6 +188,7 @@ class StrTest extends TestCase
         $attr->fill($user, $expected = 'This is a description.', []);
 
         $this->assertEquals($expected, $user->profile->description);
+        $this->assertSame('profile', $attr->with());
     }
 
     public function testReadOnly(): void
