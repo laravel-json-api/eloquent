@@ -27,15 +27,26 @@ use LaravelJsonApi\Contracts\Schema\Attribute as AttributeContract;
 use LaravelJsonApi\Core\Schema\Concerns\Sortable;
 use LaravelJsonApi\Core\Schema\Concerns\SparseField;
 use LaravelJsonApi\Core\Support\Str;
+use LaravelJsonApi\Eloquent\Contracts\EagerLoadableField;
 use LaravelJsonApi\Eloquent\Contracts\Fillable;
 use LaravelJsonApi\Eloquent\Contracts\Selectable;
 use LaravelJsonApi\Eloquent\Contracts\Sortable as SortableContract;
+use LaravelJsonApi\Eloquent\Fields\Concerns\Hideable;
+use LaravelJsonApi\Eloquent\Fields\Concerns\OnRelated;
+use LaravelJsonApi\Eloquent\Fields\Concerns\ReadOnly;
 
-abstract class Attribute implements AttributeContract, Fillable, Selectable, SortableContract, SerializableContract
+abstract class Attribute implements
+    AttributeContract,
+    EagerLoadableField,
+    Fillable, 
+    Selectable,
+    SerializableContract,
+    SortableContract
 {
 
-    use Concerns\Hideable;
-    use Concerns\ReadOnly;
+    use Hideable;
+    use OnRelated;
+    use ReadOnly;
     use Sortable;
     use SparseField;
 
@@ -189,21 +200,24 @@ abstract class Attribute implements AttributeContract, Fillable, Selectable, Sor
     /**
      * @inheritDoc
      */
-    public function fill(Model $model, $value): void
+    public function fill(Model $model, $value, array $validatedData): void
     {
+        $column = $this->column();
         $value = $this->deserialize($value);
 
         if ($this->hydrator) {
-            ($this->hydrator)($model, $this->column(), $value);
+            ($this->hydrator)($model, $column, $value, $validatedData);
             return;
         }
+
+        $owner = $this->owner($model);
 
         if (false === $this->force) {
-            $model->fill([$this->column() => $value]);
+            $owner->fill([$column => $value]);
             return;
         }
 
-        $model->{$this->column()} = $value;
+        $owner->{$column} = $value;
     }
 
     /**
@@ -222,7 +236,8 @@ abstract class Attribute implements AttributeContract, Fillable, Selectable, Sor
      */
     public function serialize(object $model)
     {
-        $value = $model->{$this->column()};
+        $owner = $this->related ? $model->{$this->related} : $model;
+        $value = $owner ? $owner->{$this->column()} : null;
 
         if ($this->serializer) {
             return ($this->serializer)($value);

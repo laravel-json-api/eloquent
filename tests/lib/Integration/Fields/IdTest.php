@@ -60,7 +60,7 @@ class IdTest extends TestCase
         $model->method('getRouteKeyName')->willReturn('uuid');
 
         $id = ID::make();
-        $id->fill($model, $expected = '5371f2e3-65cf-4004-ad71-e82ad98fb367');
+        $id->fill($model, $expected = '5371f2e3-65cf-4004-ad71-e82ad98fb367', []);
 
         $this->assertSame($expected, $model->uuid);
     }
@@ -68,7 +68,7 @@ class IdTest extends TestCase
     public function testFillUsesColumn(): void
     {
         $id = ID::make('uuid');
-        $id->fill($user = new User(), $expected = '5371f2e3-65cf-4004-ad71-e82ad98fb367');
+        $id->fill($user = new User(), $expected = '5371f2e3-65cf-4004-ad71-e82ad98fb367', []);
 
         $this->assertSame($expected, $user->uuid);
     }

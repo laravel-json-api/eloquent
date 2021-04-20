@@ -19,32 +19,13 @@ declare(strict_types=1);
 
 namespace LaravelJsonApi\Eloquent\Contracts;
 
-use Illuminate\Database\Eloquent\Model;
-
-interface FillableToOne extends ReadOnly
+interface EagerLoadableField
 {
 
     /**
-     * Does the model need to exist in the database before the relation is filled?
+     * Get the default eager load paths for the field.
      *
-     * @return bool
+     * @return string|string[]|null
      */
-    public function mustExist(): bool;
-
-    /**
-     * Fill the model with the value of the JSON:API to-one relation.
-     *
-     * @param Model $model
-     * @param mixed $identifier
-     */
-    public function fill(Model $model, ?array $identifier): void;
-
-    /**
-     * Replace the relationship.
-     *
-     * @param Model $model
-     * @param array|null $identifier
-     * @return Model|null
-     */
-    public function associate(Model $model, ?array $identifier): ?Model;
+    public function with();
 }

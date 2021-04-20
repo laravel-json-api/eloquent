@@ -35,16 +35,23 @@ class EagerLoaderTest extends TestCase
     public function includePathsProvider(): array
     {
         return [
-            'images' => [
-                'images',
-                'imageable',
-                ['imageable'],
-            ],
+//            'images' => [
+//                'images',
+//                'imageable',
+//                ['imageable'],
+//            ],
             'posts' => [
                 'posts',
                 'author.country,comments.user.country,image.imageable',
                 // return values are sorted
-                ['comments.user.country', 'image.imageable', 'user.country'],
+                // user auto includes profile as it is used in attributes
+                [
+                    'comments.user.country',
+                    'comments.user.profile',
+                    'image.imageable',
+                    'user.country',
+                    'user.profile',
+                ],
             ],
             'posts morph-to-many' => [
                 'posts',
@@ -59,7 +66,10 @@ class EagerLoaderTest extends TestCase
             'user' => [
                 'users',
                 'country.posts.image',
-                ['country.posts.image'],
+                [
+                    'country.posts.image',
+                    'profile', // auto included for users
+                ],
             ],
         ];
     }
@@ -91,110 +101,11 @@ class EagerLoaderTest extends TestCase
 
         $this->assertSame([
             'imageable' => [
-                Post::class => ['user.country'],
-                User::class => ['country'],
+                // profile is auto included for users as it is used for attributes.
+                Post::class => ['user.country', 'user.profile'],
+                User::class => ['country', 'profile'],
             ],
         ], $loader->getMorphs());
-    }
-
-    /**
-     * @return array
-     */
-    public function defaultEagerLoadProvider(): array
-    {
-        return [
-            'posts:no include paths' => [
-                'posts',
-                null,
-                ['user']
-            ],
-            'posts: with include paths' => [
-                'posts',
-                'author.country,comments.user.country,image.imageable',
-                [
-                    // sorted
-                    'comments.user.country',
-                    'image.imageable',
-                    'user.country',
-                ],
-            ],
-            'tags' => [
-                'tags',
-                'posts',
-                ['posts.user'],
-            ],
-            'user' => [
-                'users',
-                'country.posts.image',
-                ['country.posts.image', 'country.posts.user'],
-            ],
-        ];
-    }
-
-    /**
-     * @param string $type
-     * @param $includePaths
-     * @param array $expected
-     * @dataProvider defaultEagerLoadProvider
-     */
-    public function testWithDefaultEagerLoad(string $type, $includePaths, array $expected): void
-    {
-        $this->createSchemaWithDefaultEagerLoading(PostSchema::class, 'user');
-
-        $loader = $this->eagerLoader($type, $includePaths);
-
-        $this->assertSame($expected, $loader->getRelations());
-    }
-
-    /**
-     * @return array
-     */
-    public function morphToDefaultEagerLoadProvider(): array
-    {
-        return [
-            [
-                'imageable',
-                [
-                    'imageable' => [
-                        Post::class => ['user'],
-                    ],
-                ],
-            ],
-            [
-                'imageable.country',
-                [
-                    'imageable' => [
-                        Post::class => ['user'],
-                        User::class => ['country'],
-                    ],
-                ],
-            ],
-            [
-                'imageable.author.country,imageable.country',
-                [
-                    'imageable' => [
-                        Post::class => ['user.country'],
-                        User::class => ['country'],
-                    ],
-                ],
-            ],
-        ];
-    }
-
-    /**
-     * @param $includePaths
-     * @param array $expected
-     * @dataProvider morphToDefaultEagerLoadProvider
-     */
-    public function testMorphToWithDefaultEagerLoad($includePaths, array $expected): void
-    {
-        $this->createSchemaWithDefaultEagerLoading(PostSchema::class, 'user');
-
-        $loader = $this->eagerLoader('images', $includePaths);
-
-        $actual = $loader->getMorphs();
-
-        $this->assertSame($expected, $actual);
     }
 
     /**

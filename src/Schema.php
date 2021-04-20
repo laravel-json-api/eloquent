@@ -23,10 +23,13 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Http\Request;
+use Illuminate\Support\Arr;
+use Illuminate\Support\Collection;
 use LaravelJsonApi\Contracts\Implementations\Countable\CountableField;
 use LaravelJsonApi\Contracts\Implementations\Countable\CountableSchema;
 use LaravelJsonApi\Core\Schema\Schema as BaseSchema;
 use LaravelJsonApi\Eloquent\Contracts\Driver;
+use LaravelJsonApi\Eloquent\Contracts\EagerLoadableField;
 use LaravelJsonApi\Eloquent\Contracts\Parser;
 use LaravelJsonApi\Eloquent\Drivers\StandardDriver;
 use LaravelJsonApi\Eloquent\Fields\Relations\ToMany;
@@ -57,6 +60,13 @@ abstract class Schema extends BaseSchema implements CountableSchema
      * @var Parser|null
      */
     protected ?Parser $parser = null;
+
+    /**
+     * The relationships that should always be eager loaded for attribute values.
+     *
+     * @var array|null
+     */
+    private ?array $defaultEagerLoadPaths = null;
 
     /**
      * @var string|null
@@ -231,7 +241,19 @@ abstract class Schema extends BaseSchema implements CountableSchema
      */
     public function with(): array
     {
-        return $this->with;
+        if (is_array($this->defaultEagerLoadPaths)) {
+            return $this->defaultEagerLoadPaths;
+        }
+
+        $paths = $this->with;
+
+        foreach ($this->attributes() as $field) {
+            if ($field instanceof EagerLoadableField) {
+                $paths = array_merge($paths, Arr::wrap($field->with()));
+            }
+        }
+
+        return $this->defaultEagerLoadPaths = array_values(array_unique($paths));
     }
 
     /**

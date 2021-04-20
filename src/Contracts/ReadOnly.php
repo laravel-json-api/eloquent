@@ -19,32 +19,23 @@ declare(strict_types=1);
 
 namespace LaravelJsonApi\Eloquent\Contracts;
 
-use Illuminate\Database\Eloquent\Model;
+use Illuminate\Http\Request;
 
-interface FillableToOne extends ReadOnly
+interface ReadOnly
 {
-
     /**
-     * Does the model need to exist in the database before the relation is filled?
+     * Is the field read-only?
      *
+     * @param Request|null $request
      * @return bool
      */
-    public function mustExist(): bool;
+    public function isReadOnly(?Request $request): bool;
 
     /**
-     * Fill the model with the value of the JSON:API to-one relation.
+     * Is the field not read-only.
      *
-     * @param Model $model
-     * @param mixed $identifier
+     * @param Request|null $request
+     * @return bool
      */
-    public function fill(Model $model, ?array $identifier): void;
-
-    /**
-     * Replace the relationship.
-     *
-     * @param Model $model
-     * @param array|null $identifier
-     * @return Model|null
-     */
-    public function associate(Model $model, ?array $identifier): ?Model;
+    public function isNotReadOnly(?Request $request): bool;
 }

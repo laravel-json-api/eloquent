@@ -20,32 +20,24 @@ declare(strict_types=1);
 namespace LaravelJsonApi\Eloquent\Contracts;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Http\Request;
 
-interface Fillable
+interface Fillable extends ReadOnly
 {
 
     /**
-     * Is the field read-only?
+     * Does the model need to exist in the database before the attribute is filled?
      *
-     * @param Request|null $request
      * @return bool
      */
-    public function isReadOnly(?Request $request): bool;
+    public function mustExist(): bool;
 
     /**
-     * Is the field not read-only.
-     *
-     * @param Request|null $request
-     * @return bool
-     */
-    public function isNotReadOnly(?Request $request): bool;
-
-    /**
-     * Fill the model with the value of the JSON API field.
+     * Fill the model with the value of the JSON:API attribute.
      *
      * @param Model $model
      * @param mixed $value
+     * @param array $validatedData
+     * @return void
      */
-    public function fill(Model $model, $value): void;
+    public function fill(Model $model, $value, array $validatedData): void;
 }

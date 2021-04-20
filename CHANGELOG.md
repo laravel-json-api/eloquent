@@ -3,6 +3,31 @@
 All notable changes to this project will be documented in this file. This project adheres to
 [Semantic Versioning](http://semver.org/) and [this changelog format](http://keepachangelog.com/).
 
+## [1.0.0-beta.2] - 2021-04-20
+
+### Added
+
+- When using the `Attribute::fillUsing()` method to customise filling an attribute value into a model, the closure now
+  receives the entire validated data as its fourth argument. This allows the closure to use other attributes when
+  calculating the value to fill into the model.
+- Attribute fields now support the columns being on related models, allowing resources to serialize related models as
+  attributes rather than relationships. This is primarily intended for use with Eloquent `belongsTo`, `hasOne`,
+  `hasOneThrough` and `morphOne` relations that can have default related models. As part of this feature, the model
+  hydrator will now iterate through loaded relations on the model and save any models that are dirty.
+- Schemas that have attribute fields with values derived from related models will automatically eager load the
+  relationship by adding the relationship to the default eager load paths for the schema.
+
+### Changed
+
+- **BREAKING** The `Contracts\Fillable::fill()` method now expects the entire validated data as its third argument.
+- **BREAKING** The `Contracts\Fillable` interface now has a `mustExist()` method. This allows an attribute to indicate
+  that the primary model being filled must exist in the database *before* the attribute is filled. This is intended for
+  use by attributes that fill related models.
+- **BREAKING** The `Contracts\FillableToOne` and `FillableToMany` interfaces now no longer extend the `Fillable`
+  interface. This is so that the `fill()` methods can correctly type-hint the related identifier(s) that are expected
+  when filling a relationship. Effectively the `Fillable` contract is now intended for use by the `id` field and
+  attribute fields.
+
 ## [1.0.0-beta.1] - 2021-03-30
 
 ### Added

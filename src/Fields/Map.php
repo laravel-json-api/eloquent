@@ -20,20 +20,29 @@ declare(strict_types=1);
 namespace LaravelJsonApi\Eloquent\Fields;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Arr;
 use InvalidArgumentException;
 use LaravelJsonApi\Contracts\Resources\Serializer\Attribute as SerializableContract;
 use LaravelJsonApi\Contracts\Schema\Attribute as AttributeContract;
 use LaravelJsonApi\Core\Schema\Concerns\SparseField;
+use LaravelJsonApi\Eloquent\Contracts\EagerLoadableField;
 use LaravelJsonApi\Eloquent\Contracts\Fillable;
 use LaravelJsonApi\Eloquent\Contracts\Selectable;
 use LaravelJsonApi\Eloquent\Fields\Concerns\Hideable;
+use LaravelJsonApi\Eloquent\Fields\Concerns\OnRelated;
 use LaravelJsonApi\Eloquent\Fields\Concerns\ReadOnly;
 use LogicException;
 
-class Map implements AttributeContract, Selectable, Fillable, SerializableContract
+class Map implements
+    AttributeContract,
+    EagerLoadableField,
+    Fillable,
+    Selectable,
+    SerializableContract
 {
 
     use Hideable;
+    use OnRelated;
     use ReadOnly;
     use SparseField;
 
@@ -125,17 +134,59 @@ class Map implements AttributeContract, Selectable, Fillable, SerializableContra
     }
 
     /**
+     * Get the default eager load path for the attribute.
+     *
+     * @return string|string[]|null
+     */
+    public function with()
+    {
+       if ($this->related) {
+           return $this->related;
+       }
+
+       $all = [];
+
+       foreach ($this->map as $attribute) {
+           if ($attribute instanceof EagerLoadableField) {
+               $all = array_merge($all, Arr::wrap($attribute->with()));
+           }
+       }
+
+       return array_values(array_unique($all));
+    }
+
+    /**
      * @inheritDoc
      */
-    public function fill(Model $model, $value): void
+    public function mustExist(): bool
     {
+        if (!is_null($this->related)) {
+            return true;
+        }
+
+        foreach ($this->map as $field) {
+            if (($field instanceof Fillable) && $field->mustExist()) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function fill(Model $model, $value, array $validatedData): void
+    {
+        $owner = $this->owner($model);
+
         if (is_null($value)) {
-            $this->nullable($model);
+            $this->nullable($owner, $validatedData);
             return;
         }
 
         if (is_array($value)) {
-            $this->values($model, $value);
+            $this->values($owner, $value, $validatedData);
             return;
         }
 
@@ -155,34 +206,40 @@ class Map implements AttributeContract, Selectable, Fillable, SerializableContra
      */
     public function serialize(object $model)
     {
+        $owner = $this->related ? $model->{$this->related} : $model;
         $values = [];
 
         /** We intentionally use a single loop for serialization efficiency. */
-        foreach ($this->map as $attr) {
-            if ($attr instanceof SerializableContract) {
-                $values[$attr->serializedFieldName()] = $attr->serialize($model);
+        if ($owner) {
+            foreach ($this->map as $attr) {
+                if ($attr instanceof SerializableContract) {
+                    $values[$attr->serializedFieldName()] = $attr->serialize($owner);
+                }
             }
         }
 
         ksort($values);
 
-        return $values;
+        return $values ?: null;
     }
-
 
     /**
      * Set all values to null.
      *
      * @param Model $model
-     * @return void
+     * @param array $validatedData
+     * @return array
      */
-    private function nullable(Model $model): void
+    private function nullable(Model $model, array $validatedData): array
     {
+        $results = [];
+
         if (false === $this->ignoreNull) {
             /** @var AttributeContract $attribute */
             foreach ($this->map as $attribute) {
                 if ($attribute instanceof Fillable) {
-                    $attribute->fill($model, null);
+                    $result = $attribute->fill($model, null, $validatedData);
+                    $results = array_merge($results, Arr::wrap($result));
                     continue;
                 }
 
@@ -193,6 +250,8 @@ class Map implements AttributeContract, Selectable, Fillable, SerializableContra
                 ));
             }
         }
+
+        return $results;
     }
 
     /**
@@ -200,14 +259,19 @@ class Map implements AttributeContract, Selectable, Fillable, SerializableContra
      *
      * @param Model $model
      * @param array $values
+     * @param array $validatedData
+     * @return array
      */
-    private function values(Model $model, array $values): void
+    private function values(Model $model, array $values, array $validatedData): array
     {
+        $results = [];
+
         foreach ($values as $key => $value) {
             $attr = $this->map[$key] ?? null;
 
             if ($attr && $attr instanceof Fillable) {
-                $attr->fill($model, $value);
+                $result = $attr->fill($model, $value, $validatedData);
+                $results = array_merge($results, Arr::wrap($result));
                 continue;
             }
 
@@ -219,6 +283,8 @@ class Map implements AttributeContract, Selectable, Fillable, SerializableContra
                 ));
             }
         }
+
+        return $results;
     }
 
 }

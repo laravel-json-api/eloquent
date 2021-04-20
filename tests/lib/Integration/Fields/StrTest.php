@@ -20,6 +20,9 @@ declare(strict_types=1);
 namespace LaravelJsonApi\Eloquent\Tests\Integration\Fields;
 
 use App\Models\Post;
+use App\Models\User;
+use App\Models\UserProfile;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
 use LaravelJsonApi\Eloquent\Fields\Str;
 use LaravelJsonApi\Eloquent\Tests\Integration\TestCase;
@@ -96,8 +99,10 @@ class StrTest extends TestCase
         $model = new Post();
         $attr = Str::make('title');
 
-        $attr->fill($model, $value);
+        $result = $attr->fill($model, $value, []);
+
         $this->assertSame($value, $model->title);
+        $this->assertNull($result);
     }
 
     /**
@@ -124,7 +129,7 @@ class StrTest extends TestCase
         $attr = Str::make('title');
 
         $this->expectException(\UnexpectedValueException::class);
-        $attr->fill($model, $value);
+        $attr->fill($model, $value, []);
     }
 
     public function testFillRespectsMassAssignment(): void
@@ -132,7 +137,7 @@ class StrTest extends TestCase
         $model = new Post();
         $attr = Str::make('displayName');
 
-        $attr->fill($model, 'Hello World');
+        $attr->fill($model, 'Hello World', []);
         $this->assertArrayNotHasKey('display_name', $model->getAttributes());
     }
 
@@ -141,7 +146,7 @@ class StrTest extends TestCase
         $model = new Post();
         $attr = Str::make('displayName')->unguarded();
 
-        $attr->fill($model, 'Hello World');
+        $attr->fill($model, 'Hello World', []);
         $this->assertSame('Hello World', $model->display_name);
     }
 
@@ -152,22 +157,38 @@ class StrTest extends TestCase
             fn($value) => strtoupper($value)
         );
 
-        $attr->fill($model, 'Hello World');
+        $attr->fill($model, 'Hello World', []);
         $this->assertSame('HELLO WORLD', $model->title);
     }
 
     public function testFillUsing(): void
     {
-        $post = new Post();
-        $attr = Str::make('displayName')->fillUsing(function ($model, $column, $value) use ($post) {
-            $this->assertSame($post, $model);
-            $this->assertSame('display_name', $column);
-            $this->assertSame('Hello World', $value);
-            $model->title = 'Hello World!!!';
-        });
+        $data = ['foo' => 'bar'];
 
-        $attr->fill($post, 'Hello World');
+        $post = new Post();
+        $attr = Str::make('displayName')
+            ->fillUsing(function ($model, $column, $value, array $validatedData) use ($post, $data) {
+                $this->assertSame($post, $model);
+                $this->assertSame('display_name', $column);
+                $this->assertSame('Hello World', $value);
+                $this->assertSame($data, $validatedData);
+                $model->title = 'Hello World!!!';
+            });
+
+        $attr->fill($post, 'Hello World', $data);
         $this->assertSame('Hello World!!!', $post->title);
+    }
+
+    public function testFillRelated(): void
+    {
+        $user = new User();
+
+        $attr = Str::make('description')->on('profile');
+
+        $attr->fill($user, $expected = 'This is a description.', []);
+
+        $this->assertEquals($expected, $user->profile->description);
+        $this->assertSame('profile', $attr->with());
     }
 
     public function testReadOnly(): void
@@ -243,6 +264,19 @@ class StrTest extends TestCase
         );
 
         $this->assertSame('HELLO WORLD', $attr->serialize($post));
+    }
+
+    public function testSerializeRelated(): void
+    {
+        $user = new User();
+
+        $attr = Str::make('description')->on('profile');
+
+        $this->assertNull($attr->serialize($user));
+
+        $user->profile->description = $expected = 'This is a description.';
+
+        $this->assertSame($expected, $attr->serialize($user));
     }
 
     public function testHidden(): void

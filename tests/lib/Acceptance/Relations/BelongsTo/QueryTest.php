@@ -138,7 +138,8 @@ class QueryTest extends TestCase
             ->first();
 
         $this->assertSame($expected, $actual);
-        $this->assertEmpty($actual->getRelations());
+        // profile is eager loaded as it is used in attributes.
+        $this->assertSame(['profile'], array_keys($actual->getRelations()));
     }
 
     public function testAlreadyLoadedWithIncludePaths(): void

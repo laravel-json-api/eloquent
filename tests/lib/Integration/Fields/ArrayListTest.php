@@ -20,6 +20,7 @@ declare(strict_types=1);
 namespace LaravelJsonApi\Eloquent\Tests\Integration\Fields;
 
 use App\Models\Role;
+use App\Models\User;
 use Illuminate\Http\Request;
 use LaravelJsonApi\Eloquent\Fields\ArrayList;
 use LaravelJsonApi\Eloquent\Tests\Integration\TestCase;
@@ -95,7 +96,9 @@ class ArrayListTest extends TestCase
         $model = new Role();
         $attr = ArrayList::make('permissions');
 
-        $attr->fill($model, $value);
+        $result = $attr->fill($model, $value, []);
+
+        $this->assertNull($result);
         $this->assertSame($value, $model->permissions);
     }
 
@@ -125,7 +128,7 @@ class ArrayListTest extends TestCase
         $attr = ArrayList::make('permissions');
 
         $this->expectException(\UnexpectedValueException::class);
-        $attr->fill($model, $value);
+        $attr->fill($model, $value, []);
     }
 
     public function testFillRespectsMassAssignment(): void
@@ -133,7 +136,7 @@ class ArrayListTest extends TestCase
         $model = new Role();
         $attr = ArrayList::make('accessPermissions');
 
-        $attr->fill($model, ['foo']);
+        $attr->fill($model, ['foo'], []);
         $this->assertArrayNotHasKey('access_permissions', $model->getAttributes());
     }
 
@@ -142,7 +145,7 @@ class ArrayListTest extends TestCase
         $model = new Role();
         $attr = ArrayList::make('accessPermissions')->unguarded();
 
-        $attr->fill($model, ['foo']);
+        $attr->fill($model, ['foo'], []);
         $this->assertSame(['foo'], $model->access_permissions);
     }
 
@@ -155,7 +158,7 @@ class ArrayListTest extends TestCase
                 ->all()
         );
 
-        $attr->fill($model, ['foo', 'bar']);
+        $attr->fill($model, ['foo', 'bar'], []);
         $this->assertSame(['FOO', 'BAR'], $model->permissions);
     }
 
@@ -169,7 +172,7 @@ class ArrayListTest extends TestCase
             $model->permissions = ['foo', 'bar'];
         });
 
-        $attr->fill($role, ['foo']);
+        $attr->fill($role, ['foo'], []);
         $this->assertSame(['foo', 'bar'], $role->permissions);
     }
 
@@ -178,8 +181,20 @@ class ArrayListTest extends TestCase
         $model = new Role();
         $attr = ArrayList::make('permissions')->sorted();
 
-        $attr->fill($model, ['foo', 'bar']);
+        $attr->fill($model, ['foo', 'bar'], []);
         $this->assertSame(['bar', 'foo'], $model->permissions);
+    }
+
+    public function testFillRelated(): void
+    {
+        $user = new User();
+
+        $attr = ArrayList::make('permissions')->on('profile')->unguarded();
+
+        $attr->fill($user, ['foo', 'bar'], []);
+
+        $this->assertEquals(['foo', 'bar'], $user->profile->permissions);
+        $this->assertSame('profile', $attr->with());
     }
 
     public function testReadOnly(): void
@@ -283,6 +298,19 @@ class ArrayListTest extends TestCase
         $attr = ArrayList::make('permissions')->sorted();
 
         $this->assertSame(['bar', 'foo'], $attr->serialize($model));
+    }
+
+    public function testSerializeRelated(): void
+    {
+        $user = new User();
+
+        $attr = ArrayList::make('permissions')->on('profile');
+
+        $this->assertNull($attr->serialize($user));
+
+        $user->profile->permissions = ['foo', 'bar'];
+
+        $this->assertEquals(['foo', 'bar'], $attr->serialize($user));
     }
 
     public function testHidden(): void

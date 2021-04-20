@@ -20,7 +20,9 @@ declare(strict_types=1);
 namespace LaravelJsonApi\Eloquent\Tests\Integration\Fields;
 
 use App\Models\Post;
+use App\Models\User;
 use Carbon\Carbon;
+use Carbon\Traits\Creator;
 use Illuminate\Http\Request;
 use LaravelJsonApi\Eloquent\Fields\DateTime;
 use LaravelJsonApi\Eloquent\Tests\Integration\TestCase;
@@ -96,7 +98,9 @@ class DateTimeTest extends TestCase
 
         $attr = DateTime::make('publishedAt')->retainTimezone();
 
-        $attr->fill($model, null);
+        $result = $attr->fill($model, null, []);
+
+        $this->assertNull($result);
     }
 
     public function testAppTimezone(): void
@@ -112,7 +116,7 @@ class DateTimeTest extends TestCase
 
         $attr = DateTime::make('publishedAt');
 
-        $attr->fill($model, '2020-11-23T11:48:17.000000-05:00');
+        $attr->fill($model, '2020-11-23T11:48:17.000000-05:00', []);
     }
 
     public function testSpecifiedTimezone(): void
@@ -129,7 +133,7 @@ class DateTimeTest extends TestCase
         $attr = DateTime::make('publishedAt')->useTimezone('America/New_York');
 
         // 10 hours ahead of New York. (5 ahead of UTC, then New York is 5 behind UTC)
-        $attr->fill($model, '2020-11-23T11:48:17.000000+05:00');
+        $attr->fill($model, '2020-11-23T11:48:17.000000+05:00', []);
     }
 
     public function testRetainTimezone(): void
@@ -145,7 +149,7 @@ class DateTimeTest extends TestCase
 
         $attr = DateTime::make('publishedAt')->retainTimezone();
 
-        $attr->fill($model, '2020-11-23T11:48:17.000000-05:00');
+        $attr->fill($model, '2020-11-23T11:48:17.000000-05:00', []);
     }
 
     /**
@@ -173,7 +177,7 @@ class DateTimeTest extends TestCase
         $attr = DateTime::make('publishedAt');
 
         $this->expectException(\UnexpectedValueException::class);
-        $attr->fill($model, $value);
+        $attr->fill($model, $value, []);
     }
 
     public function testFillRespectsMassAssignment(): void
@@ -181,7 +185,7 @@ class DateTimeTest extends TestCase
         $model = new Post();
         $attr = DateTime::make('createdAt');
 
-        $attr->fill($model, '2020-11-23T11:48:17.238552Z');
+        $attr->fill($model, '2020-11-23T11:48:17.238552Z', []);
         $this->assertArrayNotHasKey('created_at', $model->getAttributes());
     }
 
@@ -190,7 +194,7 @@ class DateTimeTest extends TestCase
         $model = new Post();
         $attr = DateTime::make('createdAt')->unguarded();
 
-        $attr->fill($model, '2020-11-23T11:48:17.000000Z');
+        $attr->fill($model, '2020-11-23T11:48:17.000000Z', []);
         $this->assertEquals(Carbon::parse('2020-11-23T11:48:17.000000Z'), $model->created_at);
     }
 
@@ -201,7 +205,7 @@ class DateTimeTest extends TestCase
             fn($value) => Carbon::parse($value)->addHour()
         );
 
-        $attr->fill($model, '2020-11-23T11:48:17.000000Z');
+        $attr->fill($model, '2020-11-23T11:48:17.000000Z', []);
         $this->assertEquals(Carbon::parse('2020-11-23T12:48:17.000000Z'), $model->published_at);
     }
 
@@ -215,8 +219,20 @@ class DateTimeTest extends TestCase
             $model->published_at = $value->subDay();
         });
 
-        $attr->fill($post, '2020-11-23T11:48:17.000000Z');
+        $attr->fill($post, '2020-11-23T11:48:17.000000Z', []);
         $this->assertSame('2020-11-22T11:48:17.000000Z', $post->published_at->toJSON());
+    }
+
+    public function testFillRelated(): void
+    {
+        $user = new User();
+
+        $attr = DateTime::make('publishedAt')->on('profile')->unguarded();
+
+        $attr->fill($user, '2020-11-23T11:48:17.000000Z', []);
+
+        $this->assertEquals(Carbon::parse('2020-11-23T11:48:17.000000Z'), $user->profile->published_at);
+        $this->assertSame('profile', $attr->with());
     }
 
     public function testReadOnly(): void
@@ -296,6 +312,19 @@ class DateTimeTest extends TestCase
         });
 
         $this->assertEquals(new Carbon('2020-02-01 00:00:00'), $attr->serialize($model));
+    }
+
+    public function testSerializeRelated(): void
+    {
+        $user = new User();
+
+        $attr = DateTime::make('createdAt')->on('profile');
+
+        $this->assertNull($attr->serialize($user));
+
+        $user->profile->created_at = $expected = new Carbon('2020-02-01 15:55:00');
+
+        $this->assertEquals($expected, $attr->serialize($user));
     }
 
     public function testHidden(): void

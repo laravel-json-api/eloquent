@@ -26,7 +26,6 @@ use InvalidArgumentException;
 use LaravelJsonApi\Eloquent\Contracts\FillableToMany;
 use LaravelJsonApi\Eloquent\Fields\Concerns\ReadOnly;
 use LogicException;
-use UnexpectedValueException;
 use function get_class;
 use function sprintf;
 
@@ -88,14 +87,9 @@ class BelongsToMany extends ToMany implements FillableToMany
     /**
      * @inheritDoc
      */
-    public function fill(Model $model, $value): void
+    public function fill(Model $model, array $identifiers): void
     {
-        if (is_array($value)) {
-            $this->sync($model, $value);
-            return;
-        }
-
-        throw new UnexpectedValueException('Expecting value to be an array of identifiers.');
+        $this->sync($model, $identifiers);
     }
 
     /**

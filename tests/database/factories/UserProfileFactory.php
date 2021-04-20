@@ -17,34 +17,32 @@
 
 declare(strict_types=1);
 
-namespace LaravelJsonApi\Eloquent\Contracts;
+namespace Database\Factories;
 
-use Illuminate\Database\Eloquent\Model;
+use App\Models\User;
+use App\Models\UserProfile;
+use Illuminate\Database\Eloquent\Factories\Factory;
 
-interface FillableToOne extends ReadOnly
+class UserProfileFactory extends Factory
 {
+    /**
+     * The name of the factory's corresponding model.
+     *
+     * @var string
+     */
+    protected $model = UserProfile::class;
 
     /**
-     * Does the model need to exist in the database before the relation is filled?
+     * Define the model's default state.
      *
-     * @return bool
+     * @return array
      */
-    public function mustExist(): bool;
-
-    /**
-     * Fill the model with the value of the JSON:API to-one relation.
-     *
-     * @param Model $model
-     * @param mixed $identifier
-     */
-    public function fill(Model $model, ?array $identifier): void;
-
-    /**
-     * Replace the relationship.
-     *
-     * @param Model $model
-     * @param array|null $identifier
-     * @return Model|null
-     */
-    public function associate(Model $model, ?array $identifier): ?Model;
+    public function definition()
+    {
+        return [
+            'description' => $this->faker->text,
+            'image' => $this->faker->url,
+            'user_id' => User::factory(),
+        ];
+    }
 }
