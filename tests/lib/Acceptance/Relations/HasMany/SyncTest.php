@@ -27,7 +27,7 @@ use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 class SyncTest extends TestCase
 {
 
-    public function testSyncDetaches(): void
+    public function testItSyncsAndKeepsDetachedModels(): void
     {
         /** @var User $user */
         $user = User::factory()
@@ -70,7 +70,7 @@ class SyncTest extends TestCase
         ]);
     }
 
-    public function testSyncDeletes(): void
+    public function testItSyncsAndDeletesDetachedModels(): void
     {
         $this->schema->relationship('comments')->deleteDetachedModels();
 

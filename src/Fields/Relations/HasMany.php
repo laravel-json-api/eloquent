@@ -31,14 +31,18 @@ use function sprintf;
 class HasMany extends ToMany implements FillableToMany
 {
 
+    private const KEEP_DETACHED_MODELS = 0;
+    private const DELETE_DETACHED_MODELS = 1;
+    private const FORCE_DELETE_DETACHED_MODELS = 2;
+
     use ReadOnly;
 
     /**
-     * Whether the relationship is gonna be detached or deleted when a replacement request no longer has the model.
+     * Whether to delete detached models.
      *
-     * @var bool
+     * @var int
      */
-    private bool $deleteOnDetach = false;
+    private int $detachMode = self::KEEP_DETACHED_MODELS;
 
     /**
      * Create a has-many relation.
@@ -53,25 +57,37 @@ class HasMany extends ToMany implements FillableToMany
     }
 
     /**
-     * The relationship is gonna be detached when a replacement request no longer has the model.
+     * Keep models that are detached by setting the inverse relationship to `null`.
      *
      * @return $this
      */
     public function keepDetachedModels(): self
     {
-        $this->deleteOnDetach = false;
+        $this->detachMode = self::KEEP_DETACHED_MODELS;
 
         return $this;
     }
 
     /**
-     * The relationship is gonna be deleted when a replacement request no longer has the model.
+     * Delete models that are detached using the `Model::delete()` method.
      *
      * @return $this
      */
     public function deleteDetachedModels(): self
     {
-        $this->deleteOnDetach = true;
+        $this->detachMode = self::DELETE_DETACHED_MODELS;
+
+        return $this;
+    }
+
+    /**
+     * Force delete models that are detached using the `Model::forceDelete()` method.
+     *
+     * @return $this
+     */
+    public function forceDeleteDetachedModels(): self
+    {
+        $this->detachMode = self::FORCE_DELETE_DETACHED_MODELS;
 
         return $this;
     }
@@ -117,7 +133,7 @@ class HasMany extends ToMany implements FillableToMany
     {
         $models = $this->findMany($identifiers);
 
-        $this->doDetachOrDelete($model, $models);
+        $this->doDetach($model, $models);
         $model->unsetRelation($this->relationName());
 
         return $models;
@@ -132,35 +148,12 @@ class HasMany extends ToMany implements FillableToMany
         $relation = $this->getRelation($model);
         $existing = $relation->get();
 
-        $this->doDetachOrDelete(
+        $this->doDetach(
             $model,
             $existing->reject(fn($model) => $new->contains($model))
         );
 
         $relation->saveMany($new->reject(fn($model) => $existing->contains($model)));
-    }
-
-    /**
-     * @param Model $model
-     * @param EloquentCollection $remove
-     */
-    private function doDetachOrDelete(Model $model, EloquentCollection $remove): void
-    {
-        $relation = $this->getRelation($model);
-
-        /** @var Model $model */
-        foreach ($remove as $model) {
-            if ($this->deleteOnDetach) {
-                $model->delete();
-                continue;
-            }
-
-            if ($relation instanceof EloquentMorphMany) {
-                $model->setAttribute($relation->getMorphType(), null);
-            }
-
-            $model->setAttribute($relation->getForeignKeyName(), null)->save();
-        }
     }
 
     /**
@@ -180,6 +173,60 @@ class HasMany extends ToMany implements FillableToMany
             $this->relationName(),
             get_class($model)
         ));
+    }
+
+    /**
+     * Detach models from the relationship.
+     *
+     * @param Model $model
+     * @param EloquentCollection $remove
+     */
+    private function doDetach(Model $model, EloquentCollection $remove): void
+    {
+        if (self::KEEP_DETACHED_MODELS === $this->detachMode) {
+            $this->setInverseToNull($model, $remove);
+            return;
+        }
+
+        $this->deleteRelatedModels($remove);
+    }
+
+    /**
+     * Detach models by setting the inverse relation to `null`.
+     *
+     * @param Model $model
+     * @param EloquentCollection $remove
+     */
+    private function setInverseToNull(Model $model, EloquentCollection $remove): void
+    {
+        $relation = $this->getRelation($model);
+
+        /** @var Model $model */
+        foreach ($remove as $model) {
+            if ($relation instanceof EloquentMorphMany) {
+                $model->setAttribute($relation->getMorphType(), null);
+            }
+
+            $model->setAttribute($relation->getForeignKeyName(), null)->save();
+        }
+    }
+
+    /**
+     * Detach models by deleting (or force deleting) the related models.
+     *
+     * @param EloquentCollection $remove
+     */
+    private function deleteRelatedModels(EloquentCollection $remove): void
+    {
+        /** @var Model $model */
+        foreach ($remove as $model) {
+            if (self::FORCE_DELETE_DETACHED_MODELS === $this->detachMode) {
+                $model->forceDelete();
+                continue;
+            }
+
+            $model->delete();
+        }
     }
 
 }

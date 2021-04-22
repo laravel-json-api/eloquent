@@ -45,7 +45,7 @@ class TestCase extends BaseTestCase
         parent::setUp();
 
         $this->schema = $this->schemas()->schemaFor('users');
-        $this->repository = $this->schemas()->schemaFor('users')->repository();
+        $this->repository = $this->schema->repository();
     }
 
     /**

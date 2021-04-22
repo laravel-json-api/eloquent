@@ -27,7 +27,7 @@ use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 class DetachTest extends TestCase
 {
 
-    public function testDetachingRelationship(): void
+    public function testItKeepsDetachedModels(): void
     {
         $user = User::factory()
             ->has(Comment::factory()->count(3))
@@ -73,7 +73,7 @@ class DetachTest extends TestCase
         }
     }
 
-    public function testDeletingRelationship(): void
+    public function testItDeletesDetachedModels(): void
     {
         $this->schema->relationship('comments')->deleteDetachedModels();
 
