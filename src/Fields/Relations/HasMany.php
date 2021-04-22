@@ -34,6 +34,13 @@ class HasMany extends ToMany implements FillableToMany
     use ReadOnly;
 
     /**
+     * Whether the relationship is gonna be detached or deleted when a replacement request no longer has the model.
+     *
+     * @var bool
+     */
+    private bool $deleteOnDetach = false;
+
+    /**
      * Create a has-many relation.
      *
      * @param string $fieldName
@@ -43,6 +50,30 @@ class HasMany extends ToMany implements FillableToMany
     public static function make(string $fieldName, string $relation = null): HasMany
     {
         return new self($fieldName, $relation);
+    }
+
+    /**
+     * The relationship is gonna be detached when a replacement request no longer has the model.
+     *
+     * @return $this
+     */
+    public function keepDetachedModels(): self
+    {
+        $this->deleteOnDetach = false;
+
+        return $this;
+    }
+
+    /**
+     * The relationship is gonna be deleted when a replacement request no longer has the model.
+     *
+     * @return $this
+     */
+    public function deleteDetachedModels(): self
+    {
+        $this->deleteOnDetach = true;
+
+        return $this;
     }
 
     /**
@@ -86,7 +117,7 @@ class HasMany extends ToMany implements FillableToMany
     {
         $models = $this->findMany($identifiers);
 
-        $this->doDetach($model, $models);
+        $this->doDetachOrDelete($model, $models);
         $model->unsetRelation($this->relationName());
 
         return $models;
@@ -101,7 +132,7 @@ class HasMany extends ToMany implements FillableToMany
         $relation = $this->getRelation($model);
         $existing = $relation->get();
 
-        $this->doDetach(
+        $this->doDetachOrDelete(
             $model,
             $existing->reject(fn($model) => $new->contains($model))
         );
@@ -113,12 +144,17 @@ class HasMany extends ToMany implements FillableToMany
      * @param Model $model
      * @param EloquentCollection $remove
      */
-    private function doDetach(Model $model, EloquentCollection $remove): void
+    private function doDetachOrDelete(Model $model, EloquentCollection $remove): void
     {
         $relation = $this->getRelation($model);
 
         /** @var Model $model */
         foreach ($remove as $model) {
+            if ($this->deleteOnDetach) {
+                $model->delete();
+                continue;
+            }
+
             if ($relation instanceof EloquentMorphMany) {
                 $model->setAttribute($relation->getMorphType(), null);
             }

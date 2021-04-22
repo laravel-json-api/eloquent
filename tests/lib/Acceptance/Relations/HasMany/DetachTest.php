@@ -27,7 +27,7 @@ use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 class DetachTest extends TestCase
 {
 
-    public function test(): void
+    public function testDetachingRelationship(): void
     {
         $user = User::factory()
             ->has(Comment::factory()->count(3))
@@ -73,7 +73,54 @@ class DetachTest extends TestCase
         }
     }
 
-    public function testWithIncludePaths(): void
+    public function testDeletingRelationship(): void
+    {
+        $this->schema->relationship('comments')->deleteDetachedModels();
+
+        $user = User::factory()
+            ->has(Comment::factory()->count(3))
+            ->create();
+
+        /** We force the relation to be loaded before the change, so that we can test it is unset. */
+        $existing = clone $user->comments;
+        $remove = $existing->take(2);
+        $keep = $existing->last();
+
+        $ids = $remove->map(fn(Comment $comment) => [
+            'type' => 'comments',
+            'id' => (string) $comment->getRouteKey(),
+        ])->all();
+
+        $actual = $this->repository
+            ->modifyToMany($user, 'comments')
+            ->detach($ids);
+
+        $this->assertInstanceOf(EloquentCollection::class, $actual);
+        $this->assertComments($remove, $actual);
+        $this->assertSame(1, $user->comments()->count());
+
+        // as the relationship is countable, we expect the count to be loaded so the relationship meta is complete.
+        $this->assertEquals(1, $user->comments_count);
+
+        /**
+         * We expect the relation to be unloaded because we know it has changed in the
+         * database, but we don't know what it now is in its entirety.
+         */
+        $this->assertFalse($user->relationLoaded('comments'));
+
+        $this->assertDatabaseHas('comments', [
+            'id' => $keep->getKey(),
+            'user_id' => $user->getKey(),
+        ]);
+
+        foreach ($remove as $comment) {
+            $this->assertDatabaseMissing('comments', [
+                $comment->getKeyName() => $comment->getKey(),
+            ]);
+        }
+    }
+
+    public function testDetachingWithIncludePaths(): void
     {
         $user = User::factory()
             ->has(Comment::factory()->count(3))
