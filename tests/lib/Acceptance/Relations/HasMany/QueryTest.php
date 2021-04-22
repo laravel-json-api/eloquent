@@ -39,7 +39,7 @@ class QueryTest extends TestCase
             ->queryToMany($user, 'comments')
             ->cursor();
 
-        $this->assertModels($user->comments()->get(), $actual);
+        $this->assertComments($user->comments()->get(), $actual);
         // as the relationship is countable, we expect the count to be loaded so the relationship meta is complete.
         $this->assertEquals(3, $user->comments_count);
     }
@@ -55,7 +55,7 @@ class QueryTest extends TestCase
             ->with('commentable')
             ->cursor();
 
-        $this->assertModels($user->comments()->get(), $actual);
+        $this->assertComments($user->comments()->get(), $actual);
         $this->assertTrue($actual->every(fn(Comment $comment) => $comment->relationLoaded('commentable')));
     }
 
@@ -71,7 +71,7 @@ class QueryTest extends TestCase
             ->queryToMany($user, 'comments')
             ->cursor();
 
-        $this->assertModels($user->comments()->get(), $actual);
+        $this->assertComments($user->comments()->get(), $actual);
         $this->assertTrue($actual->every(
             fn(Comment $comment) => $comment->relationLoaded('user') && $user->is($comment->user)
         ));
@@ -90,7 +90,7 @@ class QueryTest extends TestCase
             ->with('commentable')
             ->cursor();
 
-        $this->assertModels($user->comments()->get(), $actual);
+        $this->assertComments($user->comments()->get(), $actual);
 
         $this->assertTrue($actual->every(
             fn(Comment $comment) => $comment->relationLoaded('user')
@@ -117,7 +117,7 @@ class QueryTest extends TestCase
             ->filter(['id' => $ids])
             ->cursor();
 
-        $this->assertModels($expected, $actual);
+        $this->assertComments($expected, $actual);
     }
 
     public function testWithSort(): void
@@ -135,7 +135,7 @@ class QueryTest extends TestCase
             ->sort('-id')
             ->cursor();
 
-        $this->assertModels($expected, $actual);
+        $this->assertComments($expected, $actual);
     }
 
 }

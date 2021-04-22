@@ -49,7 +49,7 @@ class UpdateTest extends TestCase
 
         $this->assertTrue($user->relationLoaded('comments'));
         $this->assertInstanceOf(EloquentCollection::class, $actual = $user->getRelation('comments'));
-        $this->assertModels($expected, $actual);
+        $this->assertComments($expected, $actual);
 
         foreach ($expected as $comment) {
             $this->assertDatabaseHas('comments', [
@@ -116,7 +116,7 @@ class UpdateTest extends TestCase
 
         $this->assertTrue($user->relationLoaded('comments'));
         $this->assertInstanceOf(EloquentCollection::class, $actual = $user->getRelation('comments'));
-        $this->assertModels($expected, $actual);
+        $this->assertComments($expected, $actual);
 
         foreach ($expected as $comment) {
             $this->assertDatabaseHas('comments', [

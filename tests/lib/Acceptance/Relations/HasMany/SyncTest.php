@@ -20,7 +20,6 @@ declare(strict_types=1);
 namespace LaravelJsonApi\Eloquent\Tests\Acceptance\Relations\HasMany;
 
 use App\Models\Comment;
-use App\Models\Post;
 use App\Models\User;
 use App\Schemas\CommentSchema;
 use Illuminate\Database\Eloquent\Collection as EloquentCollection;
@@ -28,7 +27,7 @@ use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 class SyncTest extends TestCase
 {
 
-    public function testSyncDetachesDetachableRelationship(): void
+    public function testSyncDetaches(): void
     {
         /** @var User $user */
         $user = User::factory()
@@ -50,7 +49,7 @@ class SyncTest extends TestCase
         );
 
         $this->assertInstanceOf(EloquentCollection::class, $actual);
-        $this->assertModels($expected, $actual);
+        $this->assertComments($expected, $actual);
 
         // as the relationship is countable, we expect the count to be loaded so the relationship meta is complete.
         $this->assertEquals(count($expected), $user->comments_count);
@@ -71,44 +70,48 @@ class SyncTest extends TestCase
         ]);
     }
 
-    public function testSyncDeletesDeletableRelationship(): void
+    public function testSyncDeletes(): void
     {
+        $this->schema->relationship('comments')->deleteDetachedModels();
+
         /** @var User $user */
         $user = User::factory()
-            ->has(Post::factory()->count(3))
+            ->has(Comment::factory()->count(3))
             ->create();
 
-        $existing = $user->posts()->get();
+        $existing = $user->comments()->get();
         $remove = $existing->last();
 
         $expected = $existing->take(2)->push(
-            Post::factory()->create()
+            Comment::factory()->create()
         );
 
-        $actual = $this->repository->modifyToMany($user, 'posts')->sync(
-            $expected->map(fn(Post $post) => [
-                'type' => 'posts',
-                'id' => (string) $post->getRouteKey(),
+        $actual = $this->repository->modifyToMany($user, 'comments')->sync(
+            $expected->map(fn(Comment $comment) => [
+                'type' => 'comments',
+                'id' => (string) $comment->getRouteKey(),
             ])->all()
         );
 
         $this->assertInstanceOf(EloquentCollection::class, $actual);
-        $this->assertModels($expected, $actual);
+        $this->assertComments($expected, $actual);
 
         // as the relationship is countable, we expect the count to be loaded so the relationship meta is complete.
-        $this->assertEquals(count($expected), $user->posts_count);
+        $this->assertEquals(count($expected), $user->comments_count);
 
-        $this->assertTrue($user->relationLoaded('posts'));
-        $this->assertSame($actual, $user->getRelation('posts'));
+        $this->assertTrue($user->relationLoaded('comments'));
+        $this->assertSame($actual, $user->getRelation('comments'));
 
-        foreach ($expected as $post) {
-            $this->assertDatabaseHas('posts', [
-                'id' => $post->getKey(),
+        foreach ($expected as $comment) {
+            $this->assertDatabaseHas('comments', [
+                'id' => $comment->getKey(),
                 'user_id' => $user->getKey(),
             ]);
         }
 
-        $this->assertNull(Post::find($remove->getKey()));
+        $this->assertDatabaseMissing('comments', [
+            $remove->getKeyName() => $remove->getKey(),
+        ]);
     }
 
     public function testEmpty(): void
@@ -224,6 +227,6 @@ class SyncTest extends TestCase
 
         $this->assertCount(3, $actual);
         $this->assertSame(3, $user->comments()->count());
-        $this->assertModels($comments, $actual);
+        $this->assertComments($comments, $actual);
     }
 }

@@ -33,15 +33,12 @@ class HasMany extends ToMany implements FillableToMany
 
     use ReadOnly;
 
-    private const DETACH = 'detach';
-    private const DELETE = 'delete';
-
     /**
      * Whether the relationship is gonna be detached or deleted when a replacement request no longer has the model.
      *
-     * @var string
+     * @var bool
      */
-    private $replacementBehaviorForNoLongerExistingResources = self::DETACH;
+    private bool $deleteOnDetach = false;
 
     /**
      * Create a has-many relation.
@@ -60,9 +57,9 @@ class HasMany extends ToMany implements FillableToMany
      *
      * @return $this
      */
-    public function detachNoLongerExistingRecordsOnReplacementRequest(): self
+    public function keepDetachedModels(): self
     {
-        $this->replacementBehaviorForNoLongerExistingResources = self::DETACH;
+        $this->deleteOnDetach = false;
 
         return $this;
     }
@@ -72,9 +69,9 @@ class HasMany extends ToMany implements FillableToMany
      *
      * @return $this
      */
-    public function deleteNoLongerExistingRecordsOnReplacementRequest(): self
+    public function deleteDetachedModels(): self
     {
-        $this->replacementBehaviorForNoLongerExistingResources = self::DELETE;
+        $this->deleteOnDetach = true;
 
         return $this;
     }
@@ -153,15 +150,16 @@ class HasMany extends ToMany implements FillableToMany
 
         /** @var Model $model */
         foreach ($remove as $model) {
+            if ($this->deleteOnDetach) {
+                $model->delete();
+                continue;
+            }
+
             if ($relation instanceof EloquentMorphMany) {
                 $model->setAttribute($relation->getMorphType(), null);
             }
 
-            if (self::DELETE === $this->replacementBehaviorForNoLongerExistingResources) {
-                $model->delete();
-            } else {
-                $model->setAttribute($relation->getForeignKeyName(), null)->save();
-            }
+            $model->setAttribute($relation->getForeignKeyName(), null)->save();
         }
     }
 

@@ -19,12 +19,18 @@ declare(strict_types=1);
 
 namespace LaravelJsonApi\Eloquent\Tests\Acceptance\Relations\HasMany;
 
-use Illuminate\Database\Eloquent\Model;
+use App\Models\Comment;
+use App\Schemas\UserSchema;
 use LaravelJsonApi\Eloquent\Repository;
 use LaravelJsonApi\Eloquent\Tests\Acceptance\TestCase as BaseTestCase;
 
 class TestCase extends BaseTestCase
 {
+
+    /**
+     * @var UserSchema
+     */
+    protected UserSchema $schema;
 
     /**
      * @var Repository
@@ -38,6 +44,7 @@ class TestCase extends BaseTestCase
     {
         parent::setUp();
 
+        $this->schema = $this->schemas()->schemaFor('users');
         $this->repository = $this->schemas()->schemaFor('users')->repository();
     }
 
@@ -46,10 +53,10 @@ class TestCase extends BaseTestCase
      * @param iterable $actual
      * @return void
      */
-    protected function assertModels(iterable $expected, iterable $actual): void
+    protected function assertComments(iterable $expected, iterable $actual): void
     {
         $expected = collect($expected)
-            ->map($fn = fn(Model $model) => $model->getKey())
+            ->map($fn = fn(Comment $comment) => $comment->getKey())
             ->values()
             ->all();
 
