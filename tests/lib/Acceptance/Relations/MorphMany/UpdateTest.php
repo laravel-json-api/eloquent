@@ -26,7 +26,7 @@ use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 class UpdateTest extends TestCase
 {
 
-    public function test(): void
+    public function testItUpdatesAndKeepsDetachedModels(): void
     {
         /** @var Video $video */
         $video = Video::factory()
@@ -63,6 +63,46 @@ class UpdateTest extends TestCase
             'id' => $remove->getKey(),
             'commentable_id' => null,
             'commentable_type' => null,
+        ]);
+    }
+
+    public function testItUpdatesAndDeletesDetachedModels(): void
+    {
+        $this->schema->relationship('comments')->deleteDetachedModels();
+
+        /** @var Video $video */
+        $video = Video::factory()
+            ->has(Comment::factory()->count(3))
+            ->create();
+
+        $existing = $video->comments()->get();
+        $remove = $existing->last();
+
+        $expected = $existing->take(2)->push(
+            Comment::factory()->create()
+        );
+
+        $this->repository->update($video)->store([
+            'comments' => $expected->map(fn(Comment $comment) => [
+                'type' => 'comments',
+                'id' => (string) $comment->getRouteKey(),
+            ])->all(),
+        ]);
+
+        $this->assertTrue($video->relationLoaded('comments'));
+        $this->assertInstanceOf(EloquentCollection::class, $actual = $video->getRelation('comments'));
+        $this->assertComments($expected, $actual);
+
+        foreach ($expected as $comment) {
+            $this->assertDatabaseHas('comments', [
+                'id' => $comment->getKey(),
+                'commentable_id' => $video->getKey(),
+                'commentable_type' => Video::class,
+            ]);
+        }
+
+        $this->assertDatabaseMissing('comments', [
+            $remove->getKeyName() => $remove->getKey(),
         ]);
     }
 

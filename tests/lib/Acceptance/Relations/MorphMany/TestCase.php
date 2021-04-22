@@ -20,11 +20,17 @@ declare(strict_types=1);
 namespace LaravelJsonApi\Eloquent\Tests\Acceptance\Relations\MorphMany;
 
 use App\Models\Comment;
+use App\Schemas\VideoSchema;
 use LaravelJsonApi\Eloquent\Repository;
 use LaravelJsonApi\Eloquent\Tests\Acceptance\TestCase as BaseTestCase;
 
 class TestCase extends BaseTestCase
 {
+
+    /**
+     * @var VideoSchema
+     */
+    protected VideoSchema $schema;
 
     /**
      * @var Repository
@@ -38,7 +44,8 @@ class TestCase extends BaseTestCase
     {
         parent::setUp();
 
-        $this->repository = $this->schemas()->schemaFor('videos')->repository();
+        $this->schema = $this->schemas()->schemaFor('videos');
+        $this->repository = $this->schema->repository();
     }
 
     /**

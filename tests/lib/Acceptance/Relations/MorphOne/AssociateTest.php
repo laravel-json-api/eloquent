@@ -47,7 +47,7 @@ class AssociateTest extends TestCase
         ]);
     }
 
-    public function testImageToNull(): void
+    public function testImageToNullKeepsImage(): void
     {
         $post = Post::factory()->create();
         $image = Image::factory()->create([
@@ -68,7 +68,28 @@ class AssociateTest extends TestCase
         ]);
     }
 
-    public function testImageToImage(): void
+    public function testImageToNullDeletesImage(): void
+    {
+        $this->schema->relationship('image')->forceDeleteDetachedModel();
+
+        $post = Post::factory()->create();
+        $image = Image::factory()->create([
+            'imageable_id' => $post->getKey(),
+            'imageable_type' => Post::class,
+        ]);
+
+        $actual = $this->repository->modifyToOne($post, 'image')->associate(null);
+
+        $this->assertNull($actual);
+        $this->assertTrue($post->relationLoaded('image'));
+        $this->assertNull($post->getRelation('image'));
+
+        $this->assertDatabaseMissing('images', [
+            $image->getKeyName() => $image->getKey(),
+        ]);
+    }
+
+    public function testImageToImageKeepsOriginalImage(): void
     {
         $image1 = Image::factory()
             ->for(Post::factory(), 'imageable')
@@ -99,6 +120,40 @@ class AssociateTest extends TestCase
             'id' => $image1->getKey(),
             'imageable_id' => null,
             'imageable_type' => null,
+        ]);
+    }
+
+    public function testImageToImageDeletesOriginalImage(): void
+    {
+        $this->schema->relationship('image')->forceDeleteDetachedModel();
+
+        $image1 = Image::factory()
+            ->for(Post::factory(), 'imageable')
+            ->create();
+
+        $image2 = Image::factory()
+            ->for(Post::factory(), 'imageable')
+            ->create();
+
+        $post = $image1->imageable;
+
+        $actual = $this->repository->modifyToOne($post, 'image')->associate([
+            'type' => 'images',
+            'id' => (string) $image2->getRouteKey(),
+        ]);
+
+        $this->assertTrue($image2->is($actual));
+        $this->assertTrue($post->relationLoaded('image'));
+        $this->assertTrue($image2->is($post->getRelation('image')));
+
+        $this->assertDatabaseHas('images', [
+            'id' => $image2->getKey(),
+            'imageable_id' => $post->getKey(),
+            'imageable_type' => Post::class,
+        ]);
+
+        $this->assertDatabaseMissing('images', [
+            $image1->getKeyName() => $image1->getKey(),
         ]);
     }
 

@@ -29,7 +29,18 @@ use LogicException;
 class HasOne extends ToOne implements FillableToOne
 {
 
+    private const KEEP_DETACHED_MODEL = 0;
+    private const DELETE_DETACHED_MODEL = 1;
+    private const FORCE_DELETE_DETACHED_MODEL = 2;
+
     use ReadOnly;
+
+    /**
+     * Flag for how to detach a model from the relationship.
+     *
+     * @var int
+     */
+    private int $detachMode = self::KEEP_DETACHED_MODEL;
 
     /**
      * Create a has-one relation.
@@ -41,6 +52,42 @@ class HasOne extends ToOne implements FillableToOne
     public static function make(string $fieldName, string $relation = null): HasOne
     {
         return new self($fieldName, $relation);
+    }
+
+    /**
+     * Keep a detached model by setting the inverse relationship column(s) to `null`.
+     *
+     * @return $this
+     */
+    public function keepDetachedModel(): self
+    {
+        $this->detachMode = self::KEEP_DETACHED_MODEL;
+
+        return $this;
+    }
+
+    /**
+     * Delete a detached model using the `Model::delete()` method.
+     *
+     * @return $this
+     */
+    public function deleteDetachedModel(): self
+    {
+        $this->detachMode = self::DELETE_DETACHED_MODEL;
+
+        return $this;
+    }
+
+    /**
+     * Force delete a detached model using the `Model::forceDelete()` method.
+     *
+     * @return $this
+     */
+    public function forceDeleteDetachedModel(): self
+    {
+        $this->detachMode = self::FORCE_DELETE_DETACHED_MODEL;
+
+        return $this;
     }
 
     /**
@@ -67,7 +114,7 @@ class HasOne extends ToOne implements FillableToOne
         $related = $this->find($identifier);
 
         if ($this->willChange($current, $related)) {
-            if ($current) $this->clear($relation, $current);
+            if ($current) $this->disassociate($relation, $current);
             if ($related) $relation->save($related);
             $model->setRelation($this->relationName(), $related);
         }
@@ -98,15 +145,50 @@ class HasOne extends ToOne implements FillableToOne
     }
 
     /**
+     * Disassociate the model from the relationship.
+     *
      * @param EloquentMorphOne|EloquentHasOne $relation
      * @param Model $current
      */
-    private function clear($relation, Model $current): void
+    private function disassociate($relation, Model $current): void
+    {
+        if (self::KEEP_DETACHED_MODEL === $this->detachMode) {
+            $this->setInverseToNull($relation, $current);
+            return;
+        }
+
+        $this->deleteRelatedModel($current);
+    }
+
+    /**
+     * Disassociate the related model by setting the relationship column(s) to `null`.
+     *
+     * @param $relation
+     * @param Model $current
+     * @return void
+     */
+    private function setInverseToNull($relation, Model $current): void
     {
         if ($relation instanceof EloquentMorphOne) {
             $current->setAttribute($relation->getMorphType(), null);
         }
 
         $current->setAttribute($relation->getForeignKeyName(), null)->save();
+    }
+
+    /**
+     * Disassociate the related model by deleting it.
+     *
+     * @param Model $related
+     * @return void
+     */
+    private function deleteRelatedModel(Model $related): void
+    {
+        if (self::FORCE_DELETE_DETACHED_MODEL === $this->detachMode) {
+            $related->forceDelete();
+            return;
+        }
+
+        $related->delete();
     }
 }

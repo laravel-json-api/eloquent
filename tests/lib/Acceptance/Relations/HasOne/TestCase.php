@@ -19,11 +19,17 @@ declare(strict_types=1);
 
 namespace LaravelJsonApi\Eloquent\Tests\Acceptance\Relations\HasOne;
 
+use App\Schemas\UserSchema;
 use LaravelJsonApi\Eloquent\Repository;
 use LaravelJsonApi\Eloquent\Tests\Acceptance\TestCase as BaseTestCase;
 
 class TestCase extends BaseTestCase
 {
+
+    /**
+     * @var UserSchema
+     */
+    protected UserSchema $schema;
 
     /**
      * @var Repository
@@ -36,6 +42,8 @@ class TestCase extends BaseTestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->repository = $this->schemas()->schemaFor('users')->repository();
+
+        $this->schema = $this->schemas()->schemaFor('users');
+        $this->repository = $this->schema->repository();
     }
 }

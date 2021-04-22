@@ -27,7 +27,7 @@ use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 class SyncTest extends TestCase
 {
 
-    public function test(): void
+    public function testItSyncsAndKeepsDetachedModels(): void
     {
         /** @var Video $video */
         $video = Video::factory()
@@ -69,6 +69,51 @@ class SyncTest extends TestCase
             'id' => $remove->getKey(),
             'commentable_id' => null,
             'commentable_type' => null,
+        ]);
+    }
+
+    public function testItSyncsAndDeletesDetachedModels(): void
+    {
+        $this->schema->relationship('comments')->deleteDetachedModels();
+
+        /** @var Video $video */
+        $video = Video::factory()
+            ->has(Comment::factory()->count(3))
+            ->create();
+
+        $existing = $video->comments()->get();
+        $remove = $existing->last();
+
+        $expected = $existing->take(2)->push(
+            Comment::factory()->create()
+        );
+
+        $actual = $this->repository->modifyToMany($video, 'comments')->sync(
+            $expected->map(fn(Comment $comment) => [
+                'type' => 'comments',
+                'id' => (string) $comment->getRouteKey(),
+            ])->all()
+        );
+
+        $this->assertInstanceOf(EloquentCollection::class, $actual);
+        $this->assertComments($expected, $actual);
+
+        // as the relationship is countable, we expect the count to be loaded so the relationship meta is complete.
+        $this->assertEquals(count($expected), $video->comments_count);
+
+        $this->assertTrue($video->relationLoaded('comments'));
+        $this->assertSame($actual, $video->getRelation('comments'));
+
+        foreach ($expected as $comment) {
+            $this->assertDatabaseHas('comments', [
+                'id' => $comment->getKey(),
+                'commentable_id' => $video->getKey(),
+                'commentable_type' => Video::class,
+            ]);
+        }
+
+        $this->assertDatabaseMissing('comments', [
+            $remove->getKeyName() => $remove->getKey(),
         ]);
     }
 

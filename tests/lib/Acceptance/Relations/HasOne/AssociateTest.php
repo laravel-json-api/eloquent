@@ -46,7 +46,7 @@ class AssociateTest extends TestCase
         ]);
     }
 
-    public function testPhoneToNull(): void
+    public function testPhoneToNullKeepsModel(): void
     {
         $user = User::factory()->create();
         $phone = Phone::factory(['user_id' => $user])->create();
@@ -63,7 +63,25 @@ class AssociateTest extends TestCase
         ]);
     }
 
-    public function testPhoneToPhone(): void
+    public function testPhoneToNullDeletesPhone(): void
+    {
+        $this->schema->relationship('phone')->deleteDetachedModel();
+
+        $user = User::factory()->create();
+        $phone = Phone::factory(['user_id' => $user])->create();
+
+        $actual = $this->repository->modifyToOne($user, 'phone')->associate(null);
+
+        $this->assertNull($actual);
+        $this->assertTrue($user->relationLoaded('phone'));
+        $this->assertNull($user->getRelation('phone'));
+
+        $this->assertDatabaseMissing('phones', [
+            $phone->getKeyName() => $phone->getKey(),
+        ]);
+    }
+
+    public function testPhoneToPhoneKeepsOriginalPhone(): void
     {
         $user = User::factory()->create();
         $existing = Phone::factory()->create(['user_id' => $user]);
@@ -86,6 +104,33 @@ class AssociateTest extends TestCase
         $this->assertDatabaseHas('phones', [
             'id' => $existing->getKey(),
             'user_id' => null,
+        ]);
+    }
+
+    public function testPhoneToPhoneDeletesOriginalPhone(): void
+    {
+        $this->schema->relationship('phone')->deleteDetachedModel();
+
+        $user = User::factory()->create();
+        $existing = Phone::factory()->create(['user_id' => $user]);
+        $phone = Phone::factory()->create();
+
+        $actual = $this->repository->modifyToOne($user, 'phone')->associate([
+            'type' => 'phones',
+            'id' => (string) $phone->getRouteKey(),
+        ]);
+
+        $this->assertTrue($phone->is($actual));
+        $this->assertTrue($user->relationLoaded('phone'));
+        $this->assertTrue($phone->is($user->getRelation('phone')));
+
+        $this->assertDatabaseHas('phones', [
+            'id' => $phone->getKey(),
+            'user_id' => $user->getKey(),
+        ]);
+
+        $this->assertDatabaseMissing('phones', [
+            $existing->getKeyName() => $existing->getKey(),
         ]);
     }
 

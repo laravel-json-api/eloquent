@@ -26,7 +26,7 @@ use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 class UpdateTest extends TestCase
 {
 
-    public function test(): void
+    public function testItUpdatesAndKeepsDetachedModels(): void
     {
         /** @var User $user */
         $user = User::factory()
@@ -61,6 +61,45 @@ class UpdateTest extends TestCase
         $this->assertDatabaseHas('comments', [
             'id' => $remove->getKey(),
             'user_id' => null,
+        ]);
+    }
+
+    public function testItUpdatesAndDeletesDetachedModels(): void
+    {
+        $this->schema->relationship('comments')->deleteDetachedModels();
+
+        /** @var User $user */
+        $user = User::factory()
+            ->has(Comment::factory()->count(3))
+            ->create();
+
+        $existing = $user->comments()->get();
+        $remove = $existing->last();
+
+        $expected = $existing->take(2)->push(
+            Comment::factory()->create()
+        );
+
+        $this->repository->update($user)->store([
+            'comments' => $expected->map(fn(Comment $comment) => [
+                'type' => 'comments',
+                'id' => (string) $comment->getRouteKey(),
+            ])->all(),
+        ]);
+
+        $this->assertTrue($user->relationLoaded('comments'));
+        $this->assertInstanceOf(EloquentCollection::class, $actual = $user->getRelation('comments'));
+        $this->assertComments($expected, $actual);
+
+        foreach ($expected as $comment) {
+            $this->assertDatabaseHas('comments', [
+                'id' => $comment->getKey(),
+                'user_id' => $user->getKey(),
+            ]);
+        }
+
+        $this->assertDatabaseMissing('comments', [
+            $remove->getKeyName() => $remove->getKey(),
         ]);
     }
 
