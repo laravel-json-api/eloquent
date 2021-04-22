@@ -47,7 +47,7 @@ class CreateTest extends TestCase
 
         $this->assertTrue($user->relationLoaded('comments'));
         $this->assertInstanceOf(EloquentCollection::class, $actual = $user->getRelation('comments'));
-        $this->assertComments($comments, $actual);
+        $this->assertModels($comments, $actual);
 
         foreach ($comments as $comment) {
             $this->assertDatabaseHas('comments', [
@@ -91,7 +91,7 @@ class CreateTest extends TestCase
 
         $this->assertTrue($user->relationLoaded('comments'));
         $this->assertInstanceOf(EloquentCollection::class, $actual = $user->getRelation('comments'));
-        $this->assertComments($comments, $actual);
+        $this->assertModels($comments, $actual);
         $this->assertSame(2, $user->comments()->count());
 
         foreach ($comments as $comment) {

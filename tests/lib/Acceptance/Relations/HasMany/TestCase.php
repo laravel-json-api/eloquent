@@ -19,7 +19,7 @@ declare(strict_types=1);
 
 namespace LaravelJsonApi\Eloquent\Tests\Acceptance\Relations\HasMany;
 
-use App\Models\Comment;
+use Illuminate\Database\Eloquent\Model;
 use LaravelJsonApi\Eloquent\Repository;
 use LaravelJsonApi\Eloquent\Tests\Acceptance\TestCase as BaseTestCase;
 
@@ -46,10 +46,10 @@ class TestCase extends BaseTestCase
      * @param iterable $actual
      * @return void
      */
-    protected function assertComments(iterable $expected, iterable $actual): void
+    protected function assertModels(iterable $expected, iterable $actual): void
     {
         $expected = collect($expected)
-            ->map($fn = fn(Comment $comment) => $comment->getKey())
+            ->map($fn = fn(Model $model) => $model->getKey())
             ->values()
             ->all();
 

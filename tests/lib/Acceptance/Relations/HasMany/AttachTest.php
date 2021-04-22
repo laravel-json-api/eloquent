@@ -48,7 +48,7 @@ class AttachTest extends TestCase
             ->attach($ids);
 
         $this->assertInstanceOf(EloquentCollection::class, $actual);
-        $this->assertComments($expected, $actual);
+        $this->assertModels($expected, $actual);
         $this->assertSame(5, $user->comments()->count());
 
         // as the relationship is countable, we expect the count to be loaded so the relationship meta is complete.
@@ -83,7 +83,7 @@ class AttachTest extends TestCase
             ->with('user')
             ->attach($ids);
 
-        $this->assertComments($comments, $actual);
+        $this->assertModels($comments, $actual);
         $this->assertTrue($actual->every(fn(Comment $comment) => $comment->relationLoaded('user')));
     }
 
@@ -106,7 +106,7 @@ class AttachTest extends TestCase
             ->modifyToMany($user, 'comments')
             ->attach($ids);
 
-        $this->assertComments($comments, $actual);
+        $this->assertModels($comments, $actual);
         $this->assertTrue($actual->every(
             fn(Comment $comment) => $comment->relationLoaded('commentable') && $post->is($comment->commentable)
         ));
@@ -132,7 +132,7 @@ class AttachTest extends TestCase
             ->with('user')
             ->attach($ids);
 
-        $this->assertComments($comments, $actual);
+        $this->assertModels($comments, $actual);
 
         $this->assertTrue($actual->every(
             fn(Comment $comment) => $comment->relationLoaded('commentable') && $post->is($comment->commentable)
@@ -166,7 +166,7 @@ class AttachTest extends TestCase
             ->modifyToMany($user, 'comments')
             ->attach($ids);
 
-        $this->assertComments($comments, $actual);
+        $this->assertModels($comments, $actual);
         $this->assertSame(2, $user->comments()->count());
     }
 }

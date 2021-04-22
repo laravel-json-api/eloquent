@@ -50,6 +50,7 @@ class UserSchema extends Schema
     {
         return [
             ID::make(),
+            HasMany::make('posts')->deleteNoLongerExistingRecordsOnReplacementRequest(),
             HasMany::make('comments'),
             BelongsTo::make('country'),
             DateTime::make('createdAt')->readOnly(),

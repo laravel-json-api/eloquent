@@ -33,6 +33,16 @@ class HasMany extends ToMany implements FillableToMany
 
     use ReadOnly;
 
+    private const DETACH = 'detach';
+    private const DELETE = 'delete';
+
+    /**
+     * Whether the relationship is gonna be detached or deleted when a replacement request no longer has the model.
+     *
+     * @var string
+     */
+    private $replacementBehaviorForNoLongerExistingResources = self::DETACH;
+
     /**
      * Create a has-many relation.
      *
@@ -43,6 +53,30 @@ class HasMany extends ToMany implements FillableToMany
     public static function make(string $fieldName, string $relation = null): HasMany
     {
         return new self($fieldName, $relation);
+    }
+
+    /**
+     * The relationship is gonna be detached when a replacement request no longer has the model.
+     *
+     * @return $this
+     */
+    public function detachNoLongerExistingRecordsOnReplacementRequest(): self
+    {
+        $this->replacementBehaviorForNoLongerExistingResources = self::DETACH;
+
+        return $this;
+    }
+
+    /**
+     * The relationship is gonna be deleted when a replacement request no longer has the model.
+     *
+     * @return $this
+     */
+    public function deleteNoLongerExistingRecordsOnReplacementRequest(): self
+    {
+        $this->replacementBehaviorForNoLongerExistingResources = self::DELETE;
+
+        return $this;
     }
 
     /**
@@ -86,7 +120,7 @@ class HasMany extends ToMany implements FillableToMany
     {
         $models = $this->findMany($identifiers);
 
-        $this->doDetach($model, $models);
+        $this->doDetachOrDelete($model, $models);
         $model->unsetRelation($this->relationName());
 
         return $models;
@@ -101,7 +135,7 @@ class HasMany extends ToMany implements FillableToMany
         $relation = $this->getRelation($model);
         $existing = $relation->get();
 
-        $this->doDetach(
+        $this->doDetachOrDelete(
             $model,
             $existing->reject(fn($model) => $new->contains($model))
         );
@@ -113,7 +147,7 @@ class HasMany extends ToMany implements FillableToMany
      * @param Model $model
      * @param EloquentCollection $remove
      */
-    private function doDetach(Model $model, EloquentCollection $remove): void
+    private function doDetachOrDelete(Model $model, EloquentCollection $remove): void
     {
         $relation = $this->getRelation($model);
 
@@ -123,7 +157,11 @@ class HasMany extends ToMany implements FillableToMany
                 $model->setAttribute($relation->getMorphType(), null);
             }
 
-            $model->setAttribute($relation->getForeignKeyName(), null)->save();
+            if (self::DELETE === $this->replacementBehaviorForNoLongerExistingResources) {
+                $model->delete();
+            } else {
+                $model->setAttribute($relation->getForeignKeyName(), null)->save();
+            }
         }
     }
 

@@ -20,6 +20,7 @@ declare(strict_types=1);
 namespace LaravelJsonApi\Eloquent\Tests\Acceptance\Relations\HasMany;
 
 use App\Models\Comment;
+use App\Models\Post;
 use App\Models\User;
 use App\Schemas\CommentSchema;
 use Illuminate\Database\Eloquent\Collection as EloquentCollection;
@@ -27,7 +28,7 @@ use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 class DetachTest extends TestCase
 {
 
-    public function test(): void
+    public function testDetachingRelationship(): void
     {
         $user = User::factory()
             ->has(Comment::factory()->count(3))
@@ -48,7 +49,7 @@ class DetachTest extends TestCase
             ->detach($ids);
 
         $this->assertInstanceOf(EloquentCollection::class, $actual);
-        $this->assertComments($remove, $actual);
+        $this->assertModels($remove, $actual);
         $this->assertSame(1, $user->comments()->count());
 
         // as the relationship is countable, we expect the count to be loaded so the relationship meta is complete.
@@ -73,7 +74,50 @@ class DetachTest extends TestCase
         }
     }
 
-    public function testWithIncludePaths(): void
+    public function testDeletingRelationship(): void
+    {
+        $user = User::factory()
+            ->has(Post::factory()->count(3))
+            ->create();
+
+        /** We force the relation to be loaded before the change, so that we can test it is unset. */
+        $existing = clone $user->posts;
+        $remove = $existing->take(2);
+        $keep = $existing->last();
+
+        $ids = $remove->map(fn(Post $post) => [
+            'type' => 'posts',
+            'id' => (string) $post->getRouteKey(),
+        ])->all();
+
+        $actual = $this->repository
+            ->modifyToMany($user, 'posts')
+            ->detach($ids);
+
+        $this->assertInstanceOf(EloquentCollection::class, $actual);
+        $this->assertModels($remove, $actual);
+        $this->assertSame(1, $user->posts()->count());
+
+        // as the relationship is countable, we expect the count to be loaded so the relationship meta is complete.
+        $this->assertEquals(1, $user->posts_count);
+
+        /**
+         * We expect the relation to be unloaded because we know it has changed in the
+         * database, but we don't know what it now is in its entirety.
+         */
+        $this->assertFalse($user->relationLoaded('posts'));
+
+        $this->assertDatabaseHas('posts', [
+            'id' => $keep->getKey(),
+            'user_id' => $user->getKey(),
+        ]);
+
+        foreach ($remove as $post) {
+            $this->assertNull(Post::find($post->getKey()));
+        }
+    }
+
+    public function testDetachingWithIncludePaths(): void
     {
         $user = User::factory()
             ->has(Comment::factory()->count(3))
@@ -91,7 +135,7 @@ class DetachTest extends TestCase
             ->with('commentable')
             ->detach($ids);
 
-        $this->assertComments($comments, $actual);
+        $this->assertModels($comments, $actual);
         $this->assertTrue($actual->every(fn(Comment $comment) => $comment->relationLoaded('commentable')));
     }
 
@@ -113,7 +157,7 @@ class DetachTest extends TestCase
             ->modifyToMany($user, 'comments')
             ->detach($ids);
 
-        $this->assertComments($comments, $actual);
+        $this->assertModels($comments, $actual);
 
         // user is null because it has been detached.
         $this->assertTrue($actual->every(
@@ -140,7 +184,7 @@ class DetachTest extends TestCase
             ->with('commentable')
             ->detach($ids);
 
-        $this->assertComments($comments, $actual);
+        $this->assertModels($comments, $actual);
 
         $this->assertTrue($actual->every(
             fn(Comment $comment) => $comment->relationLoaded('user')

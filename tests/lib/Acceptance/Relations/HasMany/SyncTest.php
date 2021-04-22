@@ -20,6 +20,7 @@ declare(strict_types=1);
 namespace LaravelJsonApi\Eloquent\Tests\Acceptance\Relations\HasMany;
 
 use App\Models\Comment;
+use App\Models\Post;
 use App\Models\User;
 use App\Schemas\CommentSchema;
 use Illuminate\Database\Eloquent\Collection as EloquentCollection;
@@ -27,7 +28,7 @@ use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 class SyncTest extends TestCase
 {
 
-    public function test(): void
+    public function testSyncDetachesDetachableRelationship(): void
     {
         /** @var User $user */
         $user = User::factory()
@@ -49,7 +50,7 @@ class SyncTest extends TestCase
         );
 
         $this->assertInstanceOf(EloquentCollection::class, $actual);
-        $this->assertComments($expected, $actual);
+        $this->assertModels($expected, $actual);
 
         // as the relationship is countable, we expect the count to be loaded so the relationship meta is complete.
         $this->assertEquals(count($expected), $user->comments_count);
@@ -68,6 +69,46 @@ class SyncTest extends TestCase
             'id' => $remove->getKey(),
             'user_id' => null,
         ]);
+    }
+
+    public function testSyncDeletesDeletableRelationship(): void
+    {
+        /** @var User $user */
+        $user = User::factory()
+            ->has(Post::factory()->count(3))
+            ->create();
+
+        $existing = $user->posts()->get();
+        $remove = $existing->last();
+
+        $expected = $existing->take(2)->push(
+            Post::factory()->create()
+        );
+
+        $actual = $this->repository->modifyToMany($user, 'posts')->sync(
+            $expected->map(fn(Post $post) => [
+                'type' => 'posts',
+                'id' => (string) $post->getRouteKey(),
+            ])->all()
+        );
+
+        $this->assertInstanceOf(EloquentCollection::class, $actual);
+        $this->assertModels($expected, $actual);
+
+        // as the relationship is countable, we expect the count to be loaded so the relationship meta is complete.
+        $this->assertEquals(count($expected), $user->posts_count);
+
+        $this->assertTrue($user->relationLoaded('posts'));
+        $this->assertSame($actual, $user->getRelation('posts'));
+
+        foreach ($expected as $post) {
+            $this->assertDatabaseHas('posts', [
+                'id' => $post->getKey(),
+                'user_id' => $user->getKey(),
+            ]);
+        }
+
+        $this->assertNull(Post::find($remove->getKey()));
     }
 
     public function testEmpty(): void
@@ -183,6 +224,6 @@ class SyncTest extends TestCase
 
         $this->assertCount(3, $actual);
         $this->assertSame(3, $user->comments()->count());
-        $this->assertComments($comments, $actual);
+        $this->assertModels($comments, $actual);
     }
 }
