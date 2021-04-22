@@ -38,7 +38,7 @@ class HasMany extends ToMany implements FillableToMany
     use ReadOnly;
 
     /**
-     * Whether to delete detached models.
+     * Flag for how to detach models from the relationship.
      *
      * @var int
      */
@@ -57,7 +57,7 @@ class HasMany extends ToMany implements FillableToMany
     }
 
     /**
-     * Keep models that are detached by setting the inverse relationship to `null`.
+     * Keep models that are detached by setting the inverse relationship column(s) to `null`.
      *
      * @return $this
      */

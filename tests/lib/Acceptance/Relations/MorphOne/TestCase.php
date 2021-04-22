@@ -19,11 +19,17 @@ declare(strict_types=1);
 
 namespace LaravelJsonApi\Eloquent\Tests\Acceptance\Relations\MorphOne;
 
+use App\Schemas\PostSchema;
 use LaravelJsonApi\Eloquent\Repository;
 use LaravelJsonApi\Eloquent\Tests\Acceptance\TestCase as BaseTestCase;
 
 class TestCase extends BaseTestCase
 {
+
+    /**
+     * @var PostSchema
+     */
+    protected PostSchema $schema;
 
     /**
      * @var Repository
@@ -36,6 +42,8 @@ class TestCase extends BaseTestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->repository = $this->schemas()->schemaFor('posts')->repository();
+
+        $this->schema = $this->schemas()->schemaFor('posts');
+        $this->repository = $this->schema->repository();
     }
 }

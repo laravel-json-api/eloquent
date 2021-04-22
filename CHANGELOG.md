@@ -12,6 +12,11 @@ All notable changes to this project will be documented in this file. This projec
   can delete the related models using either the `Model::delete()` or `Model::forceDelete()` methods. The default
   behaviour matches the behaviour in previous versions, so this change is non-breaking. The behaviour can be configured
   via the `keepDetachedModels()`, `deleteDetachedModels()` and `forceDeleteDetachedModels()` methods.
+- The `HasOne` field can now handle detaching a related model from the relationship in three ways. Either it will set
+  the inverse relationship columns to `null` (the default behaviour), or it can delete the related model using either
+  `Model::delete()` or `Model::forceDelete()`. The default behaviour matches the behaviour in previous versions, so this
+  change is non-breaking. The behaviour can be configured via the `keepDetachedModel()`, `deleteDetachedModel()` and
+  `forceDeleteDetachedModel()` methods.
 
 ## [1.0.0-beta.2] - 2021-04-20
 
