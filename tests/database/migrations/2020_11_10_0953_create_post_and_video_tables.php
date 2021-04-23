@@ -145,6 +145,10 @@ class CreatePostAndVideoTables extends Migration
      */
     public function down(): void
     {
+        Schema::dropIfExists('post_video');
+        Schema::dropIfExists('image_post');
+        Schema::dropIfExists('taggables');
+        Schema::dropIfExists('tags');
         Schema::dropIfExists('images');
         Schema::dropIfExists('comments');
         Schema::dropIfExists('videos');

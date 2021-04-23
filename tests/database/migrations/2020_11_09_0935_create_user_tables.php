@@ -86,6 +86,7 @@ class CreateUserTables extends Migration
     public function down(): void
     {
         Schema::dropIfExists('phones');
+        Schema::dropIfExists('user_profiles');
         Schema::dropIfExists('users');
         Schema::dropIfExists('countries');
     }
