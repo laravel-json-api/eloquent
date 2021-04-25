@@ -24,7 +24,6 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
-use Illuminate\Support\Collection;
 use LaravelJsonApi\Contracts\Implementations\Countable\CountableField;
 use LaravelJsonApi\Contracts\Implementations\Countable\CountableSchema;
 use LaravelJsonApi\Core\Schema\Schema as BaseSchema;
