@@ -19,21 +19,17 @@ declare(strict_types=1);
 
 namespace LaravelJsonApi\Eloquent\Sorting;
 
+use Closure;
+use LaravelJsonApi\Core\Support\Str;
 use LaravelJsonApi\Eloquent\Contracts\SortField;
-use LaravelJsonApi\Eloquent\Schema;
 
 class SortCount implements SortField
 {
 
     /**
-     * @var Schema
-     */
-    private Schema $schema;
-
-    /**
      * @var string
      */
-    private string $fieldName;
+    private string $relationName;
 
     /**
      * @var string
@@ -41,30 +37,37 @@ class SortCount implements SortField
     private string $key;
 
     /**
+     * @var string|null
+     */
+    private ?string $countAs = null;
+
+    /**
+     * @var Closure|null
+     */
+    private ?Closure $callback = null;
+
+    /**
      * Create a new sortable field.
      *
-     * @param Schema $schema
      * @param string $fieldName
      * @param string|null $key
      * @return static
      */
-    public static function make(Schema $schema, string $fieldName, string $key = null): self
+    public static function make(string $fieldName, string $key = null): self
     {
-        return new self($schema, $fieldName, $key);
+        return new self($fieldName, $key);
     }
 
     /**
-     * SortCount constructor.
+     * SortCountRelation constructor.
      *
-     * @param Schema $schema
-     * @param string $fieldName
+     * @param string $relationName
      * @param string|null $key
      */
-    public function __construct(Schema $schema, string $fieldName, string $key = null)
+    public function __construct(string $relationName, string $key = null)
     {
-        $this->schema = $schema;
-        $this->fieldName = $fieldName;
-        $this->key = $key ?? $fieldName;
+        $this->relationName = $relationName;
+        $this->key = $key ?? $relationName;
     }
 
     /**
@@ -76,15 +79,63 @@ class SortCount implements SortField
     }
 
     /**
+     * Set an alias for the relationship count.
+     *
+     * @param string $alias
+     * @return $this
+     */
+    public function countAs(string $alias): self
+    {
+        $this->countAs = $alias;
+
+        return $this;
+    }
+
+    /**
+     * @param Closure $callback
+     * @return $this
+     */
+    public function using(Closure $callback): self
+    {
+        $this->callback = $callback;
+
+        return $this;
+    }
+
+    /**
      * @inheritDoc
      */
     public function sort($query, string $direction = 'asc')
     {
-        $relation = $this->schema->toMany($this->fieldName);
+        $callback = $this->callback ?? static fn($query) => $query;
 
         return $query
-            ->withCount($relation->withCountName())
-            ->orderBy($relation->keyForCount(), $direction);
+            ->withCount([$this->withCountName() => $callback])
+            ->orderBy($this->keyForCount(), $direction);
+    }
+
+    /**
+     * @return string
+     */
+    protected function withCountName(): string
+    {
+        if ($this->countAs) {
+            return "{$this->relationName} as {$this->countAs}";
+        }
+
+        return $this->relationName;
+    }
+
+    /**
+     * @return string
+     */
+    protected function keyForCount(): string
+    {
+        if ($this->countAs) {
+            return $this->countAs;
+        }
+
+        return Str::snake($this->relationName) . '_count';
     }
 
 }

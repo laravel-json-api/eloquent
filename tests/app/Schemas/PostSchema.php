@@ -38,7 +38,7 @@ use LaravelJsonApi\Eloquent\Filters\WithTrashed;
 use LaravelJsonApi\Eloquent\Pagination\PagePagination;
 use LaravelJsonApi\Eloquent\Schema;
 use LaravelJsonApi\Eloquent\SoftDeletes;
-use LaravelJsonApi\Eloquent\Sorting\SortCount;
+use LaravelJsonApi\Eloquent\Sorting\SortCountable;
 
 class PostSchema extends Schema
 {
@@ -101,7 +101,7 @@ class PostSchema extends Schema
     public function sortables(): iterable
     {
         return [
-            SortCount::make($this, 'comments'),
+            SortCountable::make($this, 'comments'),
         ];
     }
 
