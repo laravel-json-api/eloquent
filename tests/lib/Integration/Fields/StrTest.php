@@ -21,8 +21,6 @@ namespace LaravelJsonApi\Eloquent\Tests\Integration\Fields;
 
 use App\Models\Post;
 use App\Models\User;
-use App\Models\UserProfile;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
 use LaravelJsonApi\Eloquent\Fields\Str;
 use LaravelJsonApi\Eloquent\Tests\Integration\TestCase;
