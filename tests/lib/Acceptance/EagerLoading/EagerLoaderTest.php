@@ -21,7 +21,6 @@ namespace LaravelJsonApi\Eloquent\Tests\Acceptance\EagerLoading;
 
 use App\Models\Post;
 use App\Models\User;
-use App\Schemas\PostSchema;
 use LaravelJsonApi\Core\Query\IncludePaths;
 use LaravelJsonApi\Eloquent\EagerLoading\EagerLoader;
 use LaravelJsonApi\Eloquent\Tests\Acceptance\TestCase;
