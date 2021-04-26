@@ -36,6 +36,18 @@ class SortColumn implements SortField
     private string $column;
 
     /**
+     * Create a new sortable field.
+     *
+     * @param string $fieldName
+     * @param string|null $column
+     * @return static
+     */
+    public static function make(string $fieldName, string $column = null): self
+    {
+        return new self($fieldName, $column);
+    }
+
+    /**
      * SortColumn constructor.
      *
      * @param string $fieldName
