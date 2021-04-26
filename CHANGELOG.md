@@ -9,7 +9,7 @@ All notable changes to this project will be documented in this file. This projec
 
 - Schemas now support additional sort field classes, that define how to sort models using sort fields that are not
   attributes. Sort field classes must implement the new `SortField` contract. Three initial sort classes are available:
-  `SortColumn`, `SortCountable` and `SortCount`.
+  `SortColumn`, `SortCountable` and `SortWithCount`.
 - Default sort order for resources can now be defined on the Eloquent schema using the `$defaultSort` property.
 
 ## [1.0.0-beta.3] - 2021-04-22

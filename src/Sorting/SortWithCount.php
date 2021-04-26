@@ -23,7 +23,7 @@ use Closure;
 use LaravelJsonApi\Core\Support\Str;
 use LaravelJsonApi\Eloquent\Contracts\SortField;
 
-class SortCount implements SortField
+class SortWithCount implements SortField
 {
 
     /**
