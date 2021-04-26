@@ -46,6 +46,8 @@ use LaravelJsonApi\Eloquent\Contracts\Sortable;
 use LaravelJsonApi\Eloquent\EagerLoading\EagerLoader;
 use LogicException;
 use RuntimeException;
+use function get_class;
+use function sprintf;
 
 /**
  * Class JsonApiBuilder
@@ -144,7 +146,7 @@ class JsonApiBuilder
         $query = ExtendedQueryParameters::cast($query);
 
         $this->filter($query->filter())
-            ->sort($query->sortFields())
+            ->sortWithDefault($query->sortFields())
             ->with($query->includePaths())
             ->withCount($query->countable());
 
@@ -152,7 +154,7 @@ class JsonApiBuilder
     }
 
     /**
-     * Apply the supplied JSON API filters.
+     * Apply the supplied JSON:API filters.
      *
      * @param FilterParameters|array|mixed|null $filters
      * @return $this
@@ -208,7 +210,7 @@ class JsonApiBuilder
     }
 
     /**
-     * Sort models using JSON API sort fields.
+     * Sort models using JSON:API sort fields.
      *
      * @param SortFields|SortField|array|string|null $fields
      * @return $this
@@ -229,17 +231,17 @@ class JsonApiBuilder
                 continue;
             }
 
-            $field = $this->schema->attribute($sort->name());
+            $field = $this->schema->sortField($sort->name());
 
-            if ($field->isSortable() && $field instanceof Sortable) {
+            if ($field instanceof Sortable) {
                 $field->sort($this->query, $sort->getDirection());
                 continue;
             }
 
             throw new LogicException(sprintf(
-                'Field %s is not sortable on resource type %s.',
+                'Expecting sort field %s on schema %s to implement the Eloquent sortable interface.',
                 $sort->name(),
-                $this->schema->type()
+                get_class($this->schema),
             ));
         }
 
@@ -249,7 +251,22 @@ class JsonApiBuilder
     }
 
     /**
-     * Set the relations that should be eager loaded using JSON API include paths.
+     * Sort models using JSON:API sort fields, or use the schema's default sort order.
+     *
+     * @param SortFields|SortField|array|string|null $fields
+     * @return $this
+     */
+    public function sortWithDefault($fields): self
+    {
+        if (is_null($fields)) {
+            $fields = $this->schema->defaultSort();
+        }
+
+        return $this->sort($fields);
+    }
+
+    /**
+     * Set the relations that should be eager loaded using JSON:API include paths.
      *
      * @param IncludePaths|RelationshipPath|array|string|null $includePaths
      * @return $this
@@ -298,7 +315,7 @@ class JsonApiBuilder
     }
 
     /**
-     * Add a where clause using the JSON API resource id.
+     * Add a where clause using the JSON:API resource id.
      *
      * @param string|array|Arrayable $resourceId
      * @return $this
@@ -389,7 +406,7 @@ class JsonApiBuilder
     }
 
     /**
-     * Return a page of models using JSON API page parameters.
+     * Return a page of models using JSON:API page parameters.
      *
      * @param array $page
      * @return Page|mixed
