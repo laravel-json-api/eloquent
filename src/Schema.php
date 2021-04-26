@@ -24,7 +24,6 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
-use Illuminate\Support\Collection;
 use LaravelJsonApi\Contracts\Implementations\Countable\CountableField;
 use LaravelJsonApi\Contracts\Implementations\Countable\CountableSchema;
 use LaravelJsonApi\Core\Schema\Schema as BaseSchema;
@@ -36,6 +35,7 @@ use LaravelJsonApi\Eloquent\Fields\Relations\ToMany;
 use LaravelJsonApi\Eloquent\Fields\Relations\ToOne;
 use LaravelJsonApi\Eloquent\Parsers\StandardParser;
 use LogicException;
+use function sprintf;
 
 abstract class Schema extends BaseSchema implements CountableSchema
 {
@@ -53,6 +53,13 @@ abstract class Schema extends BaseSchema implements CountableSchema
      * @var array|null
      */
     protected ?array $defaultPagination = null;
+
+    /**
+     * The default sort order for this resource.
+     *
+     * @var string|string[]|null
+     */
+    protected $defaultSort = null;
 
     /**
      * The cached parser instance.
@@ -254,6 +261,20 @@ abstract class Schema extends BaseSchema implements CountableSchema
         }
 
         return $this->defaultEagerLoadPaths = array_values(array_unique($paths));
+    }
+
+    /**
+     * Get the default sort order for this resource.
+     *
+     * The default sort order is used if the client supplies no sort parameters.
+     * Returning `null` from this method indicates that no default sort order exists
+     * and resource should be returned in the order they are retrieved from the database.
+     *
+     * @return string|string[]|null
+     */
+    public function defaultSort()
+    {
+        return $this->defaultSort;
     }
 
     /**

@@ -17,33 +17,10 @@
 
 declare(strict_types=1);
 
-namespace Database\Factories;
+namespace LaravelJsonApi\Eloquent\Contracts;
 
-use App\Models\Post;
-use App\Models\User;
-use Illuminate\Database\Eloquent\Factories\Factory;
+use LaravelJsonApi\Contracts\Schema\Sortable as SortableContract;
 
-class PostFactory extends Factory
+interface SortField extends SortableContract, Sortable
 {
-
-    /**
-     * The name of the factory's corresponding model.
-     *
-     * @var string
-     */
-    protected $model = Post::class;
-
-    /**
-     * @inheritDoc
-     */
-    public function definition()
-    {
-        return [
-            'content' => $this->faker->paragraphs(3, true),
-            'slug' => $this->faker->unique()->slug,
-            'title' => $this->faker->unique()->words(5, true),
-            'user_id' => User::factory(),
-        ];
-    }
-
 }

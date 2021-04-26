@@ -38,6 +38,7 @@ use LaravelJsonApi\Eloquent\Filters\WithTrashed;
 use LaravelJsonApi\Eloquent\Pagination\PagePagination;
 use LaravelJsonApi\Eloquent\Schema;
 use LaravelJsonApi\Eloquent\SoftDeletes;
+use LaravelJsonApi\Eloquent\Sorting\SortCountable;
 
 class PostSchema extends Schema
 {
@@ -75,7 +76,7 @@ class PostSchema extends Schema
             ]),
             Str::make('slug')->sortable(),
             BelongsToMany::make('tags')->fields(new ApprovedPivot()),
-            Str::make('title'),
+            Str::make('title')->sortable(),
             DateTime::make('updatedAt')->sortable()->readOnly(),
         ];
     }
@@ -91,6 +92,16 @@ class PostSchema extends Schema
             Where::make('slug')->singular(),
             WhereIn::make('slugs')->delimiter(','),
             WithTrashed::make('withTrashed'),
+        ];
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function sortables(): iterable
+    {
+        return [
+            SortCountable::make($this, 'comments'),
         ];
     }
 

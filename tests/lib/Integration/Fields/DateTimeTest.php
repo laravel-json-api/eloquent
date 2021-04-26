@@ -22,7 +22,6 @@ namespace LaravelJsonApi\Eloquent\Tests\Integration\Fields;
 use App\Models\Post;
 use App\Models\User;
 use Carbon\Carbon;
-use Carbon\Traits\Creator;
 use Illuminate\Http\Request;
 use LaravelJsonApi\Eloquent\Fields\DateTime;
 use LaravelJsonApi\Eloquent\Tests\Integration\TestCase;
