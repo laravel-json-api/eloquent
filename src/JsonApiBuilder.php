@@ -273,7 +273,7 @@ class JsonApiBuilder
      */
     public function with($includePaths): self
     {
-        $includePaths = IncludePaths::cast($includePaths);
+        $includePaths = IncludePaths::nullable($includePaths);
 
         $loader = new EagerLoader(
             $this->schemas,
@@ -283,7 +283,7 @@ class JsonApiBuilder
 
         $this->query->with($paths = $loader->getRelations());
 
-        foreach ($morphs = $loader->getMorphs() as $name => $map) {
+        foreach ($loader->getMorphs() as $name => $map) {
             $this->query->with($name, static function(EloquentMorphTo $morphTo) use ($map) {
                 $morphTo->morphWith($map);
             });

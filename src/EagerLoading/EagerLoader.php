@@ -53,13 +53,13 @@ class EagerLoader
      *
      * @param Container $schemas
      * @param Schema $schema
-     * @param IncludePaths $paths
+     * @param IncludePaths|null $paths
      */
-    public function __construct(Container $schemas, Schema $schema, IncludePaths $paths)
+    public function __construct(Container $schemas, Schema $schema, ?IncludePaths $paths)
     {
         $this->schemas = $schemas;
         $this->schema = $schema;
-        $this->paths = $paths;
+        $this->paths = $paths ?? new IncludePaths();
     }
 
     /**
