@@ -3,6 +3,20 @@
 All notable changes to this project will be documented in this file. This project adheres to
 [Semantic Versioning](http://semver.org/) and [this changelog format](http://keepachangelog.com/).
 
+## [1.0.0-beta.5] - 2021-06-02
+
+### Changed
+
+- Updated the `Pagination\ProxyPage::withQuery()` method to remove iterable type-hint that has been removed from the
+  page interface. The class was also made `final`, as it is not intended to be extended. Although these changes are
+  technically breaking, they are unlikely to affect consuming applications.
+
+### Fixed
+
+- The `JsonApiBuilder` was incorrectly casting `null` to an include paths object. On pages, this would incorrectly
+  result in pagination links having an `include=` (empty) parameter. This has been fixed, so include paths will only be
+  set on the pagination links if include paths were actually specified.
+
 ## [1.0.0-beta.4] - 2021-04-26
 
 ### Added

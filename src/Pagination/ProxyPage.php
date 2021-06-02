@@ -23,7 +23,7 @@ use LaravelJsonApi\Contracts\Pagination\Page;
 use LaravelJsonApi\Core\Document\Links;
 use LaravelJsonApi\Eloquent\Contracts\Proxy;
 
-class ProxyPage implements Page
+final class ProxyPage implements Page
 {
 
     /**
@@ -83,7 +83,7 @@ class ProxyPage implements Page
     /**
      * @inheritDoc
      */
-    public function withQuery(iterable $query): Page
+    public function withQuery($query): Page
     {
         $this->page->withQuery($query);
 
