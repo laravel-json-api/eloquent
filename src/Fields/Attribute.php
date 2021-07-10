@@ -38,7 +38,7 @@ use LaravelJsonApi\Eloquent\Fields\Concerns\ReadOnly;
 abstract class Attribute implements
     AttributeContract,
     EagerLoadableField,
-    Fillable, 
+    Fillable,
     Selectable,
     SerializableContract,
     SortableContract
@@ -74,6 +74,11 @@ abstract class Attribute implements
      * @var Closure|null
      */
     private ?Closure $hydrator = null;
+
+    /**
+     * @var Closure|null
+     */
+    private ?Closure $extractor = null;
 
     /**
      * @var bool
@@ -145,6 +150,19 @@ abstract class Attribute implements
     public function fillUsing(Closure $hydrator): self
     {
         $this->hydrator = $hydrator;
+
+        return $this;
+    }
+
+    /**
+     * Customise the extraction of the model attribute.
+     *
+     * @param Closure $extractor
+     * @return $this
+     */
+    public function extractUsing(Closure $extractor): self
+    {
+        $this->extractor = $extractor;
 
         return $this;
     }
@@ -236,11 +254,16 @@ abstract class Attribute implements
      */
     public function serialize(object $model)
     {
+        $column = $this->column();
         $owner = $this->related ? $model->{$this->related} : $model;
-        $value = $owner ? $owner->{$this->column()} : null;
+        $value = $owner ? $owner->{$column} : null;
 
         if ($this->serializer) {
-            return ($this->serializer)($value);
+            $value = ($this->serializer)($value);
+        }
+
+        if ($this->extractor) {
+            return ($this->extractor)($model, $column, $value);
         }
 
         return $value;
