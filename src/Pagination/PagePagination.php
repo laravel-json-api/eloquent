@@ -197,7 +197,9 @@ class PagePagination implements Paginator
     private function defaultOrder($query): self
     {
         if ($this->doesRequireOrdering($query)) {
-            $query->orderBy($this->primaryKey);
+            $query->orderBy(
+                $query->getModel()->qualifyColumn($this->primaryKey)
+            );
         }
 
         return $this;

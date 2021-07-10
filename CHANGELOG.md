@@ -3,6 +3,21 @@
 All notable changes to this project will be documented in this file. This project adheres to
 [Semantic Versioning](http://semver.org/) and [this changelog format](http://keepachangelog.com/).
 
+## [1.0.0-beta.6] - 2021-07-10
+
+### Added
+
+- Developers can now fully control the extraction of attribute values from a model by providing a closure to the
+  `extractUsing()` method on attributes. This callback receives the model, the column name, and the serialized value.
+  Resource classes are still the recommended way of fully customising serialization of models to JSON:API resource
+  objects. However, the `extractUsing()` method is useful where a developer only needs to customise one or two attribute
+  values on a resource.
+
+### Fixed
+
+- [#13](https://github.com/laravel-json-api/eloquent/pull/13) The default order by column in the page paginator now has
+  the table name added. This fixes problems with pagination on relationships or other joins.
+
 ## [1.0.0-beta.5] - 2021-06-02
 
 ### Changed

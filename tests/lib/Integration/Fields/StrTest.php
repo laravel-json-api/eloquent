@@ -277,6 +277,37 @@ class StrTest extends TestCase
         $this->assertSame($expected, $attr->serialize($user));
     }
 
+    public function testExtractUsing(): void
+    {
+        $post = new Post(['title' => 'Hello World!']);
+
+        $attr = Str::make('display_name', 'title')->serializeUsing(fn($value) => strtoupper($value))->extractUsing(
+            function($model, $column, $value) use ($post) {
+                $this->assertSame($post, $model, 'model');
+                $this->assertSame('title', $column, 'column');
+                $this->assertSame('HELLO WORLD!', $value, 'value');
+                return "{$value}!!";
+            }
+        );
+
+        $this->assertSame('HELLO WORLD!!!', $attr->serialize($post));
+    }
+
+    public function testExtractUsingOnRelated(): void
+    {
+        $user = new User();
+        $user->profile->description = 'This is a description.';
+
+        $attr = Str::make('description')->on('profile')->extractUsing(function ($model, $column, $value) use ($user) {
+            $this->assertSame($user, $model, 'model');
+            $this->assertSame('description', $column, 'column');
+            $this->assertSame('This is a description.', $value);
+            return 'This is a different description.';
+        });
+
+        $this->assertSame('This is a different description.', $attr->serialize($user));
+    }
+
     public function testHidden(): void
     {
         $request = $this->createMock(Request::class);
