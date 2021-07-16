@@ -47,7 +47,7 @@ trait HasDelimiter
     /**
      * Convert the provided value to an array.
      *
-     * @param string|array $value
+     * @param string|array|null $value
      * @return array
      */
     protected function toArray($value): array
@@ -58,6 +58,10 @@ trait HasDelimiter
 
         if (\is_array($value)) {
             return $value;
+        }
+
+        if (\is_null($value)) {
+            return [];
         }
 
         throw new \LogicException(
