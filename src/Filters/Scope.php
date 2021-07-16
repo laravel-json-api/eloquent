@@ -43,11 +43,11 @@ class Scope implements Filter
      *
      * @param string $name
      * @param string|null $scope
-     * @return Scope
+     * @return static
      */
     public static function make(string $name, string $scope = null)
     {
-        return new self($name, $scope);
+        return new static($name, $scope);
     }
 
     /**
