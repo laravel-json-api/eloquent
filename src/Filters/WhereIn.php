@@ -26,17 +26,13 @@ class WhereIn implements Filter
 {
 
     use Concerns\DeserializesValue;
+    use Concerns\HasColumn;
     use Concerns\HasDelimiter;
 
     /**
      * @var string
      */
     private string $name;
-
-    /**
-     * @var string
-     */
-    private string $column;
 
     /**
      * Create a new filter.
@@ -87,14 +83,6 @@ class WhereIn implements Filter
             $query->getModel()->qualifyColumn($this->column()),
             $this->deserialize($value)
         );
-    }
-
-    /**
-     * @return string
-     */
-    protected function column(): string
-    {
-        return $this->column;
     }
 
     /**
