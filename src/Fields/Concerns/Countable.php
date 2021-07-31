@@ -29,7 +29,7 @@ trait Countable
     /**
      * @var bool
      */
-    private bool $countable = true;
+    private bool $countable = false;
 
     /**
      * @var bool|null
@@ -42,13 +42,32 @@ trait Countable
     private ?string $countAs = null;
 
     /**
+     * Set the countable flag on the relationship.
+     *
+     * @param bool $bool
+     * @return $this
+     */
+    public function countable(bool $bool): self
+    {
+        $this->countable = $bool;
+
+        return $this;
+    }
+
+    /**
+     * @return $this
+     */
+    public function canCount(): self
+    {
+        return $this->countable(true);
+    }
+
+    /**
      * @return $this
      */
     public function cannotCount(): self
     {
-        $this->countable = false;
-
-        return $this;
+        return $this->countable(false);
     }
 
     /**

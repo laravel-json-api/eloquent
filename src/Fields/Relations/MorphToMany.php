@@ -104,6 +104,11 @@ class MorphToMany extends ToMany implements PolymorphicRelation, IteratorAggrega
                 );
             }
 
+            /** The countable setting on the child relationship must match the parent. */
+            if ($relation instanceof Countable) {
+                $relation->countable($this->isCountable());
+            }
+
             if ($relation instanceof Relation) {
                 yield $relation;
                 continue;
@@ -146,10 +151,10 @@ class MorphToMany extends ToMany implements PolymorphicRelation, IteratorAggrega
         $count = 0;
 
         foreach ($this as $relation) {
-            if ($relation instanceof Countable && $relation->isCountable()) {
+            if ($relation instanceof Countable) {
                 $value = $model->{$relation->keyForCount()};
 
-                if (!is_null($value)) {
+                if (null !== $value) {
                     $hasValue = true;
                     $count += intval($value);
                 }

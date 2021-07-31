@@ -147,6 +147,10 @@ class HasManyTest extends TestCase
     {
         $relation = HasMany::make('tags');
 
+        $this->assertFalse($relation->isCountable());
+        $this->assertFalse($relation->isCountableInRelationship());
+
+        $this->assertSame($relation, $relation->canCount());
         $this->assertTrue($relation->isCountable());
         $this->assertTrue($relation->isCountableInRelationship());
 
@@ -174,7 +178,7 @@ class HasManyTest extends TestCase
         $this->assertFalse($relation->isCountable());
         $this->assertFalse($relation->isCountableInRelationship());
 
-        $relation = HasMany::make('tags')->dontCountInRelationship();
+        $relation = HasMany::make('tags')->canCount()->dontCountInRelationship();
 
         $this->assertTrue($relation->isCountable());
         $this->assertFalse($relation->isCountableInRelationship());

@@ -47,9 +47,13 @@ class TagSchema extends Schema
             ID::make(),
             DateTime::make('createdAt')->readOnly(),
             Str::make('name'),
-            BelongsToMany::make('posts')->fields(new ApprovedPivot()),
+            BelongsToMany::make('posts')
+                ->fields(new ApprovedPivot())
+                ->canCount(),
             DateTime::make('updatedAt')->readOnly(),
-            BelongsToMany::make('videos')->fields(new ApprovedPivot()),
+            BelongsToMany::make('videos')
+                ->fields(new ApprovedPivot())
+                ->canCount(),
         ];
     }
 

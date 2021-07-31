@@ -27,6 +27,7 @@ use LaravelJsonApi\Contracts\Store\QueryManyBuilder;
 use LaravelJsonApi\Core\Query\Custom\ExtendedQueryParameters;
 use LaravelJsonApi\Eloquent\Contracts\Driver;
 use LaravelJsonApi\Eloquent\Contracts\Parser;
+use LaravelJsonApi\Eloquent\QueryBuilder\JsonApiBuilder;
 
 class QueryAll implements QueryManyBuilder, HasPagination, HasSingularFilters
 {

@@ -59,6 +59,26 @@ class SortTest extends TestCase
         $this->assertPosts($posts->sortByDesc('id'), $actual);
     }
 
+    public function testIdWithFilter(): void
+    {
+        $posts = Post::factory()->count(3)->create();
+
+        Post::factory()->count(2)->create();
+
+        $ids = $posts
+            ->map(fn(Post $post) => (string) $post->getRouteKey())
+            ->all();
+
+        $actual = $this->posts
+            ->repository()
+            ->queryAll()
+            ->filter(['id' => $ids])
+            ->sort('-id')
+            ->get();
+
+        $this->assertPosts($posts->sortByDesc('id'), $actual);
+    }
+
     public function testAttribute(): void
     {
         $posts = Post::factory()->count(3)->create();

@@ -35,7 +35,7 @@ use LaravelJsonApi\Core\Schema\Concerns\SchemaAware;
 use LaravelJsonApi\Core\Schema\Concerns\SparseField;
 use LaravelJsonApi\Core\Support\Str;
 use LaravelJsonApi\Eloquent\Fields\Concerns\Hideable;
-use LaravelJsonApi\Eloquent\JsonApiBuilder;
+use LaravelJsonApi\Eloquent\QueryBuilder\JsonApiBuilder;
 use LaravelJsonApi\Eloquent\Resources\Relation as ResourceRelation;
 use LaravelJsonApi\Eloquent\Schema;
 use LogicException;

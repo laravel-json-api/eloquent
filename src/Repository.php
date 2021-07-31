@@ -40,6 +40,7 @@ use LaravelJsonApi\Eloquent\Fields\Relations\MorphToMany;
 use LaravelJsonApi\Eloquent\Hydrators\ModelHydrator;
 use LaravelJsonApi\Eloquent\Hydrators\ToManyHydrator;
 use LaravelJsonApi\Eloquent\Hydrators\ToOneHydrator;
+use LaravelJsonApi\Eloquent\QueryBuilder\JsonApiBuilder;
 use LogicException;
 use RuntimeException;
 use function is_string;

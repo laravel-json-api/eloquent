@@ -31,6 +31,7 @@ use LaravelJsonApi\Contracts\Store\HasPagination;
 use LaravelJsonApi\Contracts\Store\QueryManyBuilder;
 use LaravelJsonApi\Core\Query\Custom\ExtendedQueryParameters;
 use LaravelJsonApi\Eloquent\Fields\Relations\ToMany;
+use LaravelJsonApi\Eloquent\QueryBuilder\JsonApiBuilder;
 use LogicException;
 use function get_class;
 use function sprintf;

@@ -445,6 +445,19 @@ class PagePaginationTest extends TestCase
         $this->assertPage([$first, $fourth, $third], $page);
     }
 
+    public function testIdDescSortIsRespected(): void
+    {
+        $posts = Post::factory()->count(3)->create();
+
+        $page = $this->posts
+            ->repository()
+            ->queryAll()
+            ->sort('-id')
+            ->paginate(['number' => '1', 'size' => '10']);
+
+        $this->assertPage($posts->sortByDesc('id'), $page);
+    }
+
     public function testCustomPageKeys(): void
     {
         Post::factory()->count(4)->create();

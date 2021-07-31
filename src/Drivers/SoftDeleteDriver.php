@@ -34,7 +34,7 @@ class SoftDeleteDriver extends StandardDriver
      */
     public function __construct($model)
     {
-        if (!method_exists($model, 'getDeletedAtColumn')) {
+        if (!in_array(SoftDeletes::class, class_uses_recursive($model), true)) {
             throw new InvalidArgumentException('Expecting a model that is soft-deletable.');
         }
 

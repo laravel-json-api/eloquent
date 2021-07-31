@@ -29,6 +29,7 @@ use LaravelJsonApi\Contracts\Store\QueryOneBuilder;
 use LaravelJsonApi\Contracts\Store\QueryOneBuilder as QueryOneBuilderContract;
 use LaravelJsonApi\Core\Query\Custom\ExtendedQueryParameters;
 use LaravelJsonApi\Eloquent\Fields\Relations\ToOne;
+use LaravelJsonApi\Eloquent\QueryBuilder\JsonApiBuilder;
 use LogicException;
 use function sprintf;
 

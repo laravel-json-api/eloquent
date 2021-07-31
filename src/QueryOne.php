@@ -25,6 +25,7 @@ use LaravelJsonApi\Contracts\Store\QueryOneBuilder as QueryOneBuilderContract;
 use LaravelJsonApi\Core\Query\Custom\ExtendedQueryParameters;
 use LaravelJsonApi\Eloquent\Contracts\Driver;
 use LaravelJsonApi\Eloquent\Contracts\Parser;
+use LaravelJsonApi\Eloquent\QueryBuilder\JsonApiBuilder;
 
 class QueryOne implements QueryOneBuilderContract
 {

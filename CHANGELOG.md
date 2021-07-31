@@ -3,6 +3,50 @@
 All notable changes to this project will be documented in this file. This project adheres to
 [Semantic Versioning](http://semver.org/) and [this changelog format](http://keepachangelog.com/).
 
+## [1.0.0] - 2021-07-31
+
+### Added
+
+- [#16](https://github.com/laravel-json-api/eloquent/pull/16) New filter classes that allow you to filter via a
+  relationship's filters:
+    - `Has`
+    - `WhereHas`
+    - `WhereDoesntHave`
+- [#18](https://github.com/laravel-json-api/eloquent/pull/18) Extracted some filter code to the `HasColumn` and
+  `HasOperator` traits.
+- Extracted logic to apply sort and filter parameters to an Eloquent query builder into separate classes:
+  `FilterApplicator` and `SortApplicator`.
+
+### Changed
+
+- **BREAKING** Countable relationships are now **not** countable by default. This change has been made as the countable
+  feature is **not considered production ready** as we plan to make breaking changes to the implementation. By changing
+  the default setting to off, you now have to opt-in to this experimental feature.
+- Update the `SoftDeleteDriver` to use `class_uses_recursive` to check if the model support soft-deleting.
+- [#15](https://github.com/laravel-json-api/eloquent/pull/15) Change the `Scope::make()` method to use `static` instead
+  of `self`.
+- Moved the following into the `QueryBuilder` namespace. This change should not affect consuming applications as these
+  classes are meant for internal package use:
+    - `JsonApiBuilder` class.
+    - `ModelLoader` class.
+    - `Aggregates` namespace.
+    - `EagerLoading` namespace.
+
+### Fixed
+
+- [#14](https://github.com/laravel-json-api/eloquent/pull/14) Allow a `null` value in the filter `HasDelimiter` trait.
+- When detecting if a query needs a deterministic order, the page paginator will now also correctly match the qualified
+  primary key of the model. Previously only the unqualified column name was matched. In MySql this led to the
+  deterministic order overriding an existing descending sort for the primary key.
+
+### Removed
+
+- The cursor pagination implementation has been moved to a separate package:
+  [laravel-json-api/cursor-pagination](https://github.com/laravel-json-api/cursor-pagination). This is so that we can
+  add support for Laravel's new cursor implementation within this Eloquent package. To migrate, install the new package
+  and then change your import statements from `LaravelJsonApi\Eloquent\Pagination\CursorPagination`
+  to `LaravelJsonApi\CursorPagination\CursorPagination`.
+
 ## [1.0.0-beta.6] - 2021-07-10
 
 ### Added

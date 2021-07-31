@@ -47,7 +47,7 @@ class CountrySchema extends Schema
             ID::make(),
             DateTime::make('createdAt')->readOnly(),
             Str::make('name'),
-            HasManyThrough::make('posts'),
+            HasManyThrough::make('posts')->canCount(),
             DateTime::make('updatedAt')->readOnly(),
         ];
     }

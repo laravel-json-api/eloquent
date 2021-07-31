@@ -20,7 +20,7 @@ declare(strict_types=1);
 namespace LaravelJsonApi\Eloquent\Tests\Acceptance\EagerLoading;
 
 use LaravelJsonApi\Core\Query\RelationshipPath;
-use LaravelJsonApi\Eloquent\EagerLoading\EagerLoadPathList;
+use LaravelJsonApi\Eloquent\QueryBuilder\EagerLoading\EagerLoadPathList;
 use LaravelJsonApi\Eloquent\Tests\Acceptance\TestCase;
 
 class EagerLoadPathListTest extends TestCase

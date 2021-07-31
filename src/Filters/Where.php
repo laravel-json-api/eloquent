@@ -26,22 +26,14 @@ class Where implements Filter
 {
 
     use Concerns\DeserializesValue;
+    use Concerns\HasColumn;
+    use Concerns\HasOperator;
     use Concerns\IsSingular;
 
     /**
      * @var string
      */
     private string $name;
-
-    /**
-     * @var string
-     */
-    private string $column;
-
-    /**
-     * @var string
-     */
-    private string $operator;
 
     /**
      * Create a new filter.
@@ -69,59 +61,6 @@ class Where implements Filter
     }
 
     /**
-     * @return $this
-     */
-    public function eq(): self
-    {
-        return $this->using('=');
-    }
-
-    /**
-     * @return $this
-     */
-    public function gt(): self
-    {
-        return $this->using('>');
-    }
-
-    /**
-     * @return $this
-     */
-    public function gte(): self
-    {
-        return $this->using('>=');
-    }
-
-    /**
-     * @return $this
-     */
-    public function lt(): self
-    {
-        return $this->using('<');
-    }
-
-    /**
-     * @return $this
-     */
-    public function lte(): self
-    {
-        return $this->using('<=');
-    }
-
-    /**
-     * Use the provided operator for the filter.
-     *
-     * @param string $operator
-     * @return $this
-     */
-    public function using(string $operator): self
-    {
-        $this->operator = $operator;
-
-        return $this;
-    }
-
-    /**
      * @inheritDoc
      */
     public function key(): string
@@ -139,22 +78,6 @@ class Where implements Filter
             $this->operator(),
             $this->deserialize($value)
         );
-    }
-
-    /**
-     * @return string
-     */
-    protected function column(): string
-    {
-        return $this->column;
-    }
-
-    /**
-     * @return string
-     */
-    protected function operator(): string
-    {
-        return $this->operator;
     }
 
     /**

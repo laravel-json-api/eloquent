@@ -17,7 +17,7 @@
 
 declare(strict_types=1);
 
-namespace LaravelJsonApi\Eloquent;
+namespace LaravelJsonApi\Eloquent\QueryBuilder;
 
 use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Database\Eloquent\Model;
@@ -25,8 +25,9 @@ use InvalidArgumentException;
 use LaravelJsonApi\Contracts\Schema\Container;
 use LaravelJsonApi\Core\Query\Custom\CountablePaths;
 use LaravelJsonApi\Core\Query\IncludePaths;
-use LaravelJsonApi\Eloquent\Aggregates\CountableLoader;
-use LaravelJsonApi\Eloquent\EagerLoading\EagerLoader;
+use LaravelJsonApi\Eloquent\QueryBuilder\Aggregates\CountableLoader;
+use LaravelJsonApi\Eloquent\QueryBuilder\EagerLoading\EagerLoader;
+use LaravelJsonApi\Eloquent\Schema;
 
 class ModelLoader
 {
@@ -124,7 +125,7 @@ class ModelLoader
     {
         $counter = new CountableLoader(
             $this->schema,
-            $countable = CountablePaths::cast($countable)
+            CountablePaths::cast($countable)
         );
 
         $this->target->loadCount($counter->getRelations());
