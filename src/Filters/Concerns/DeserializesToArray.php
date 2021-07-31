@@ -17,22 +17,32 @@
 
 declare(strict_types=1);
 
-namespace LaravelJsonApi\Eloquent\Filters;
+namespace LaravelJsonApi\Eloquent\Filters\Concerns;
 
-use LaravelJsonApi\Eloquent\Contracts\Filter;
-use LaravelJsonApi\Eloquent\Filters\Concerns\IsSingular;
-use LaravelJsonApi\Eloquent\Filters\Concerns\DeserializesValue;
+use Illuminate\Support\Enumerable;
+use UnexpectedValueException;
+use function is_array;
 
-class WhereDoesntHave extends WhereHas
+trait DeserializesToArray
 {
+    use DeserializesValue;
+
     /**
-     * @inheritDoc
+     * @param mixed $value
+     * @return array
      */
-    public function apply($query, $value)
+    protected function toArray($value): array
     {
-        return $query->whereDoesntHave(
-            $this->relationName(),
-            $this->callback($value),
-        );
+        $values = $this->deserialize($value);
+
+        if ($values instanceof Enumerable) {
+            return $values->all();
+        }
+
+        if (is_array($values) || null === $values) {
+            return $values ?? [];
+        }
+
+        throw new UnexpectedValueException('Expecting filter value to deserialize to an array.');
     }
 }

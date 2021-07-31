@@ -17,7 +17,7 @@
 
 declare(strict_types=1);
 
-namespace LaravelJsonApi\Eloquent;
+namespace LaravelJsonApi\Eloquent\QueryBuilder;
 
 use Illuminate\Contracts\Support\Arrayable;
 use Illuminate\Database\Eloquent\Builder;
@@ -39,13 +39,14 @@ use LaravelJsonApi\Core\Query\RelationshipPath;
 use LaravelJsonApi\Core\Query\SortField;
 use LaravelJsonApi\Core\Query\SortFields;
 use LaravelJsonApi\Core\Schema\IdParser;
-use LaravelJsonApi\Eloquent\Aggregates\CountableLoader;
-use LaravelJsonApi\Eloquent\Contracts\Filter;
+use LaravelJsonApi\Eloquent\QueryBuilder\Aggregates\CountableLoader;
 use LaravelJsonApi\Eloquent\Contracts\Paginator;
 use LaravelJsonApi\Eloquent\Contracts\Sortable;
-use LaravelJsonApi\Eloquent\EagerLoading\EagerLoader;
+use LaravelJsonApi\Eloquent\QueryBuilder\Applicators\FilterApplicator;
+use LaravelJsonApi\Eloquent\QueryBuilder\Applicators\SortApplicator;
+use LaravelJsonApi\Eloquent\QueryBuilder\EagerLoading\EagerLoader;
+use LaravelJsonApi\Eloquent\Schema;
 use LogicException;
-use RuntimeException;
 use function get_class;
 use function sprintf;
 
@@ -161,50 +162,11 @@ class JsonApiBuilder
      */
     public function filter($filters): self
     {
-        if (is_null($filters)) {
-            $this->parameters->withoutFilters();
-            return $this;
-        }
+        $applicator = FilterApplicator::make($this->schema, $this->relation)
+            ->apply($this->query, $filters);
 
-        $filters = FilterParameters::cast($filters);
-        $keys = [];
-
-        foreach ($this->filters() as $filter) {
-            if ($filter instanceof Filter) {
-                $keys[] = $key = $filter->key();
-
-                if ($filters->exists($key)) {
-                    $filter->apply($this->query, $value = $filters->get($key)->value());
-                    $actual[$key] = $value;
-
-                    if ($filter->isSingular()) {
-                        $this->singular = true;
-                    }
-                }
-                continue;
-            }
-
-            throw new RuntimeException(sprintf(
-                'Schema %s has a filter that does not implement the Eloquent filter contract.',
-                $this->schema->type()
-            ));
-        }
-
-        $unrecognised = $filters->collect()->keys()->diff($keys);
-
-        if ($unrecognised->isNotEmpty()) {
-            throw new RuntimeException(sprintf(
-                'Encountered filters that are not defined on the %s schema: %s',
-                $this->schema->type(),
-                $unrecognised->implode(', ')
-            ));
-        }
-
-        if (true === $this->schema->isSingular($filters->toArray())) {
-            $this->singular = true;
-        }
-
-        $this->parameters->setFilters($filters);
+        $this->parameters->setFilters($applicator->applied());
+        $this->singular = $applicator->didApplySingularFilter();
 
         return $this;
     }
@@ -217,35 +179,10 @@ class JsonApiBuilder
      */
     public function sort($fields): self
     {
-        if (is_null($fields)) {
-            $this->parameters->withoutSortFields();
-            return $this;
-        }
+        $applicator = SortApplicator::make($this->schema)
+            ->apply($this->query, $fields);
 
-        $fields = SortFields::cast($fields);
-
-        /** @var SortField $sort */
-        foreach ($fields as $sort) {
-            if ('id' === $sort->name()) {
-                $this->orderByResourceId($sort->getDirection());
-                continue;
-            }
-
-            $field = $this->schema->sortField($sort->name());
-
-            if ($field instanceof Sortable) {
-                $field->sort($this->query, $sort->getDirection());
-                continue;
-            }
-
-            throw new LogicException(sprintf(
-                'Expecting sort field %s on schema %s to implement the Eloquent sortable interface.',
-                $sort->name(),
-                get_class($this->schema),
-            ));
-        }
-
-        $this->parameters->setSortFields($fields);
+        $this->parameters->setSortFields($applicator->applied());
 
         return $this;
     }
@@ -258,7 +195,7 @@ class JsonApiBuilder
      */
     public function sortWithDefault($fields): self
     {
-        if (is_null($fields)) {
+        if (null === $fields) {
             $fields = $this->schema->defaultSort();
         }
 
@@ -453,22 +390,6 @@ class JsonApiBuilder
         }
 
         return $this->query;
-    }
-
-    /**
-     * @return iterable
-     */
-    private function filters(): iterable
-    {
-        foreach ($this->schema->filters() as $filter) {
-            yield $filter;
-        }
-
-        if ($this->relation) {
-            foreach ($this->relation->filters() as $filter) {
-                yield $filter;
-            }
-        }
     }
 
     /**

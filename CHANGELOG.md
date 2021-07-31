@@ -7,14 +7,27 @@ All notable changes to this project will be documented in this file. This projec
 
 ### Added
 
+- [#16](https://github.com/laravel-json-api/eloquent/pull/16) New filter classes that allow you to filter via a
+  relationship's filters:
+    - `Has`
+    - `WhereHas`
+    - `WhereDoesntHave`
 - [#18](https://github.com/laravel-json-api/eloquent/pull/18) Extracted some filter code to the `HasColumn` and
   `HasOperator` traits.
+- Extracted logic to apply sort and filter parameters to an Eloquent query builder into separate classes:
+  `FilterApplicator` and `SortApplicator`.
 
 ### Changed
 
 - Update the `SoftDeleteDriver` to use `class_uses_recursive` to check if the model support soft-deleting.
 - [#15](https://github.com/laravel-json-api/eloquent/pull/15) Change the `Scope::make()` method to use `static` instead
   of `self`.
+- Moved the following into the `QueryBuilder` namespace. This change should not affect consuming applications as these
+  classes are meant for internal package use:
+    - `JsonApiBuilder` class.
+    - `ModelLoader` class.
+    - `Aggregates` namespace.
+    - `EagerLoading` namespace.
 
 ### Fixed
 

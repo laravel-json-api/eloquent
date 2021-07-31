@@ -17,7 +17,7 @@
 
 declare(strict_types=1);
 
-namespace LaravelJsonApi\Eloquent\Aggregates;
+namespace LaravelJsonApi\Eloquent\QueryBuilder\Aggregates;
 
 use Generator;
 use LaravelJsonApi\Core\Query\Custom\CountablePaths;

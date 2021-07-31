@@ -19,41 +19,69 @@ declare(strict_types=1);
 
 namespace LaravelJsonApi\Eloquent\Filters;
 
+use Closure;
+use LaravelJsonApi\Contracts\Schema\Schema;
 use LaravelJsonApi\Eloquent\Contracts\Filter;
+use LaravelJsonApi\Eloquent\Filters\Concerns\DeserializesToArray;
+use LaravelJsonApi\Eloquent\Filters\Concerns\HasRelation;
 use LaravelJsonApi\Eloquent\Filters\Concerns\IsSingular;
-use LaravelJsonApi\Eloquent\Filters\Concerns\DeserializesValue;
+use LaravelJsonApi\Eloquent\QueryBuilder\Applicators\FilterApplicator;
 
 class WhereHas implements Filter
 {
-    use DeserializesValue;
+    use DeserializesToArray;
+    use HasRelation;
     use IsSingular;
-    use Having;
 
     /**
-     * Apply the filter to the query.
+     * Create a new filter.
      *
-     * @param \Illuminate\Database\Eloquent\Builder $query
-     * @param mixed $value
-     * @return \Illuminate\Database\Eloquent\Builder
+     * @param Schema $schema
+     * @param string $fieldName
+     * @param string|null $key
+     * @return static
+     */
+    public static function make(Schema $schema, string $fieldName, string $key = null)
+    {
+        return new static($schema, $fieldName, $key);
+    }
+
+    /**
+     * WhereHas constructor.
+     *
+     * @param Schema $schema
+     * @param string $fieldName
+     * @param string|null $key
+     */
+    public function __construct(Schema $schema, string $fieldName, string $key = null)
+    {
+        $this->schema = $schema;
+        $this->fieldName = $fieldName;
+        $this->key = $key;
+    }
+
+    /**
+     * @inheritDoc
      */
     public function apply($query, $value)
     {
-        $deserializedValues = $this->deserialize($value);
+        return $query->whereHas(
+            $this->relationName(),
+            $this->callback($value),
+        );
+    }
 
-        $relation = $this->schema->relationship($this->relationName());
-
-        $availableFilters = collect($relation->schema()->filters())->merge($relation->filters());
-
-        $keyedFilters = collect($availableFilters)->keyBy(function ($filter) {
-            return $filter->key();
-        })->all();
-
-        return $query->whereHas($this->relationName(), function ($query) use ($deserializedValues, $keyedFilters) {
-            foreach ($deserializedValues as $key => $value) {
-                if (isset($keyedFilters[$key])) {
-                    $keyedFilters[$key]->apply($query, $value);
-                }
-            }
-        });
+    /**
+     * Get the relation query callback.
+     *
+     * @param mixed $value
+     * @return Closure
+     */
+    protected function callback($value): Closure
+    {
+        return function($query) use ($value) {
+            FilterApplicator::make($this->schema, $this->relation())
+                ->apply($query, $this->toArray($value));
+        };
     }
 }

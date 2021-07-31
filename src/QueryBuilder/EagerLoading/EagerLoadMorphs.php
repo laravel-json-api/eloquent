@@ -17,7 +17,7 @@
 
 declare(strict_types=1);
 
-namespace LaravelJsonApi\Eloquent\EagerLoading;
+namespace LaravelJsonApi\Eloquent\QueryBuilder\EagerLoading;
 
 use IteratorAggregate;
 use LaravelJsonApi\Contracts\Schema\Container;

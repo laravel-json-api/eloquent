@@ -34,6 +34,8 @@ use LaravelJsonApi\Eloquent\Drivers\StandardDriver;
 use LaravelJsonApi\Eloquent\Fields\Relations\ToMany;
 use LaravelJsonApi\Eloquent\Fields\Relations\ToOne;
 use LaravelJsonApi\Eloquent\Parsers\StandardParser;
+use LaravelJsonApi\Eloquent\QueryBuilder\JsonApiBuilder;
+use LaravelJsonApi\Eloquent\QueryBuilder\ModelLoader;
 use LogicException;
 use function sprintf;
 
