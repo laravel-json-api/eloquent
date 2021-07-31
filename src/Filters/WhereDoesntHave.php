@@ -19,10 +19,6 @@ declare(strict_types=1);
 
 namespace LaravelJsonApi\Eloquent\Filters;
 
-use LaravelJsonApi\Eloquent\Contracts\Filter;
-use LaravelJsonApi\Eloquent\Filters\Concerns\IsSingular;
-use LaravelJsonApi\Eloquent\Filters\Concerns\DeserializesValue;
-
 class WhereDoesntHave extends WhereHas
 {
     /**
