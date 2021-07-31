@@ -39,15 +39,13 @@ use LaravelJsonApi\Core\Query\RelationshipPath;
 use LaravelJsonApi\Core\Query\SortField;
 use LaravelJsonApi\Core\Query\SortFields;
 use LaravelJsonApi\Core\Schema\IdParser;
-use LaravelJsonApi\Eloquent\QueryBuilder\Aggregates\CountableLoader;
 use LaravelJsonApi\Eloquent\Contracts\Paginator;
-use LaravelJsonApi\Eloquent\Contracts\Sortable;
+use LaravelJsonApi\Eloquent\QueryBuilder\Aggregates\CountableLoader;
 use LaravelJsonApi\Eloquent\QueryBuilder\Applicators\FilterApplicator;
 use LaravelJsonApi\Eloquent\QueryBuilder\Applicators\SortApplicator;
 use LaravelJsonApi\Eloquent\QueryBuilder\EagerLoading\EagerLoader;
 use LaravelJsonApi\Eloquent\Schema;
 use LogicException;
-use function get_class;
 use function sprintf;
 
 /**
