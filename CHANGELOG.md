@@ -35,6 +35,9 @@ All notable changes to this project will be documented in this file. This projec
 ### Fixed
 
 - [#14](https://github.com/laravel-json-api/eloquent/pull/14) Allow a `null` value in the filter `HasDelimiter` trait.
+- When detecting if a query needs a deterministic order, the page paginator will now also correctly match the qualified
+  primary key of the model. Previously only the unqualified column name was matched. In MySql this led to the
+  deterministic order overriding an existing descending sort for the primary key.
 
 ### Removed
 

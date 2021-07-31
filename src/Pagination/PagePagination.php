@@ -22,6 +22,7 @@ namespace LaravelJsonApi\Eloquent\Pagination;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Pagination\AbstractPaginator;
+use Illuminate\Support\Collection;
 use LaravelJsonApi\Contracts\Pagination\Page as PageContract;
 use LaravelJsonApi\Core\Pagination\Concerns\HasPageMeta;
 use LaravelJsonApi\Core\Pagination\Concerns\HasPageNumbers;
@@ -211,6 +212,10 @@ class PagePagination implements Paginator
      * If the primary key has not been used for a sort order already, we use it
      * to ensure the page has a deterministic order.
      *
+     * When checking for the primary key in the sort orders, we also need to check
+     * the qualified version of the column name - as it may have been ordered using
+     * the qualified name.
+     *
      * @param Builder|Relation $query
      * @return bool
      */
@@ -220,11 +225,12 @@ class PagePagination implements Paginator
             return false;
         }
 
+        $qualified = $query->getModel()->qualifyColumn($this->primaryKey);
         $query = $query->toBase();
 
-        return !collect($query->orders ?: [])->contains(function (array $order) {
+        return !Collection::make($query->orders ?: [])->contains(function (array $order) use ($qualified) {
             $col = $order['column'] ?? '';
-            return $this->primaryKey === $col;
+            return ($this->primaryKey === $col || $qualified === $col);
         });
     }
 
