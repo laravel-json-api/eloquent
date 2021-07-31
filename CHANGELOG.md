@@ -5,9 +5,20 @@ All notable changes to this project will be documented in this file. This projec
 
 ## Unreleased
 
+### Added
+
+- [#18](https://github.com/laravel-json-api/eloquent/pull/18) Extracted some filter code to the `HasColumn` and
+  `HasOperator` traits.
+
 ### Changed
 
 - Update the `SoftDeleteDriver` to use `class_uses_recursive` to check if the model support soft-deleting.
+- [#15](https://github.com/laravel-json-api/eloquent/pull/15) Change the `Scope::make()` method to use `static` instead
+  of `self`.
+
+### Fixed
+
+- [#14](https://github.com/laravel-json-api/eloquent/pull/14) Allow a `null` value in the filter `HasDelimiter` trait.
 
 ## [1.0.0-beta.6] - 2021-07-10
 

@@ -19,6 +19,12 @@ declare(strict_types=1);
 
 namespace LaravelJsonApi\Eloquent\Filters\Concerns;
 
+use InvalidArgumentException;
+use LogicException;
+use function explode;
+use function is_array;
+use function is_string;
+
 trait HasDelimiter
 {
 
@@ -36,7 +42,7 @@ trait HasDelimiter
     public function delimiter(string $delimiter): self
     {
         if (empty($delimiter)) {
-            throw new \InvalidArgumentException('Expecting a non-empty string delimiter.');
+            throw new InvalidArgumentException('Expecting a non-empty string delimiter.');
         }
 
         $this->delimiter = $delimiter;
@@ -52,20 +58,14 @@ trait HasDelimiter
      */
     protected function toArray($value): array
     {
-        if ($this->delimiter && \is_string($value)) {
-            return \explode($this->delimiter, $value);
+        if ($this->delimiter && is_string($value)) {
+            return ('' !== $value) ? explode($this->delimiter, $value) : [];
         }
 
-        if (\is_array($value)) {
-            return $value;
+        if (is_array($value) || null === $value) {
+            return $value ?? [];
         }
 
-        if (\is_null($value)) {
-            return [];
-        }
-
-        throw new \LogicException(
-            'Expecting filter value to be an array, or a string when a string delimiter is set.'
-        );
+        throw new LogicException('Expecting filter value to be an array, or a string when a string delimiter is set.');
     }
 }
