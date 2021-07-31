@@ -25,6 +25,14 @@ interface Countable extends CountableField
 {
 
     /**
+     * Set the countable flag on the relationship.
+     *
+     * @param bool $countable
+     * @return $this
+     */
+    public function countable(bool $countable): self;
+
+    /**
      * Should the relationship count be loaded for top-level meta in a relationship endpoint?
      *
      * @return bool

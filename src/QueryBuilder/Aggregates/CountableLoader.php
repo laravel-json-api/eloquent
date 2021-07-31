@@ -89,7 +89,8 @@ class CountableLoader
     {
         if ($relation instanceof MorphToMany) {
             foreach ($relation as $child) {
-                if ($child instanceof Countable && $child->isCountable()) {
+                // do not check whether the child is countable because the parent is.
+                if ($child instanceof Countable) {
                     yield $child->withCountName();
                 }
             }

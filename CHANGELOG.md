@@ -19,6 +19,9 @@ All notable changes to this project will be documented in this file. This projec
 
 ### Changed
 
+- **BREAKING** Countable relationships are now **not** countable by default. This change has been made as the countable
+  feature is **not considered production ready** as we plan to make breaking changes to the implementation. By changing
+  the default setting to off, you now have to opt-in to this experimental feature.
 - Update the `SoftDeleteDriver` to use `class_uses_recursive` to check if the model support soft-deleting.
 - [#15](https://github.com/laravel-json-api/eloquent/pull/15) Change the `Scope::make()` method to use `static` instead
   of `self`.

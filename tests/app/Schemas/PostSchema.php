@@ -66,16 +66,18 @@ class PostSchema extends Schema
             ID::make(),
             BelongsTo::make('author', 'user'),
             DateTime::make('createdAt')->sortable()->readOnly(),
-            HasMany::make('comments'),
+            HasMany::make('comments')->canCount(),
             Str::make('content'),
             SoftDelete::make('deletedAt')->sortable(),
             HasOne::make('image'),
             MorphToMany::make('media', [
                 BelongsToMany::make('images'),
                 BelongsToMany::make('videos'),
-            ]),
+            ])->canCount(),
             Str::make('slug')->sortable(),
-            BelongsToMany::make('tags')->fields(new ApprovedPivot()),
+            BelongsToMany::make('tags')
+                ->fields(new ApprovedPivot())
+                ->canCount(),
             Str::make('title')->sortable(),
             DateTime::make('updatedAt')->sortable()->readOnly(),
         ];

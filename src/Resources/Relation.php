@@ -20,6 +20,7 @@ declare(strict_types=1);
 namespace LaravelJsonApi\Eloquent\Resources;
 
 use LaravelJsonApi\Core\Resources\Relation as BaseRelation;
+use LaravelJsonApi\Eloquent\Contracts\Countable;
 use LaravelJsonApi\Eloquent\Fields\Relations\MorphToMany;
 use LaravelJsonApi\Eloquent\Fields\Relations\Relation as SchemaRelation;
 use LaravelJsonApi\Eloquent\Fields\Relations\ToMany;
@@ -119,9 +120,27 @@ class Relation extends BaseRelation
      */
     private function defaultMeta(): array
     {
-        return array_filter([
-            self::withCount() => $this->count(),
-        ], fn($value) => !is_null($value));
+        if ($this->countable()) {
+            return array_filter([
+                self::withCount() => $this->count(),
+            ], fn($value) => (null !== $value));
+        }
+
+        return [];
+    }
+
+    /**
+     * Is the field countable?
+     *
+     * @return bool
+     */
+    private function countable(): bool
+    {
+        if ($this->field instanceof Countable) {
+            return $this->field->isCountable();
+        }
+
+        return false;
     }
 
     /**

@@ -50,7 +50,7 @@ class UserSchema extends Schema
     {
         return [
             ID::make(),
-            HasMany::make('comments'),
+            HasMany::make('comments')->canCount(),
             BelongsTo::make('country'),
             DateTime::make('createdAt')->readOnly(),
             Str::make('email'),
@@ -61,7 +61,9 @@ class UserSchema extends Schema
                 Str::make('description'),
                 Str::make('image'),
             ])->on('profile'),
-            BelongsToMany::make('roles')->fields(new ApprovedPivot()),
+            BelongsToMany::make('roles')
+                ->fields(new ApprovedPivot())
+                ->canCount(),
             DateTime::make('updatedAt')->readOnly(),
         ];
     }

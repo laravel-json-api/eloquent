@@ -48,9 +48,11 @@ class VideoSchema extends Schema
         return [
             ID::make()->uuid()->sortable(),
             DateTime::make('createdAt')->sortable()->readOnly(),
-            HasMany::make('comments'),
+            HasMany::make('comments')->canCount(),
             Str::make('slug'),
-            BelongsToMany::make('tags')->fields(new ApprovedPivot()),
+            BelongsToMany::make('tags')
+                ->fields(new ApprovedPivot())
+                ->canCount(),
             Str::make('title'),
             DateTime::make('updatedAt')->sortable()->readOnly(),
             Str::make('url'),

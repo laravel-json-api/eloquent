@@ -23,7 +23,7 @@ use Generator;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
 use Illuminate\Support\LazyCollection;
-use LaravelJsonApi\Contracts\Pagination\Page;
+use IteratorAggregate;
 use LaravelJsonApi\Contracts\Store\QueryManyBuilder;
 use LaravelJsonApi\Core\Query\Custom\ExtendedQueryParameters;
 use LaravelJsonApi\Eloquent\Fields\Relations\MorphTo;
@@ -33,7 +33,7 @@ use LaravelJsonApi\Eloquent\Fields\Relations\ToMany;
 use LaravelJsonApi\Eloquent\Fields\Relations\ToOne;
 use LogicException;
 
-class QueryMorphToMany implements QueryManyBuilder, \IteratorAggregate
+class QueryMorphToMany implements QueryManyBuilder, IteratorAggregate
 {
 
     use HasQueryParameters;
@@ -97,7 +97,7 @@ class QueryMorphToMany implements QueryManyBuilder, \IteratorAggregate
     }
 
     /**
-     * @inheritDoc
+     * @return LazyCollection
      */
     public function cursor(): LazyCollection
     {
@@ -107,33 +107,16 @@ class QueryMorphToMany implements QueryManyBuilder, \IteratorAggregate
     }
 
     /**
-     * @inheritDoc
-     */
-    public function paginate(array $page): Page
-    {
-        throw new LogicException('Pagination is not supported on a JSON:API morph-to-many relation.');
-    }
-
-    /**
-     * @inheritDoc
-     */
-    public function getOrPaginate(?array $page): iterable
-    {
-        if (is_null($page)) {
-            return $this->get();
-        }
-
-        return $this->paginate($page);
-    }
-
-    /**
      * @return Generator
      */
     public function getIterator()
     {
         foreach ($this->relation as $relation) {
             $query = $this->toQuery($relation);
-            $this->request ? $query->withRequest($this->request) : null;
+
+            if ($this->request) {
+                $query->withRequest($this->request);
+            }
 
             yield $query->withQuery(
                 $this->queryParameters->forSchema($relation->schema())
