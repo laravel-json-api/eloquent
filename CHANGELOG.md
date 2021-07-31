@@ -33,6 +33,14 @@ All notable changes to this project will be documented in this file. This projec
 
 - [#14](https://github.com/laravel-json-api/eloquent/pull/14) Allow a `null` value in the filter `HasDelimiter` trait.
 
+### Removed
+
+- The cursor pagination implementation has been moved to a separate package:
+  [laravel-json-api/cursor-pagination](https://github.com/laravel-json-api/cursor-pagination). This is so that we can
+  add support for Laravel's new cursor implementation within this Eloquent package. To migrate, install the new package
+  and then change your import statements from `LaravelJsonApi\Eloquent\Pagination\CursorPagination`
+  to `LaravelJsonApi\CursorPagination\CursorPagination`.
+
 ## [1.0.0-beta.6] - 2021-07-10
 
 ### Added
