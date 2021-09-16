@@ -22,7 +22,10 @@ namespace LaravelJsonApi\Eloquent\Fields\Relations;
 use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany as EloquentBelongsToMany;
+use Illuminate\Support\Arr;
 use InvalidArgumentException;
+use LaravelJsonApi\Core\Schema\IdParser;
+use LaravelJsonApi\Core\Support\Str;
 use LaravelJsonApi\Eloquent\Contracts\FillableToMany;
 use LaravelJsonApi\Eloquent\Fields\Concerns\ReadOnly;
 use LogicException;
@@ -52,6 +55,11 @@ class BelongsToMany extends ToMany implements FillableToMany
     private $pivot;
 
     /**
+     * @var array
+     */
+    private $fieldsColumns;
+
+    /**
      * Set the values or callback to use for pivot attributes.
      *
      * @param callable|array|null $pivot
@@ -64,6 +72,23 @@ class BelongsToMany extends ToMany implements FillableToMany
         }
 
         $this->pivot = $pivot;
+
+        return $this;
+    }
+
+    /**
+     * Set a different database column name
+     *
+     * @param $fieldsColumns
+     * @return $this
+     */
+    public function fieldsColumns($fieldsColumns): self
+    {
+        if (!is_array($fieldsColumns)) {
+            throw new InvalidArgumentException('Expecting an array value.');
+        }
+
+        $this->fieldsColumns = $fieldsColumns;
 
         return $this;
     }
@@ -103,7 +128,8 @@ class BelongsToMany extends ToMany implements FillableToMany
         $relation->sync($this->formatAttachRecords(
             $model,
             $relation,
-            $related
+            $related,
+            $identifiers
         ));
 
         $model->setRelation($this->relationName(), $related);
@@ -131,7 +157,8 @@ class BelongsToMany extends ToMany implements FillableToMany
         $relation->attach($this->formatAttachRecords(
             $model,
             $relation,
-            $related->diff($existing)
+            $related->diff($existing),
+            $identifiers
         ));
 
         $model->unsetRelation($this->relationName());
@@ -175,17 +202,19 @@ class BelongsToMany extends ToMany implements FillableToMany
      * @param Model $parent
      * @param EloquentBelongsToMany $relation
      * @param EloquentCollection $models
+     * @param array $identifiers
      * @return array
      */
     private function formatAttachRecords(
         Model $parent,
         EloquentBelongsToMany $relation,
-        EloquentCollection $models
+        EloquentCollection $models,
+        array $identifiers
     ): array
     {
         return $models
             ->keyBy(static fn($related) => $related->{$relation->getRelatedKeyName()})
-            ->map(fn($related) => $this->getPivotAttributes($parent, $related))
+            ->map(fn($related) => $this->setPivotAttributes($parent, $related, $identifiers))
             ->all();
     }
 
@@ -205,6 +234,41 @@ class BelongsToMany extends ToMany implements FillableToMany
         }
 
         return [];
+    }
+
+    /**
+     * @param Model $parent
+     * @param Model $related
+     * @param array $identifiers
+     * @return array
+     */
+    private function setPivotAttributes(Model $parent, Model $related, array $identifiers): array
+    {
+        $attributes = [];
+        $pivotAttributes = $this->getPivotAttributes($parent, $related);
+        $parser = IdParser::make($this->schemas()->schemaForModel($related)->id());
+
+        $metaPivot = collect($identifiers)
+            ->where('id', '=', $parser->encodeId($related->getKey()))
+            ->pluck('meta.pivot')
+            ->first();
+
+        foreach ($pivotAttributes as $key => $keyOrDefaultValue) {
+            if (is_int($key)) {
+                // then value of that key should be inserted by user, it has no default value
+                if ($newValue = Arr::get($metaPivot, $keyOrDefaultValue)) {
+                    $attributes[$this->fieldsColumns[$keyOrDefaultValue] ?? Str::underscore($keyOrDefaultValue)] = $newValue;
+                }
+            } else {
+                if ($overrideValue = Arr::get($metaPivot, $key)) {
+                    $attributes[$this->fieldsColumns[$key] ?? Str::underscore($key)] = $overrideValue;
+                } else {
+                    $attributes[$this->fieldsColumns[$key] ?? Str::underscore($key)] = $keyOrDefaultValue;
+                }
+            }
+        }
+
+        return $attributes;
     }
 
 }
