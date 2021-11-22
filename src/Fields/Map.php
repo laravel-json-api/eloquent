@@ -30,7 +30,7 @@ use LaravelJsonApi\Eloquent\Contracts\Fillable;
 use LaravelJsonApi\Eloquent\Contracts\Selectable;
 use LaravelJsonApi\Eloquent\Fields\Concerns\Hideable;
 use LaravelJsonApi\Eloquent\Fields\Concerns\OnRelated;
-use LaravelJsonApi\Eloquent\Fields\Concerns\OnlyRead;
+use LaravelJsonApi\Eloquent\Fields\Concerns\IsReadOnly;
 use LogicException;
 
 class Map implements
@@ -43,7 +43,7 @@ class Map implements
 
     use Hideable;
     use OnRelated;
-    use OnlyRead;
+    use IsReadOnly;
     use SparseField;
 
     /**

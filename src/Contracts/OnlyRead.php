@@ -21,7 +21,7 @@ namespace LaravelJsonApi\Eloquent\Contracts;
 
 use Illuminate\Http\Request;
 
-interface OnlyRead
+interface IsReadOnly
 {
     /**
      * Is the field read-only?

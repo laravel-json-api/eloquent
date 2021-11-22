@@ -24,7 +24,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany as EloquentHasMany;
 use Illuminate\Database\Eloquent\Relations\MorphMany as EloquentMorphMany;
 use LaravelJsonApi\Eloquent\Contracts\FillableToMany;
-use LaravelJsonApi\Eloquent\Fields\Concerns\OnlyRead;
+use LaravelJsonApi\Eloquent\Fields\Concerns\IsReadOnly;
 use LogicException;
 use function sprintf;
 
@@ -35,7 +35,7 @@ class HasMany extends ToMany implements FillableToMany
     private const DELETE_DETACHED_MODELS = 1;
     private const FORCE_DELETE_DETACHED_MODELS = 2;
 
-    use OnlyRead;
+    use IsReadOnly;
 
     /**
      * Flag for how to detach models from the relationship.

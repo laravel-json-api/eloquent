@@ -23,7 +23,7 @@ use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Database\Eloquent\Model;
 use LaravelJsonApi\Eloquent\Polymorphism\MorphMany;
 
-interface FillableToMany extends OnlyRead
+interface FillableToMany extends IsReadOnly
 {
 
     /**

@@ -23,7 +23,7 @@ use Closure;
 use Illuminate\Http\Request;
 use InvalidArgumentException;
 
-trait OnlyRead
+trait IsReadOnly
 {
 
     /**
