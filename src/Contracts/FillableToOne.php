@@ -21,7 +21,7 @@ namespace LaravelJsonApi\Eloquent\Contracts;
 
 use Illuminate\Database\Eloquent\Model;
 
-interface FillableToOne extends ReadOnly
+interface FillableToOne extends OnlyRead
 {
 
     /**

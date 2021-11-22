@@ -23,7 +23,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasOne as EloquentHasOne;
 use Illuminate\Database\Eloquent\Relations\MorphOne as EloquentMorphOne;
 use LaravelJsonApi\Eloquent\Contracts\FillableToOne;
-use LaravelJsonApi\Eloquent\Fields\Concerns\ReadOnly;
+use LaravelJsonApi\Eloquent\Fields\Concerns\OnlyRead;
 use LogicException;
 
 class HasOne extends ToOne implements FillableToOne
@@ -33,7 +33,7 @@ class HasOne extends ToOne implements FillableToOne
     private const DELETE_DETACHED_MODEL = 1;
     private const FORCE_DELETE_DETACHED_MODEL = 2;
 
-    use ReadOnly;
+    use OnlyRead;
 
     /**
      * Flag for how to detach a model from the relationship.

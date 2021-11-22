@@ -24,7 +24,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany as EloquentBelongsToMany;
 use InvalidArgumentException;
 use LaravelJsonApi\Eloquent\Contracts\FillableToMany;
-use LaravelJsonApi\Eloquent\Fields\Concerns\ReadOnly;
+use LaravelJsonApi\Eloquent\Fields\Concerns\OnlyRead;
 use LogicException;
 use function get_class;
 use function sprintf;
@@ -32,7 +32,7 @@ use function sprintf;
 class BelongsToMany extends ToMany implements FillableToMany
 {
 
-    use ReadOnly;
+    use OnlyRead;
 
     /**
      * Create a belongs-to-many relation.
