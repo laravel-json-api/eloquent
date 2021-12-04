@@ -19,9 +19,13 @@ declare(strict_types=1);
 
 namespace LaravelJsonApi\Eloquent\Tests\Acceptance;
 
+use App\Models\Comment;
 use App\Models\Post;
+use App\Models\User;
 use App\Schemas\PostSchema;
+use App\Schemas\UserSchema;
 use Illuminate\Support\LazyCollection;
+use LaravelJsonApi\Core\Store\QueryAllHandler;
 use PHPUnit\Framework\MockObject\MockObject;
 
 class FilterTest extends TestCase
@@ -68,6 +72,32 @@ class FilterTest extends TestCase
             $expected->sortBy('id')->pluck('id')->all(),
             $actual->sortBy('id')->pluck('id')->all(),
         );
+    }
+
+    public function testWhereHasFilter(): void
+    {
+        $userSchema = new UserSchema($this->server());
+
+        /** @var Comment $commentOne */
+        $commentOne = Comment::factory()->create(['content' => 'foo']);
+        /** @var Comment $commentTwo */
+        $commentTwo = Comment::factory()->create(['content' => 'bar']);
+
+        $queryAllHandler = new QueryAllHandler($userSchema->repository()->queryAll());
+        $queryAllHandler->filter(['comments' => ['content' => 'bar']]);
+
+        /** @var LazyCollection $data */
+        $data = $queryAllHandler->firstOrPaginate(null);
+
+        $this->assertInstanceOf(LazyCollection::class, $data);
+        $this->assertCount(1, $data);
+
+        /** @var User $user */
+        $user = $data->first();
+
+        $this->assertInstanceOf(User::class, $user);
+
+        $this->assertTrue($user->is($commentTwo->user));
     }
 
     public function testSingular(): void

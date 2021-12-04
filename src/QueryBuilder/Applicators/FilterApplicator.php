@@ -184,6 +184,10 @@ class FilterApplicator
             foreach ($this->relation->filters() as $filter) {
                 yield $filter;
             }
+
+            foreach ($this->relation->schema()->filters() as $filter) {
+                yield $filter;
+            }
         }
     }
 }
