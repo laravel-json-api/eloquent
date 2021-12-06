@@ -27,7 +27,7 @@ use LaravelJsonApi\Contracts\Schema\Container;
 use LaravelJsonApi\Contracts\Schema\PolymorphicRelation;
 use LaravelJsonApi\Eloquent\Contracts\Countable;
 use LaravelJsonApi\Eloquent\Contracts\FillableToMany;
-use LaravelJsonApi\Eloquent\Fields\Concerns\ReadOnly;
+use LaravelJsonApi\Eloquent\Fields\Concerns\IsReadOnly;
 use LaravelJsonApi\Eloquent\Polymorphism\MorphMany;
 use LaravelJsonApi\Eloquent\Polymorphism\MorphValue;
 use LogicException;
@@ -37,7 +37,7 @@ class MorphToMany extends ToMany implements PolymorphicRelation, IteratorAggrega
 {
 
     use Polymorphic;
-    use ReadOnly;
+    use IsReadOnly;
 
     /**
      * @var array

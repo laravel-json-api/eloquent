@@ -22,13 +22,13 @@ namespace LaravelJsonApi\Eloquent\Fields\Relations;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo as EloquentBelongsTo;
 use LaravelJsonApi\Eloquent\Contracts\FillableToOne;
-use LaravelJsonApi\Eloquent\Fields\Concerns\ReadOnly;
+use LaravelJsonApi\Eloquent\Fields\Concerns\IsReadOnly;
 use LogicException;
 
 class BelongsTo extends ToOne implements FillableToOne
 {
 
-    use ReadOnly;
+    use IsReadOnly;
 
     /**
      * Create a belongs-to relation.

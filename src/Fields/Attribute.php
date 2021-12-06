@@ -33,7 +33,7 @@ use LaravelJsonApi\Eloquent\Contracts\Selectable;
 use LaravelJsonApi\Eloquent\Contracts\Sortable as SortableContract;
 use LaravelJsonApi\Eloquent\Fields\Concerns\Hideable;
 use LaravelJsonApi\Eloquent\Fields\Concerns\OnRelated;
-use LaravelJsonApi\Eloquent\Fields\Concerns\ReadOnly;
+use LaravelJsonApi\Eloquent\Fields\Concerns\IsReadOnly;
 
 abstract class Attribute implements
     AttributeContract,
@@ -46,7 +46,7 @@ abstract class Attribute implements
 
     use Hideable;
     use OnRelated;
-    use ReadOnly;
+    use IsReadOnly;
     use Sortable;
     use SparseField;
 
