@@ -20,12 +20,12 @@ declare(strict_types=1);
 namespace LaravelJsonApi\Eloquent\Filters;
 
 use Closure;
-use LaravelJsonApi\Contracts\Schema\Schema;
 use LaravelJsonApi\Eloquent\Contracts\Filter;
 use LaravelJsonApi\Eloquent\Filters\Concerns\DeserializesToArray;
 use LaravelJsonApi\Eloquent\Filters\Concerns\HasRelation;
 use LaravelJsonApi\Eloquent\Filters\Concerns\IsSingular;
 use LaravelJsonApi\Eloquent\QueryBuilder\Applicators\FilterApplicator;
+use LaravelJsonApi\Eloquent\Schema;
 
 class WhereHas implements Filter
 {
@@ -80,7 +80,8 @@ class WhereHas implements Filter
     protected function callback($value): Closure
     {
         return function($query) use ($value) {
-            FilterApplicator::make($this->schema, $this->relation())
+            $relation = $this->relation();
+            FilterApplicator::make($relation->schema(), $relation)
                 ->apply($query, $this->toArray($value));
         };
     }

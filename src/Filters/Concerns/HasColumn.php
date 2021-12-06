@@ -23,6 +23,11 @@ trait HasColumn
 {
 
     /**
+     * @var string|null
+     */
+    private ?string $table = null;
+
+    /**
      * @var string
      */
     private string $column;
@@ -32,6 +37,35 @@ trait HasColumn
      */
     public function column(): string
     {
+        return $this->column;
+    }
+
+    /**
+     * Force the table name when qualifying the column.
+     *
+     * This allows the developer to force the table that the column is qualified as.
+     *
+     * @param string $table
+     * @return $this
+     */
+    public function qualifyAs(string $table): self
+    {
+        $this->table = $table;
+
+        return $this;
+    }
+
+    /**
+     * Get the qualified column.
+     *
+     * @return string
+     */
+    protected function qualifiedColumn(): string
+    {
+        if ($this->table) {
+            return $this->table . '.' . $this->column;
+        }
+
         return $this->column;
     }
 }

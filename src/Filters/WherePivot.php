@@ -20,7 +20,6 @@ declare(strict_types=1);
 namespace LaravelJsonApi\Eloquent\Filters;
 
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
-use LogicException;
 
 class WherePivot extends Where
 {
@@ -38,7 +37,16 @@ class WherePivot extends Where
             );
         }
 
-        throw new LogicException('Expecting pivot filter to be used with a belongs-to-many relation.');
+        /**
+         * If we haven't got a belongs-to-many, then we'll use a standard `where()` and
+         * hope that our column is qualified enough to be unique in the query so the
+         * database knows we mean the pivot table.
+         */
+        return $query->where(
+            $this->qualifiedColumn(),
+            $this->operator(),
+            $this->deserialize($value)
+        );
     }
 
 }

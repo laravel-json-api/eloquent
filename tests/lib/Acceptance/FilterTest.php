@@ -20,7 +20,9 @@ declare(strict_types=1);
 namespace LaravelJsonApi\Eloquent\Tests\Acceptance;
 
 use App\Models\Post;
+use App\Models\Tag;
 use App\Schemas\PostSchema;
+use Illuminate\Support\Collection;
 use Illuminate\Support\LazyCollection;
 use PHPUnit\Framework\MockObject\MockObject;
 
@@ -142,5 +144,134 @@ class FilterTest extends TestCase
         $this->assertInstanceOf(LazyCollection::class, $actual);
         $this->assertCount(1, $actual);
         $this->assertTrue($expected->is($actual->first()));
+    }
+
+    public function testWhereHas(): void
+    {
+        $tag1 = Tag::factory()->create(['name' => 'Foo']);
+        $tag2 = Tag::factory()->create(['name' => 'Bar']);
+
+        $posts = Post::factory()->count(4)->create();
+
+        $posts[0]->tags()->attach($tag1);
+        $posts[1]->tags()->attach($tag2);
+        $posts[2]->tags()->attach($tag1);
+        $posts[2]->tags()->attach($tag2);
+
+        $filter = [
+            'tags' => [
+                'name' => 'Bar',
+            ],
+        ];
+
+        $actual = $this->posts
+            ->repository()
+            ->queryAll()
+            ->filter($filter)
+            ->get();
+
+        $this->assertPosts([$posts[1], $posts[2]], $actual);
+    }
+
+    public function testWhereHasViaRelationFilter(): void
+    {
+        $tag1 = Tag::factory()->create(['name' => 'Foo']);
+        $tag2 = Tag::factory()->create(['name' => 'Bar']);
+
+        $posts = Post::factory()->count(4)->create();
+
+        $posts[0]->tags()->attach($tag1, ['approved' => true]);
+        $posts[1]->tags()->attach($tag2, ['approved' => false]);
+        $posts[2]->tags()->attach($tag1, ['approved' => true]);
+        $posts[2]->tags()->attach($tag2, ['approved' => false]);
+
+        $filter = [
+            'tags' => [
+                'approved' => 'true',
+            ],
+        ];
+
+        $actual = $this->posts
+            ->repository()
+            ->queryAll()
+            ->filter($filter)
+            ->get();
+
+        $this->assertPosts([$posts[0], $posts[2]], $actual);
+    }
+
+    public function testWhereDoesntHave(): void
+    {
+        $tag1 = Tag::factory()->create(['name' => 'Foo']);
+        $tag2 = Tag::factory()->create(['name' => 'Bar']);
+
+        $posts = Post::factory()->count(4)->create();
+
+        $posts[0]->tags()->attach($tag1);
+        $posts[1]->tags()->attach($tag2);
+        $posts[2]->tags()->attach($tag1);
+        $posts[2]->tags()->attach($tag2);
+
+        $filter = [
+            'notTags' => [
+                'name' => 'Bar',
+            ],
+        ];
+
+        $actual = $this->posts
+            ->repository()
+            ->queryAll()
+            ->filter($filter)
+            ->get();
+
+        $this->assertPosts([$posts[0], $posts[3]], $actual);
+    }
+
+    public function testWhereDoesntHaveViaRelationFilter(): void
+    {
+        $tag1 = Tag::factory()->create(['name' => 'Foo']);
+        $tag2 = Tag::factory()->create(['name' => 'Bar']);
+
+        $posts = Post::factory()->count(4)->create();
+
+        $posts[0]->tags()->attach($tag1, ['approved' => true]);
+        $posts[1]->tags()->attach($tag2, ['approved' => false]);
+        $posts[2]->tags()->attach($tag1, ['approved' => true]);
+        $posts[2]->tags()->attach($tag2, ['approved' => false]);
+
+        $filter = [
+            'notTags' => [
+                'approved' => 'true',
+            ],
+        ];
+
+        $actual = $this->posts
+            ->repository()
+            ->queryAll()
+            ->filter($filter)
+            ->get();
+
+        $this->assertPosts([$posts[1], $posts[3]], $actual);
+    }
+
+    /**
+     * @param iterable $expected
+     * @param iterable $actual
+     */
+    private function assertPosts(iterable $expected, iterable $actual): void
+    {
+        $expected = Collection::make($expected)
+            ->map(static fn(Post $post) => $post->getKey())
+            ->sort()
+            ->values()
+            ->all();
+
+        $actual = Collection::make($actual)
+            ->map(static fn(Post $post) => $post->getKey())
+            ->sort()
+            ->values()
+            ->all();
+
+        $this->assertSame($expected, $actual);
     }
 }
