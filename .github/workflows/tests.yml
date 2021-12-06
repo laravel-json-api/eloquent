@@ -10,11 +10,11 @@ jobs:
   build:
 
     runs-on: ubuntu-latest
-    
+
     strategy:
       fail-fast: true
       matrix:
-        php: ['7.4', '8.0']
+        php: ['7.4', '8.0', '8.1']
         laravel: ['^8.0']
 
     steps:
@@ -38,6 +38,6 @@ jobs:
         timeout_minutes: 5
         max_attempts: 5
         command: composer install --no-suggest --prefer-dist -n -o
-        
+
     - name: Execute tests
       run: vendor/bin/phpunit
