@@ -12,10 +12,10 @@ All notable changes to this project will be documented in this file. This projec
 ### Changed
 
 - [#20](https://github.com/laravel-json-api/eloquent/pull/20) **BREAKING** To support PHP 8.1 we needed to rename the
-  `ReadOnly` contract and trait. This is because PHP 8.1 introduced readonly as a reserved word. The following changes
+  `ReadOnly` contract and trait. This is because PHP 8.1 introduced `readonly` as a reserved word. The following changes
   were made:
   - `LaravelJsonApi\Eloquent\Contracts\ReadOnly` is now `IsReadOnly`.
-  - `LeravelJsonApi\Eloquent\Fields\Concerns\ReadOnly` is now `IsReadOnly`.
+  - `LaravelJsonApi\Eloquent\Fields\Concerns\ReadOnly` is now `IsReadOnly`.
 
 ## Unreleased
 
