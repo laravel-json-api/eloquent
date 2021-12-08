@@ -17,12 +17,19 @@ All notable changes to this project will be documented in this file. This projec
   - `LaravelJsonApi\Eloquent\Contracts\ReadOnly` is now `IsReadOnly`.
   - `LaravelJsonApi\Eloquent\Fields\Concerns\ReadOnly` is now `IsReadOnly`.
 
-## Unreleased
+## [1.0.1] - 2021-12-08
 
 ### Changed
 
 - The maximum PHP version is now 8.0. This is because this package does not work in its current form with PHP 8.1. The
   next major version of this package will support PHP 8.1.
+
+### Fixed
+
+- [laravel#139](https://github.com/laravel-json-api/laravel/issues/139) Fix the `WhereHas` and `WhereDoesntHave` filters
+  that have been broken since `1.0.0`. Previously they have been iterating over filters on the schema to which the
+  relationship belongs - which is incorrect. They now correctly iterate over the filters on the schema on the other side
+  of the relationship (this inverse filter).
 
 ## [1.0.0] - 2021-07-31
 

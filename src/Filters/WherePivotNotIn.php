@@ -20,7 +20,6 @@ declare(strict_types=1);
 namespace LaravelJsonApi\Eloquent\Filters;
 
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
-use LogicException;
 
 class WherePivotNotIn extends WhereIn
 {
@@ -37,7 +36,15 @@ class WherePivotNotIn extends WhereIn
             );
         }
 
-        throw new LogicException('Expecting pivot filter to be used with a belongs-to-many relation.');
+        /**
+         * If we haven't got a belongs-to-many, then we'll use a standard `whereNotIn()` and
+         * hope that our column is qualified enough to be unique in the query so the
+         * database knows we mean the pivot table.
+         */
+        return $query->whereNotIn(
+            $this->qualifiedColumn(),
+            $this->deserialize($value)
+        );
     }
 
 }
