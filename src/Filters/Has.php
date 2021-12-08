@@ -19,10 +19,10 @@ declare(strict_types=1);
 
 namespace LaravelJsonApi\Eloquent\Filters;
 
-use LaravelJsonApi\Contracts\Schema\Schema;
 use LaravelJsonApi\Eloquent\Contracts\Filter;
 use LaravelJsonApi\Eloquent\Filters\Concerns\HasRelation;
 use LaravelJsonApi\Eloquent\Filters\Concerns\IsSingular;
+use LaravelJsonApi\Eloquent\Schema;
 use function filter_var;
 
 class Has implements Filter

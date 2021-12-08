@@ -19,8 +19,8 @@ declare(strict_types=1);
 
 namespace LaravelJsonApi\Eloquent\Filters\Concerns;
 
-use LaravelJsonApi\Contracts\Schema\Relation;
-use LaravelJsonApi\Contracts\Schema\Schema;
+use LaravelJsonApi\Eloquent\Fields\Relations\Relation;
+use LaravelJsonApi\Eloquent\Schema;
 
 trait HasRelation
 {
