@@ -24,6 +24,7 @@ use LaravelJsonApi\Core\Query\RelationshipPath;
 use LaravelJsonApi\Eloquent\Fields\Relations\Relation;
 use LaravelJsonApi\Eloquent\Schema;
 use LogicException;
+use Traversable;
 
 /**
  * Class EagerLoadPathList
@@ -89,7 +90,7 @@ class EagerLoadPathList implements IteratorAggregate
     /**
      * @inheritDoc
      */
-    public function getIterator()
+    public function getIterator(): Traversable
     {
         foreach ($this->defaults() as $default) {
             yield $default;

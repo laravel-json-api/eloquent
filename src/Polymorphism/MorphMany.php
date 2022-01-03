@@ -118,7 +118,7 @@ class MorphMany implements IteratorAggregate, \Countable
     /**
      * @inheritDoc
      */
-    public function count()
+    public function count(): int
     {
         $count = 0;
 

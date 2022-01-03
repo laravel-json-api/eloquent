@@ -114,7 +114,7 @@ class MorphValue implements IteratorAggregate, Countable
     /**
      * @inheritDoc
      */
-    public function count()
+    public function count(): int
     {
         if ($this->value instanceof Model) {
             return 1;

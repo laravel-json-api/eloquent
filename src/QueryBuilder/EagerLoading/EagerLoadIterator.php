@@ -24,6 +24,7 @@ use Illuminate\Support\Str;
 use IteratorAggregate;
 use LaravelJsonApi\Core\Query\IncludePaths;
 use LaravelJsonApi\Eloquent\Schema;
+use Traversable;
 
 /**
  * Class EagerLoadIterator
@@ -95,7 +96,7 @@ class EagerLoadIterator implements IteratorAggregate
     /**
      * @inheritDoc
      */
-    public function getIterator()
+    public function getIterator(): Traversable
     {
         /**
          * We always need to yield the default paths on the base schema.

@@ -31,6 +31,7 @@ use LaravelJsonApi\Eloquent\Fields\Concerns\IsReadOnly;
 use LaravelJsonApi\Eloquent\Polymorphism\MorphMany;
 use LaravelJsonApi\Eloquent\Polymorphism\MorphValue;
 use LogicException;
+use Traversable;
 use UnexpectedValueException;
 
 class MorphToMany extends ToMany implements PolymorphicRelation, IteratorAggregate, FillableToMany
@@ -95,7 +96,7 @@ class MorphToMany extends ToMany implements PolymorphicRelation, IteratorAggrega
     /**
      * @inheritDoc
      */
-    public function getIterator(): iterable
+    public function getIterator(): Traversable
     {
         foreach ($this->relations as $relation) {
             if ($relation instanceof self) {

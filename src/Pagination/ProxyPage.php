@@ -59,7 +59,7 @@ final class ProxyPage implements Page
     /**
      * @inheritDoc
      */
-    public function count()
+    public function count(): int
     {
         return $this->page->count();
     }
