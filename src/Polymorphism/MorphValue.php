@@ -28,7 +28,6 @@ use LaravelJsonApi\Core\Query\IncludePaths;
 use LaravelJsonApi\Eloquent\Fields\Relations\Relation;
 use LaravelJsonApi\Eloquent\Fields\Relations\ToMany;
 use LaravelJsonApi\Eloquent\Fields\Relations\ToOne;
-use LaravelJsonApi\Eloquent\Query\ExtendedQueryParameters;
 
 class MorphValue implements IteratorAggregate, Countable
 {
