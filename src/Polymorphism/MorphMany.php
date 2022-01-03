@@ -21,6 +21,7 @@ namespace LaravelJsonApi\Eloquent\Polymorphism;
 
 use Illuminate\Support\Collection;
 use IteratorAggregate;
+use Traversable;
 
 class MorphMany implements IteratorAggregate, \Countable
 {
@@ -132,7 +133,7 @@ class MorphMany implements IteratorAggregate, \Countable
     /**
      * @inheritDoc
      */
-    public function getIterator()
+    public function getIterator(): Traversable
     {
         foreach ($this->values as $value) {
             foreach ($value as $item) {

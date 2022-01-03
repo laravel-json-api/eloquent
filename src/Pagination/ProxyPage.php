@@ -22,6 +22,7 @@ namespace LaravelJsonApi\Eloquent\Pagination;
 use LaravelJsonApi\Contracts\Pagination\Page;
 use LaravelJsonApi\Core\Document\Links;
 use LaravelJsonApi\Eloquent\Contracts\Proxy;
+use Traversable;
 
 final class ProxyPage implements Page
 {
@@ -51,7 +52,7 @@ final class ProxyPage implements Page
     /**
      * @inheritDoc
      */
-    public function getIterator()
+    public function getIterator(): Traversable
     {
         yield from $this->proxy->iterator($this->page);
     }

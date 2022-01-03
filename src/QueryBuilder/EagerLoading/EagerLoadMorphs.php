@@ -25,6 +25,7 @@ use LaravelJsonApi\Core\Query\IncludePaths;
 use LaravelJsonApi\Core\Query\RelationshipPath;
 use LaravelJsonApi\Eloquent\Fields\Relations\MorphTo;
 use LaravelJsonApi\Eloquent\Schema;
+use Traversable;
 
 /**
  * Class EagerLoadMorphs
@@ -82,7 +83,7 @@ class EagerLoadMorphs implements IteratorAggregate
     /**
      * @inheritDoc
      */
-    public function getIterator()
+    public function getIterator(): Traversable
     {
         foreach ($this->relation->allSchemas() as $schema) {
             $loader = new EagerLoader($this->schemas, $schema, $this->pathsFor($schema));

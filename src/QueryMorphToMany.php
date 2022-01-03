@@ -109,7 +109,7 @@ class QueryMorphToMany implements QueryManyBuilder, IteratorAggregate
     /**
      * @return Generator
      */
-    public function getIterator()
+    public function getIterator(): Generator
     {
         foreach ($this->relation as $relation) {
             $query = $this->toQuery($relation);
