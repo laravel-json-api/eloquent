@@ -39,11 +39,16 @@ class Boolean extends Attribute
      */
     protected function assertValue($value): void
     {
-        if (!is_null($value) && !is_bool($value)) {
+        if (!is_null($value) && is_null($this->is_boolean($value))) {
             throw new \UnexpectedValueException(sprintf(
                 'Expecting the value of attribute %s to be a boolean.',
                 $this->name()
             ));
         }
     }
+
+	protected function is_boolean($value)
+	{
+		return filter_var($value, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE);
+	}
 }
