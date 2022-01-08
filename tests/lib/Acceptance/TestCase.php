@@ -26,6 +26,7 @@ use LaravelJsonApi\Contracts\Schema\Container as SchemaContainerContract;
 use LaravelJsonApi\Contracts\Server\Server;
 use LaravelJsonApi\Core\Schema\Container as SchemaContainer;
 use LaravelJsonApi\Core\Schema\TypeResolver;
+use LaravelJsonApi\Core\Support\ContainerResolver;
 use Orchestra\Testbench\TestCase as BaseTestCase;
 
 class TestCase extends BaseTestCase
@@ -43,9 +44,9 @@ class TestCase extends BaseTestCase
 
         $this->loadMigrationsFrom(__DIR__ . '/../../database/migrations');
 
-        $this->app->singleton(
-            SchemaContainerContract::class,
-            fn($container) => new SchemaContainer($container, $container->make(Server::class), [
+        $this->app->singleton(SchemaContainerContract::class, function ($container) {
+            $resolver = new ContainerResolver(static fn() => $container);
+            return new SchemaContainer($resolver, $container->make(Server::class), [
                 Schemas\CarOwnerSchema::class,
                 Schemas\CarSchema::class,
                 Schemas\CommentSchema::class,
@@ -59,8 +60,8 @@ class TestCase extends BaseTestCase
                 Schemas\UserAccountSchema::class,
                 Schemas\UserSchema::class,
                 Schemas\VideoSchema::class,
-            ])
-        );
+            ]);
+        });
 
         $this->app->singleton(Server::class, function () {
             $server = $this->createMock(Server::class);

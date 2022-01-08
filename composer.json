@@ -27,7 +27,7 @@
         "ext-json": "*",
         "illuminate/database": "^8.0",
         "illuminate/support": "^8.0",
-        "laravel-json-api/core": "^1.0.0"
+        "laravel-json-api/core": "^2.0"
     },
     "require-dev": {
         "orchestra/testbench": "^6.23",
@@ -51,7 +51,7 @@
             "dev-2.x": "2.x-dev"
         }
     },
-    "minimum-stability": "stable",
+    "minimum-stability": "dev",
     "prefer-stable": true,
     "config": {
         "sort-packages": true
