@@ -25,6 +25,7 @@ use LaravelJsonApi\Eloquent\Fields\Relations\MorphToMany;
 use LaravelJsonApi\Eloquent\Fields\Relations\Relation;
 use LaravelJsonApi\Eloquent\Schema;
 use LogicException;
+use Traversable;
 
 /**
  * Class EagerLoadPath
@@ -228,7 +229,7 @@ class EagerLoadPath implements IteratorAggregate
     /**
      * @inheritDoc
      */
-    public function getIterator()
+    public function getIterator(): Traversable
     {
         yield from $this->relations;
     }
