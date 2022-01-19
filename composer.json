@@ -25,12 +25,12 @@
     "require": {
         "php": "^7.4|^8.0",
         "ext-json": "*",
-        "illuminate/database": "^8.0",
-        "illuminate/support": "^8.0",
+        "illuminate/database": "^8.0|^9.0",
+        "illuminate/support": "^8.0|^9.0",
         "laravel-json-api/core": "^2.0"
     },
     "require-dev": {
-        "orchestra/testbench": "^6.23",
+        "orchestra/testbench": "^6.23|^7.0",
         "phpunit/phpunit": "^9.5.10"
     },
     "autoload": {

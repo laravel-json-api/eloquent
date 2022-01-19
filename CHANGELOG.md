@@ -8,6 +8,7 @@ All notable changes to this project will be documented in this file. This projec
 ### Added
 
 - Added support for PHP 8.1.
+- Added support for Laravel 9.
 
 ### Changed
 
