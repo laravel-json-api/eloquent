@@ -29,8 +29,8 @@ use LaravelJsonApi\Eloquent\Contracts\EagerLoadableField;
 use LaravelJsonApi\Eloquent\Contracts\Fillable;
 use LaravelJsonApi\Eloquent\Contracts\Selectable;
 use LaravelJsonApi\Eloquent\Fields\Concerns\Hideable;
-use LaravelJsonApi\Eloquent\Fields\Concerns\OnRelated;
 use LaravelJsonApi\Eloquent\Fields\Concerns\IsReadOnly;
+use LaravelJsonApi\Eloquent\Fields\Concerns\OnRelated;
 use LogicException;
 
 class Map implements

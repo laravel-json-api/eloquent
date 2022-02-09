@@ -32,8 +32,8 @@ use LaravelJsonApi\Eloquent\Contracts\Fillable;
 use LaravelJsonApi\Eloquent\Contracts\Selectable;
 use LaravelJsonApi\Eloquent\Contracts\Sortable as SortableContract;
 use LaravelJsonApi\Eloquent\Fields\Concerns\Hideable;
-use LaravelJsonApi\Eloquent\Fields\Concerns\OnRelated;
 use LaravelJsonApi\Eloquent\Fields\Concerns\IsReadOnly;
+use LaravelJsonApi\Eloquent\Fields\Concerns\OnRelated;
 
 abstract class Attribute implements
     AttributeContract,
