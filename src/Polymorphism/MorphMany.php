@@ -1,6 +1,6 @@
 <?php
 /*
- * Copyright 2021 Cloud Creativity Limited
+ * Copyright 2022 Cloud Creativity Limited
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ namespace LaravelJsonApi\Eloquent\Polymorphism;
 
 use Illuminate\Support\Collection;
 use IteratorAggregate;
+use Traversable;
 
 class MorphMany implements IteratorAggregate, \Countable
 {
@@ -118,7 +119,7 @@ class MorphMany implements IteratorAggregate, \Countable
     /**
      * @inheritDoc
      */
-    public function count()
+    public function count(): int
     {
         $count = 0;
 
@@ -132,7 +133,7 @@ class MorphMany implements IteratorAggregate, \Countable
     /**
      * @inheritDoc
      */
-    public function getIterator()
+    public function getIterator(): Traversable
     {
         foreach ($this->values as $value) {
             foreach ($value as $item) {

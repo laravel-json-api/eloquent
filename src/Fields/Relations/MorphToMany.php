@@ -1,6 +1,6 @@
 <?php
 /*
- * Copyright 2021 Cloud Creativity Limited
+ * Copyright 2022 Cloud Creativity Limited
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,17 +27,18 @@ use LaravelJsonApi\Contracts\Schema\Container;
 use LaravelJsonApi\Contracts\Schema\PolymorphicRelation;
 use LaravelJsonApi\Eloquent\Contracts\Countable;
 use LaravelJsonApi\Eloquent\Contracts\FillableToMany;
-use LaravelJsonApi\Eloquent\Fields\Concerns\ReadOnly;
+use LaravelJsonApi\Eloquent\Fields\Concerns\IsReadOnly;
 use LaravelJsonApi\Eloquent\Polymorphism\MorphMany;
 use LaravelJsonApi\Eloquent\Polymorphism\MorphValue;
 use LogicException;
+use Traversable;
 use UnexpectedValueException;
 
 class MorphToMany extends ToMany implements PolymorphicRelation, IteratorAggregate, FillableToMany
 {
 
     use Polymorphic;
-    use ReadOnly;
+    use IsReadOnly;
 
     /**
      * @var array
@@ -95,7 +96,7 @@ class MorphToMany extends ToMany implements PolymorphicRelation, IteratorAggrega
     /**
      * @inheritDoc
      */
-    public function getIterator(): iterable
+    public function getIterator(): Traversable
     {
         foreach ($this->relations as $relation) {
             if ($relation instanceof self) {

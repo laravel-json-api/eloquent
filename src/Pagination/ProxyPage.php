@@ -1,6 +1,6 @@
 <?php
 /*
- * Copyright 2021 Cloud Creativity Limited
+ * Copyright 2022 Cloud Creativity Limited
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ namespace LaravelJsonApi\Eloquent\Pagination;
 use LaravelJsonApi\Contracts\Pagination\Page;
 use LaravelJsonApi\Core\Document\Links;
 use LaravelJsonApi\Eloquent\Contracts\Proxy;
+use Traversable;
 
 final class ProxyPage implements Page
 {
@@ -51,7 +52,7 @@ final class ProxyPage implements Page
     /**
      * @inheritDoc
      */
-    public function getIterator()
+    public function getIterator(): Traversable
     {
         yield from $this->proxy->iterator($this->page);
     }
@@ -59,7 +60,7 @@ final class ProxyPage implements Page
     /**
      * @inheritDoc
      */
-    public function count()
+    public function count(): int
     {
         return $this->page->count();
     }

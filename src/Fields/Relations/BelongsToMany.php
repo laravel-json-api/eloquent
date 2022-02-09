@@ -1,6 +1,6 @@
 <?php
 /*
- * Copyright 2021 Cloud Creativity Limited
+ * Copyright 2022 Cloud Creativity Limited
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany as EloquentBelongsToMany;
 use InvalidArgumentException;
 use LaravelJsonApi\Eloquent\Contracts\FillableToMany;
-use LaravelJsonApi\Eloquent\Fields\Concerns\ReadOnly;
+use LaravelJsonApi\Eloquent\Fields\Concerns\IsReadOnly;
 use LogicException;
 use function get_class;
 use function sprintf;
@@ -32,7 +32,7 @@ use function sprintf;
 class BelongsToMany extends ToMany implements FillableToMany
 {
 
-    use ReadOnly;
+    use IsReadOnly;
 
     /**
      * Create a belongs-to-many relation.

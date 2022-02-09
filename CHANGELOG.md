@@ -3,6 +3,22 @@
 All notable changes to this project will be documented in this file. This project adheres to
 [Semantic Versioning](http://semver.org/) and [this changelog format](http://keepachangelog.com/).
 
+## [2.0.0] - 2022-02-09
+
+### Added
+
+- Added support for PHP 8.1.
+- Added support for Laravel 9.
+
+### Changed
+
+- Added return types for internal methods, to remove deprecation warnings on PHP 8.1.
+- [#20](https://github.com/laravel-json-api/eloquent/pull/20) **BREAKING** To support PHP 8.1 we needed to rename the
+  `ReadOnly` contract and trait. This is because PHP 8.1 introduced `readonly` as a reserved word. The following changes
+  were made:
+  - `LaravelJsonApi\Eloquent\Contracts\ReadOnly` is now `IsReadOnly`.
+  - `LaravelJsonApi\Eloquent\Fields\Concerns\ReadOnly` is now `IsReadOnly`.
+
 ## [1.0.1] - 2021-12-08
 
 ### Changed

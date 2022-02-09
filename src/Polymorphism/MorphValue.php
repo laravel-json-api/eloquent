@@ -1,6 +1,6 @@
 <?php
 /*
- * Copyright 2021 Cloud Creativity Limited
+ * Copyright 2022 Cloud Creativity Limited
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,7 @@ use LaravelJsonApi\Core\Query\IncludePaths;
 use LaravelJsonApi\Eloquent\Fields\Relations\Relation;
 use LaravelJsonApi\Eloquent\Fields\Relations\ToMany;
 use LaravelJsonApi\Eloquent\Fields\Relations\ToOne;
-use LaravelJsonApi\Eloquent\Query\ExtendedQueryParameters;
+use Traversable;
 
 class MorphValue implements IteratorAggregate, Countable
 {
@@ -114,7 +114,7 @@ class MorphValue implements IteratorAggregate, Countable
     /**
      * @inheritDoc
      */
-    public function count()
+    public function count(): int
     {
         if ($this->value instanceof Model) {
             return 1;
@@ -130,7 +130,7 @@ class MorphValue implements IteratorAggregate, Countable
     /**
      * @inheritDoc
      */
-    public function getIterator()
+    public function getIterator(): Traversable
     {
         if ($this->relation instanceof ToOne && $this->value) {
             yield $this->relation->parse($this->value);

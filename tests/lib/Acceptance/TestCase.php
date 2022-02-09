@@ -1,6 +1,6 @@
 <?php
 /*
- * Copyright 2021 Cloud Creativity Limited
+ * Copyright 2022 Cloud Creativity Limited
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,15 +20,18 @@ declare(strict_types=1);
 namespace LaravelJsonApi\Eloquent\Tests\Acceptance;
 
 use App\Schemas;
+use Illuminate\Foundation\Testing\Concerns\InteractsWithDeprecationHandling;
 use Illuminate\Support\Arr;
 use LaravelJsonApi\Contracts\Schema\Container as SchemaContainerContract;
 use LaravelJsonApi\Contracts\Server\Server;
 use LaravelJsonApi\Core\Schema\Container as SchemaContainer;
 use LaravelJsonApi\Core\Schema\TypeResolver;
+use LaravelJsonApi\Core\Support\ContainerResolver;
 use Orchestra\Testbench\TestCase as BaseTestCase;
 
 class TestCase extends BaseTestCase
 {
+    use InteractsWithDeprecationHandling;
 
     /**
      * @inheritDoc
@@ -37,11 +40,13 @@ class TestCase extends BaseTestCase
     {
         parent::setUp();
 
+        $this->withoutDeprecationHandling();
+
         $this->loadMigrationsFrom(__DIR__ . '/../../database/migrations');
 
-        $this->app->singleton(
-            SchemaContainerContract::class,
-            fn($container) => new SchemaContainer($container, $container->make(Server::class), [
+        $this->app->singleton(SchemaContainerContract::class, function ($container) {
+            $resolver = new ContainerResolver(static fn() => $container);
+            return new SchemaContainer($resolver, $container->make(Server::class), [
                 Schemas\CarOwnerSchema::class,
                 Schemas\CarSchema::class,
                 Schemas\CommentSchema::class,
@@ -55,8 +60,8 @@ class TestCase extends BaseTestCase
                 Schemas\UserAccountSchema::class,
                 Schemas\UserSchema::class,
                 Schemas\VideoSchema::class,
-            ])
-        );
+            ]);
+        });
 
         $this->app->singleton(Server::class, function () {
             $server = $this->createMock(Server::class);

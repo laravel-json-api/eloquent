@@ -1,6 +1,6 @@
 <?php
 /*
- * Copyright 2021 Cloud Creativity Limited
+ * Copyright 2022 Cloud Creativity Limited
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,8 +32,8 @@ use LaravelJsonApi\Eloquent\Contracts\Fillable;
 use LaravelJsonApi\Eloquent\Contracts\Selectable;
 use LaravelJsonApi\Eloquent\Contracts\Sortable as SortableContract;
 use LaravelJsonApi\Eloquent\Fields\Concerns\Hideable;
+use LaravelJsonApi\Eloquent\Fields\Concerns\IsReadOnly;
 use LaravelJsonApi\Eloquent\Fields\Concerns\OnRelated;
-use LaravelJsonApi\Eloquent\Fields\Concerns\ReadOnly;
 
 abstract class Attribute implements
     AttributeContract,
@@ -46,7 +46,7 @@ abstract class Attribute implements
 
     use Hideable;
     use OnRelated;
-    use ReadOnly;
+    use IsReadOnly;
     use Sortable;
     use SparseField;
 
