@@ -3,6 +3,13 @@
 All notable changes to this project will be documented in this file. This project adheres to
 [Semantic Versioning](http://semver.org/) and [this changelog format](http://keepachangelog.com/).
 
+## Unreleased
+
+### Added
+
+- The `Number` field can now be configured to accept numeric strings by calling the `acceptStrings()` method on the
+  field.
+
 ## [2.0.0] - 2022-02-09
 
 ### Added
