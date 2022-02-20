@@ -17,12 +17,13 @@
 
 declare(strict_types=1);
 
-namespace LaravelJsonApi\Eloquent\Tests\Acceptance;
+namespace LaravelJsonApi\Eloquent\Tests\Acceptance\RelationAttributes;
 
 use App\Models\User;
 use App\Schemas\UserSchema;
+use LaravelJsonApi\Eloquent\Tests\Acceptance\TestCase;
 
-class RelationAttributesTest extends TestCase
+class HasOneTest extends TestCase
 {
 
     /**
@@ -70,7 +71,7 @@ class RelationAttributesTest extends TestCase
     {
         $user = User::factory()->create();
 
-        $user = $this->schema->repository()->update($user)->store($data = [
+        $this->schema->repository()->update($user)->store($data = [
             'email' => 'john.doe@example.com',
             'name' => 'John Doe',
             'profile' => [
