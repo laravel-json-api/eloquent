@@ -41,7 +41,7 @@ class CarOwnerFactory extends Factory
     {
         return [
             'car_id' => Car::factory(),
-            'name' => $this->faker->name,
+            'name' => $this->faker->name(),
         ];
     }
 }

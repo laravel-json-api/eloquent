@@ -40,8 +40,8 @@ class UserProfileFactory extends Factory
     public function definition()
     {
         return [
-            'description' => $this->faker->text,
-            'image' => $this->faker->url,
+            'description' => $this->faker->text(),
+            'image' => $this->faker->url(),
             'user_id' => User::factory(),
         ];
     }

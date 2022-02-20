@@ -40,7 +40,7 @@ class PostFactory extends Factory
     {
         return [
             'content' => $this->faker->paragraphs(3, true),
-            'slug' => $this->faker->unique()->slug,
+            'slug' => $this->faker->unique()->slug(),
             'title' => $this->faker->unique()->words(5, true),
             'user_id' => User::factory(),
         ];
