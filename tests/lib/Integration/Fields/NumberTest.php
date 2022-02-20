@@ -82,9 +82,11 @@ class NumberTest extends TestCase
     public function validProvider(): array
     {
         return [
-            [1],
-            [0.1],
-            [null],
+            'int' => [1],
+            'float' => [0.1],
+            'null' => [null],
+            'zero' => [0],
+            'zero as float' => [0.0],
         ];
     }
 
@@ -97,9 +99,34 @@ class NumberTest extends TestCase
         $model = new Post();
         $attr = Number::make('title');
 
-        $result = $attr->fill($model, $value, []);
+        $attr->fill($model, $value, []);
 
-        $this->assertNull($result);
+        $this->assertSame($value, $model->title);
+    }
+
+    /**
+     * @return array
+     */
+    public function validWithStringProvider(): array
+    {
+        return array_merge($this->validProvider(), [
+            'int as string' => ['1'],
+            'float as string' => ['0.1'],
+            'zero as string' => ['0'],
+        ]);
+    }
+
+    /**
+     * @param $value
+     * @dataProvider validWithStringProvider
+     */
+    public function testFillAcceptsStrings($value): void
+    {
+        $model = new Post();
+        $attr = Number::make('title')->acceptStrings();
+
+        $attr->fill($model, $value, []);
+
         $this->assertSame($value, $model->title);
     }
 
@@ -128,6 +155,39 @@ class NumberTest extends TestCase
         $attr = Number::make('title');
 
         $this->expectException(\UnexpectedValueException::class);
+        $this->expectExceptionMessage('Expecting the value of attribute title to be an integer or float.');
+
+        $attr->fill($model, $value, []);
+    }
+
+    /**
+     * @return array
+     */
+    public function invalidWhenAcceptingStringsProvider(): array
+    {
+        return [
+            [true],
+            ['foo'],
+            [''],
+            [[]],
+            [new \DateTime()],
+        ];
+    }
+
+    /**
+     * @param $value
+     * @dataProvider invalidWhenAcceptingStringsProvider
+     */
+    public function testFillWithInvalidWhenAcceptingStrings($value): void
+    {
+        $model = new Post();
+        $attr = Number::make('title')->acceptStrings();
+
+        $this->expectException(\UnexpectedValueException::class);
+        $this->expectExceptionMessage(
+            'Expecting the value of attribute title to be an integer, float or numeric string.'
+        );
+
         $attr->fill($model, $value, []);
     }
 

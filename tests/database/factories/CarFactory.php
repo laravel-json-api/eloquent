@@ -41,7 +41,7 @@ class CarFactory extends Factory
     {
         return [
             'mechanic_id' => Mechanic::factory(),
-            'model' => $this->faker->colorName,
+            'model' => $this->faker->colorName(),
         ];
     }
 }

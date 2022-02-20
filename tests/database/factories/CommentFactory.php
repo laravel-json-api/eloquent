@@ -39,7 +39,7 @@ class CommentFactory extends Factory
     public function definition()
     {
         return [
-            'content' => $this->faker->paragraph,
+            'content' => $this->faker->paragraph(),
             'user_id' => User::factory(),
         ];
     }

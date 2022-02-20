@@ -39,7 +39,7 @@ class PhoneFactory extends Factory
     public function definition()
     {
         return [
-            'number' => $this->faker->unique()->phoneNumber,
+            'number' => $this->faker->unique()->phoneNumber(),
             'user_id' => User::factory(),
         ];
     }
