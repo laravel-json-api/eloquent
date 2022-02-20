@@ -9,6 +9,12 @@ All notable changes to this project will be documented in this file. This projec
 
 - The `Number` field can now be configured to accept numeric strings by calling the `acceptStrings()` method on the
   field.
+  
+### Fixed
+
+- The `JsonApiBuilder` class was previously converting a `null` decoded id to an empty string when querting for a 
+  resource id. This has been fixed to pass `null` to the query builder instead of the empty string, as this was most
+  likely the cause of failures in Postgres.
 
 ## [2.0.0] - 2022-02-09
 

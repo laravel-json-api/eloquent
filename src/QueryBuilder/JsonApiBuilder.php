@@ -261,7 +261,7 @@ class JsonApiBuilder
         $parser = IdParser::make($this->schema->id());
 
         if (is_string($resourceId)) {
-            $this->query->where($column, '=', $parser->decodeIfMatch($resourceId) ?? '');
+            $this->query->where($column, '=', $parser->decodeIfMatch($resourceId));
             return $this;
         }
 
