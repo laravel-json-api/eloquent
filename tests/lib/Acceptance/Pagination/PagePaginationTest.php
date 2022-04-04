@@ -28,6 +28,7 @@ use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Pagination\AbstractPaginator;
 use Illuminate\Support\LazyCollection;
 use LaravelJsonApi\Contracts\Pagination\Page;
+use LaravelJsonApi\Core\Query\QueryParameters;
 use LaravelJsonApi\Core\Support\Arr;
 use LaravelJsonApi\Eloquent\Pagination\PagePagination;
 use LaravelJsonApi\Eloquent\Tests\Acceptance\TestCase;
@@ -642,6 +643,53 @@ class PagePaginationTest extends TestCase
         $this->assertEmpty($page->meta());
         $this->assertSame($links, $page->links()->toArray());
         $this->assertPage($posts->take(3), $page);
+    }
+
+    public function testUrlsIncludeOtherQueryParameters(): void
+    {
+        $posts = Post::factory()->count(6)->create();
+        $slugs = $posts->take(4)->pluck('slug')->implode(',');
+
+        $links = [
+            'first' => [
+                'href' => 'http://localhost/api/v1/posts?' . Arr::query([
+                        'fields' => $fields = [
+                            'posts' => 'author,slug,title',
+                            'users' => 'name',
+                        ],
+                        'filter' => ['slugs' => $slugs],
+                        'include' => 'author',
+                        'page' => ['number' => '1', 'size' => '3'],
+                        'sort' => '-createdAt',
+                    ]),
+            ],
+            'last' => [
+                'href' => $last = 'http://localhost/api/v1/posts?' . Arr::query([
+                        'fields' => $fields,
+                        'filter' => ['slugs' => $slugs],
+                        'include' => 'author',
+                        'page' => ['number' => '2', 'size' => '3'],
+                        'sort' => '-createdAt',
+                    ]),
+            ],
+            'next' => [
+                'href' => $last,
+            ],
+        ];
+
+        $query = QueryParameters::make()
+            ->setFilters(['slugs' => $slugs])
+            ->setSparseFieldSets($fields)
+            ->setIncludePaths('author')
+            ->setSortFields('-createdAt');
+
+        $page = $this->posts
+            ->repository()
+            ->queryAll()
+            ->withQuery($query)
+            ->paginate(['size' => 3]);
+
+        $this->assertSame($links, $page->links()->toArray());
     }
 
     /**

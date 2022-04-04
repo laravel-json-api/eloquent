@@ -3,6 +3,13 @@
 All notable changes to this project will be documented in this file. This project adheres to
 [Semantic Versioning](http://semver.org/) and [this changelog format](http://keepachangelog.com/).
 
+## [2.1.1] - 2022-04-04
+
+### Fixed
+
+- Pass sparse field sets to the `JsonApiBuilder` class, ensuring that they are present on any generated page objects.
+  Previously this omission meant that page URLs were missing any fields sent by the client.
+
 ## [2.1.0] - 2022-02-20
 
 ### Added
