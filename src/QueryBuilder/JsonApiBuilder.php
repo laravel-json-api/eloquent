@@ -146,6 +146,7 @@ class JsonApiBuilder
 
         $this->filter($query->filter())
             ->sortWithDefault($query->sortFields())
+            ->sparseFieldSets($query->sparseFieldSets())
             ->with($query->includePaths())
             ->withCount($query->countable());
 
@@ -165,6 +166,20 @@ class JsonApiBuilder
 
         $this->parameters->setFilters($applicator->applied());
         $this->singular = $applicator->didApplySingularFilter();
+
+        return $this;
+    }
+
+    /**
+     * Set the sparse field sets for the query.
+     *
+     * @param mixed $fields
+     * @return $this
+     * @todo in a future version, these need to be used to determine which columns to retrieve from the db.
+     */
+    public function sparseFieldSets($fields): self
+    {
+        $this->parameters->setSparseFieldSets($fields);
 
         return $this;
     }
