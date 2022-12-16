@@ -78,10 +78,19 @@ class WhereNull implements Filter
      */
     public function apply($query, $value)
     {
-        $value = filter_var($value, FILTER_VALIDATE_BOOL);
-        $this->not = !$value ?? false;
+        if ($value === null) {
+            $value = $this->not;
 
-        return $query->whereNull($query->getModel()->qualifyColumn($this->column()), 'and', $this->not);
+            return $query->whereNull($query->getModel()->qualifyColumn($this->column()), 'and', $value);
+        }
+
+        $value = filter_var($value, FILTER_VALIDATE_BOOL);
+
+        if (!$this->not) {
+            $value = !$value;
+        }
+
+        return $query->whereNull($query->getModel()->qualifyColumn($this->column()), 'and', $value);
     }
 
     /**
