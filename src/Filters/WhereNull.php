@@ -30,19 +30,19 @@ class WhereNull implements Filter
     /**
      * @var string
      */
-    private string $key;
+    private string $name;
 
     /**
      * Create a new filter.
      *
-     * @param string      $key
+     * @param string $name
      * @param string|null $column
      *
      * @return static
      */
-    public static function make(string $key, string $column = null): self
+    public static function make(string $name, string $column = null): self
     {
-        return new static($key, $column);
+        return new static($name, $column);
     }
 
     /**
@@ -50,9 +50,9 @@ class WhereNull implements Filter
      *
      * @param string|null $column
      */
-    public function __construct(string $key, string $column = null)
+    public function __construct(string $name, string $column = null)
     {
-        $this->key = $key;
+        $this->name = $name;
         $this->column = $column ?: $this->guessColumn();
     }
 
@@ -61,36 +61,44 @@ class WhereNull implements Filter
      */
     public function key(): string
     {
-        return $this->key;
+        return $this->name;
     }
 
     /**
-     * @return $this
-     */
-    public function not(): WhereNull
-    {
-        $this->not = true;
-        return $this;
-    }
-
-    /**
-     * {@inheritDoc}
+     * @inheritDoc
      */
     public function apply($query, $value)
     {
-        if ($value === null) {
-            $value = $this->not;
+        $value = $this->deserialize($value);
+        $column = $query->getModel()->qualifyColumn($this->column());
 
-            return $query->whereNull($query->getModel()->qualifyColumn($this->column()), 'and', $value);
+        if ($this->isWhereNull($value)) {
+            return $query->whereNull($column);
         }
 
-        $value = filter_var($value, FILTER_VALIDATE_BOOL);
+        return $query->whereNotNull($column);
+    }
 
-        if (!$this->not) {
-            $value = !$value;
-        }
+    /**
+     * Should a "where null" query be used?
+     *
+     * @param bool $value
+     * @return bool
+     */
+    protected function isWhereNull(bool $value): bool
+    {
+        return $value === true;
+    }
 
-        return $query->whereNull($query->getModel()->qualifyColumn($this->column()), 'and', $value);
+    /**
+     * Deserialize the value.
+     *
+     * @param mixed $value
+     * @return bool
+     */
+    private function deserialize($value): bool
+    {
+        return filter_var($value, FILTER_VALIDATE_BOOL);
     }
 
     /**
@@ -98,6 +106,6 @@ class WhereNull implements Filter
      */
     private function guessColumn(): string
     {
-        return Str::underscore($this->key);
+        return Str::underscore($this->name);
     }
 }
