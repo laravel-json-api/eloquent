@@ -36,6 +36,8 @@ use LaravelJsonApi\Eloquent\Filters\WhereDoesntHave;
 use LaravelJsonApi\Eloquent\Filters\WhereHas;
 use LaravelJsonApi\Eloquent\Filters\WhereIdIn;
 use LaravelJsonApi\Eloquent\Filters\WhereIn;
+use LaravelJsonApi\Eloquent\Filters\WhereNotNull;
+use LaravelJsonApi\Eloquent\Filters\WhereNull;
 use LaravelJsonApi\Eloquent\Filters\WithTrashed;
 use LaravelJsonApi\Eloquent\Pagination\PagePagination;
 use LaravelJsonApi\Eloquent\Schema;
@@ -44,7 +46,6 @@ use LaravelJsonApi\Eloquent\Sorting\SortCountable;
 
 class PostSchema extends Schema
 {
-
     use SoftDeletes;
 
     /**
@@ -76,6 +77,7 @@ class PostSchema extends Schema
                 BelongsToMany::make('images'),
                 BelongsToMany::make('videos'),
             ])->canCount(),
+            DateTime::make('publishedAt'),
             Str::make('slug')->sortable(),
             BelongsToMany::make('tags')
                 ->fields(new ApprovedPivot())
@@ -92,7 +94,9 @@ class PostSchema extends Schema
     {
         return [
             WhereIdIn::make($this),
+            WhereNull::make('draft', 'published_at'),
             WhereDoesntHave::make($this, 'tags', 'notTags'),
+            WhereNotNull::make('published', 'published_at'),
             WhereHas::make($this, 'tags'),
             OnlyTrashed::make('trashed'),
             Where::make('slug')->singular(),
