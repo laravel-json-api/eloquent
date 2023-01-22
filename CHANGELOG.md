@@ -3,6 +3,13 @@
 All notable changes to this project will be documented in this file. This project adheres to
 [Semantic Versioning](http://semver.org/) and [this changelog format](http://keepachangelog.com/).
 
+## Unreleased
+
+### Fixed
+
+- [laravel#223](https://github.com/laravel-json-api/laravel/issues/223) Ensure a model always has fresh data from the
+  database after a write operation, to prevent stale data on cached relationships.
+
 ## [2.2.0] - 2022-12-22
 
 ### Added

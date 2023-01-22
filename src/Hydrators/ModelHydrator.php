@@ -92,6 +92,28 @@ class ModelHydrator implements ResourceBuilder
         $model = $this->hydrate($validatedData);
 
         /**
+         * Always refresh the model from the database.
+         *
+         * Due to the way Eloquent models cache relationships, it is
+         * possible that a relationship on the model holds stale data.
+         * E.g. if the relationship has been accessed on the model before
+         * hydration was executed above, there is a possibility that some
+         * data might be stale.
+         *
+         * We therefore always need to ensure we have the latest data from
+         * the database, and a refresh is the only way to achieve that at
+         * this point.
+         *
+         * This effectively means we are following more of a CQRS pattern.
+         * I.e. we've done the "write" (command), now we're doing a query
+         * so we need fresh data for that to achieve responsibility separation.
+         * We'll move to a CQRS pattern in a future version of the package.
+         *
+         * @see https://github.com/laravel-json-api/laravel/issues/223
+         */
+        $model->refresh();
+
+        /**
          * Always do eager loading, as we may have default eager
          * load paths.
          */
