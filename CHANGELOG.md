@@ -9,6 +9,12 @@ All notable changes to this project will be documented in this file. This projec
 
 - Upgraded to Laravel 10 and set minimum PHP version to `8.1`.
 
+## [2.3.0] - 2023-02-09
+
+### Added
+
+- New `MultiPaginator` that allows a schema to offer multiple different pagination strategies.
+
 ## [2.2.1] - 2023-01-23
 
 ### Fixed
