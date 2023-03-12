@@ -123,12 +123,10 @@ class ModelLoader
      */
     public function loadCount($countable): self
     {
-        if ($countable) {
-            $counter = new CountableLoader(
-                $this->schema,
-                CountablePaths::cast($countable)
-            );
+        $paths = CountablePaths::cast($countable);
 
+        if ($paths->isNotEmpty()) {
+            $counter = new CountableLoader($this->schema, $paths);
             $this->target->loadCount($counter->getRelations());
         }
 
