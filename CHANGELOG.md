@@ -3,6 +3,13 @@
 All notable changes to this project will be documented in this file. This project adheres to
 [Semantic Versioning](http://semver.org/) and [this changelog format](http://keepachangelog.com/).
 
+## [3.0.1] - 2023-04-03
+
+### Fixed
+
+- [#29](https://github.com/laravel-json-api/eloquent/pull/29) Avoid unnecessary query when there is no need to count a
+  relationship.
+
 ## [3.0.0] - 2023-02-14
 
 ### Changed
