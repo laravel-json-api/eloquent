@@ -21,6 +21,7 @@ namespace LaravelJsonApi\Eloquent\Hydrators;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
+use Illuminate\Support\ValidatedInput;
 use LaravelJsonApi\Contracts\Schema\Attribute;
 use LaravelJsonApi\Contracts\Schema\Field;
 use LaravelJsonApi\Contracts\Schema\Relation as RelationContract;
@@ -87,9 +88,13 @@ class ModelHydrator implements ResourceBuilder
     /**
      * @inheritDoc
      */
-    public function store(array $validatedData): object
+    public function store(ValidatedInput|array $input): object
     {
-        $model = $this->hydrate($validatedData);
+        if ($input instanceof ValidatedInput) {
+            $input = $input->all();
+        }
+
+        $model = $this->hydrate($input);
 
         /**
          * Always refresh the model from the database.

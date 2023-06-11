@@ -40,10 +40,12 @@ trait HasQueryParameters
     /**
      * @inheritDoc
      */
-    public function withRequest(Request $request): BuilderContract
+    public function withRequest(?Request $request): BuilderContract
     {
-        $this->request = $request;
-        $this->queryParameters = ExtendedQueryParameters::cast($request);
+        if ($request) {
+            $this->request = $request;
+            $this->queryParameters = ExtendedQueryParameters::cast($request);
+        }
 
         return $this;
     }
