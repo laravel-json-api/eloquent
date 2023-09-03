@@ -96,9 +96,8 @@ class ArrayHashTest extends TestCase
         $model = new Role();
         $attr = ArrayHash::make('permissions');
 
-        $result = $attr->fill($model, $value, []);
+        $attr->fill($model, $value, []);
 
-        $this->assertNull($result);
         $this->assertSame($value, $model->permissions);
     }
 

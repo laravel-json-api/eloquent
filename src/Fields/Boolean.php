@@ -19,8 +19,13 @@ declare(strict_types=1);
 
 namespace LaravelJsonApi\Eloquent\Fields;
 
-class Boolean extends Attribute
+use LaravelJsonApi\Validation\Fields\IsValidated;
+use LaravelJsonApi\Validation\Fields\ValidatedWithListOfRules;
+use LaravelJsonApi\Validation\Rules\JsonBoolean;
+
+class Boolean extends Attribute implements IsValidated
 {
+    use ValidatedWithListOfRules;
 
     /**
      * Create a boolean attribute.
@@ -35,11 +40,19 @@ class Boolean extends Attribute
     }
 
     /**
+     * @return array
+     */
+    protected function defaultRules(): array
+    {
+        return [new JsonBoolean()];
+    }
+
+    /**
      * @inheritDoc
      */
     protected function assertValue($value): void
     {
-        if (!is_null($value) && !is_bool($value)) {
+        if ($value !== null && !is_bool($value)) {
             throw new \UnexpectedValueException(sprintf(
                 'Expecting the value of attribute %s to be a boolean.',
                 $this->name()

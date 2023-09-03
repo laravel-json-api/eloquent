@@ -27,7 +27,8 @@
         "ext-json": "*",
         "illuminate/database": "^10.0",
         "illuminate/support": "^10.0",
-        "laravel-json-api/core": "^4.0"
+        "laravel-json-api/core": "^4.0",
+        "laravel-json-api/validation": "^4.0"
     },
     "require-dev": {
         "orchestra/testbench": "^8.0",

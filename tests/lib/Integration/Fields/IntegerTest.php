@@ -22,18 +22,18 @@ namespace LaravelJsonApi\Eloquent\Tests\Integration\Fields;
 use App\Models\Post;
 use App\Models\User;
 use Illuminate\Http\Request;
-use LaravelJsonApi\Eloquent\Fields\Number;
+use LaravelJsonApi\Eloquent\Fields\Integer;
 use LaravelJsonApi\Eloquent\Tests\Integration\TestCase;
 use LaravelJsonApi\Validation\Fields\IsValidated;
 use LaravelJsonApi\Validation\Rules\JsonNumber;
 
-class NumberTest extends TestCase
+class IntegerTest extends TestCase
 {
 
     public function test(): void
     {
         $request = $this->createMock(Request::class);
-        $attr = Number::make('failureCount');
+        $attr = Integer::make('failureCount');
 
         $this->assertSame('failureCount', $attr->name());
         $this->assertSame('failureCount', $attr->serializedFieldName());
@@ -49,7 +49,7 @@ class NumberTest extends TestCase
 
     public function testColumn(): void
     {
-        $attr = Number::make('failures', 'failure_count');
+        $attr = Integer::make('failures', 'failure_count');
 
         $this->assertSame('failures', $attr->name());
         $this->assertSame('failure_count', $attr->column());
@@ -58,7 +58,7 @@ class NumberTest extends TestCase
 
     public function testNotSparseField(): void
     {
-        $attr = Number::make('failures')->notSparseField();
+        $attr = Integer::make('failures')->notSparseField();
 
         $this->assertFalse($attr->isSparseField());
     }
@@ -67,7 +67,7 @@ class NumberTest extends TestCase
     {
         $query = Post::query();
 
-        $attr = Number::make('failures')->sortable();
+        $attr = Integer::make('failures')->sortable();
 
         $this->assertTrue($attr->isSortable());
         $attr->sort($query, 'desc');
@@ -80,20 +80,21 @@ class NumberTest extends TestCase
 
     public function testItIsValidatedAsNumber(): void
     {
-        $attr = Number::make('views');
+        $rule = (new JsonNumber())->onlyIntegers();
+        $attr = Integer::make('views');
 
         $this->assertInstanceOf(IsValidated::class, $attr);
-        $this->assertEquals([new JsonNumber()], $attr->rulesForCreation(null));
-        $this->assertEquals([new JsonNumber()], $attr->rulesForUpdate(null, new \stdClass()));
+        $this->assertEquals([$rule], $attr->rulesForCreation(null));
+        $this->assertEquals([$rule], $attr->rulesForUpdate(null, new \stdClass()));
     }
 
     public function testItIsValidatedAsNumberAllowingStrings(): void
     {
-        $attr = Number::make('views')->acceptStrings();
+        $attr = Integer::make('views')->acceptStrings();
 
         $this->assertInstanceOf(IsValidated::class, $attr);
-        $this->assertEquals(['numeric'], $attr->rulesForCreation(null));
-        $this->assertEquals(['numeric'], $attr->rulesForUpdate(null, new \stdClass()));
+        $this->assertEquals(['numeric', 'integer'], $attr->rulesForCreation(null));
+        $this->assertEquals(['numeric', 'integer'], $attr->rulesForUpdate(null, new \stdClass()));
     }
 
     /**
@@ -103,10 +104,8 @@ class NumberTest extends TestCase
     {
         return [
             'int' => [1],
-            'float' => [0.1],
             'null' => [null],
             'zero' => [0],
-            'zero as float' => [0.0],
         ];
     }
 
@@ -117,7 +116,7 @@ class NumberTest extends TestCase
     public function testFill($value): void
     {
         $model = new Post();
-        $attr = Number::make('title');
+        $attr = Integer::make('title');
 
         $attr->fill($model, $value, []);
 
@@ -131,7 +130,6 @@ class NumberTest extends TestCase
     {
         return array_merge($this->validProvider(), [
             'int as string' => ['1'],
-            'float as string' => ['0.1'],
             'zero as string' => ['0'],
         ]);
     }
@@ -143,7 +141,7 @@ class NumberTest extends TestCase
     public function testFillAcceptsStrings($value): void
     {
         $model = new Post();
-        $attr = Number::make('title')->acceptStrings();
+        $attr = Integer::make('title')->acceptStrings();
 
         $attr->fill($model, $value, []);
 
@@ -156,6 +154,8 @@ class NumberTest extends TestCase
     public function invalidProvider(): array
     {
         return [
+            [0.0],
+            [1.1],
             [true],
             ['foo'],
             ['0'],
@@ -172,10 +172,10 @@ class NumberTest extends TestCase
     public function testFillWithInvalid($value): void
     {
         $model = new Post();
-        $attr = Number::make('title');
+        $attr = Integer::make('count');
 
         $this->expectException(\UnexpectedValueException::class);
-        $this->expectExceptionMessage('Expecting the value of attribute title to be an integer or float.');
+        $this->expectExceptionMessage('Expecting the value of attribute count to be an integer.');
 
         $attr->fill($model, $value, []);
     }
@@ -186,6 +186,8 @@ class NumberTest extends TestCase
     public function invalidWhenAcceptingStringsProvider(): array
     {
         return [
+            ['0.0'],
+            ['1.1'],
             [true],
             ['foo'],
             [''],
@@ -201,11 +203,11 @@ class NumberTest extends TestCase
     public function testFillWithInvalidWhenAcceptingStrings($value): void
     {
         $model = new Post();
-        $attr = Number::make('title')->acceptStrings();
+        $attr = Integer::make('title')->acceptStrings();
 
         $this->expectException(\UnexpectedValueException::class);
         $this->expectExceptionMessage(
-            'Expecting the value of attribute title to be an integer, float or numeric string.'
+            'Expecting the value of attribute title to be an integer or a numeric string that is an integer.'
         );
 
         $attr->fill($model, $value, []);
@@ -214,7 +216,7 @@ class NumberTest extends TestCase
     public function testFillRespectsMassAssignment(): void
     {
         $model = new Post();
-        $attr = Number::make('views');
+        $attr = Integer::make('views');
 
         $attr->fill($model, 200, []);
         $this->assertArrayNotHasKey('views', $model->getAttributes());
@@ -223,7 +225,7 @@ class NumberTest extends TestCase
     public function testUnguarded(): void
     {
         $model = new Post();
-        $attr = Number::make('views')->unguarded();
+        $attr = Integer::make('views')->unguarded();
 
         $attr->fill($model, 200, []);
         $this->assertSame(200, $model->views);
@@ -232,7 +234,7 @@ class NumberTest extends TestCase
     public function testDeserializeUsing(): void
     {
         $model = new Post();
-        $attr = Number::make('title')->deserializeUsing(
+        $attr = Integer::make('title')->deserializeUsing(
             fn($value) => $value + 200
         );
 
@@ -243,7 +245,7 @@ class NumberTest extends TestCase
     public function testFillUsing(): void
     {
         $post = new Post();
-        $attr = Number::make('views')->fillUsing(function ($model, $column, $value) use ($post) {
+        $attr = Integer::make('views')->fillUsing(function ($model, $column, $value) use ($post) {
             $this->assertSame($post, $model);
             $this->assertSame('views', $column);
             $this->assertSame(200, $value);
@@ -258,7 +260,7 @@ class NumberTest extends TestCase
     {
         $user = new User();
 
-        $attr = Number::make('views')->on('profile')->unguarded();
+        $attr = Integer::make('views')->on('profile')->unguarded();
 
         $attr->fill($user, 99, []);
 
@@ -271,7 +273,7 @@ class NumberTest extends TestCase
         $request = $this->createMock(Request::class);
         $request->expects($this->never())->method($this->anything());
 
-        $attr = Number::make('views')->readOnly();
+        $attr = Integer::make('views')->readOnly();
 
         $this->assertTrue($attr->isReadOnly($request));
         $this->assertFalse($attr->isNotReadOnly($request));
@@ -284,7 +286,7 @@ class NumberTest extends TestCase
             ->method('wantsJson')
             ->willReturnOnConsecutiveCalls(true, false);
 
-        $attr = Number::make('views')->readOnly(
+        $attr = Integer::make('views')->readOnly(
             fn($request) => $request->wantsJson()
         );
 
@@ -300,7 +302,7 @@ class NumberTest extends TestCase
             ->with('POST')
             ->willReturnOnConsecutiveCalls(true, false);
 
-        $attr = Number::make('views')->readOnlyOnCreate();
+        $attr = Integer::make('views')->readOnlyOnCreate();
 
         $this->assertTrue($attr->isReadOnly($request));
         $this->assertFalse($attr->isReadOnly($request));
@@ -314,7 +316,7 @@ class NumberTest extends TestCase
             ->with('PATCH')
             ->willReturnOnConsecutiveCalls(true, false);
 
-        $attr = Number::make('views')->readOnlyOnUpdate();
+        $attr = Integer::make('views')->readOnlyOnUpdate();
 
         $this->assertTrue($attr->isReadOnly($request));
         $this->assertFalse($attr->isReadOnly($request));
@@ -323,7 +325,7 @@ class NumberTest extends TestCase
     public function testSerialize(): void
     {
         $post = new Post();
-        $attr = Number::make('views');
+        $attr = Integer::make('views');
 
         $this->assertNull($attr->serialize($post));
         $post->views = 101;
@@ -335,7 +337,7 @@ class NumberTest extends TestCase
         $post = new Post();
         $post->views = 100;
 
-        $attr = Number::make('views')->serializeUsing(
+        $attr = Integer::make('views')->serializeUsing(
             fn($value) => $value * 2
         );
 
@@ -346,7 +348,7 @@ class NumberTest extends TestCase
     {
         $user = new User();
 
-        $attr = Number::make('views')->on('profile');
+        $attr = Integer::make('views')->on('profile');
 
         $this->assertNull($attr->serialize($user));
 
@@ -360,7 +362,7 @@ class NumberTest extends TestCase
         $request = $this->createMock(Request::class);
         $request->expects($this->never())->method($this->anything());
 
-        $attr = Number::make('views')->hidden();
+        $attr = Integer::make('views')->hidden();
 
         $this->assertTrue($attr->isHidden($request));
     }
@@ -370,7 +372,7 @@ class NumberTest extends TestCase
         $mock = $this->createMock(Request::class);
         $mock->expects($this->once())->method('isMethod')->with('POST')->willReturn(true);
 
-        $attr = Number::make('views')->hidden(
+        $attr = Integer::make('views')->hidden(
             fn($request) => $request->isMethod('POST')
         );
 

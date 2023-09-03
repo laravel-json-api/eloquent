@@ -24,7 +24,7 @@ use LaravelJsonApi\Validation\Fields\ValidatedWithListOfRules;
 use LaravelJsonApi\Validation\Rules\JsonNumber;
 use UnexpectedValueException;
 
-class Number extends Attribute implements IsValidated
+class Integer extends Attribute implements IsValidated
 {
     use ValidatedWithListOfRules;
 
@@ -38,7 +38,7 @@ class Number extends Attribute implements IsValidated
      *
      * @param string $fieldName
      * @param string|null $column
-     * @return Number
+     * @return self
      */
     public static function make(string $fieldName, string $column = null): self
     {
@@ -61,10 +61,10 @@ class Number extends Attribute implements IsValidated
     protected function defaultRules(): array
     {
         if ($this->acceptStrings) {
-            return ['numeric'];
+            return ['numeric', 'integer'];
         }
 
-        return [new JsonNumber()];
+        return [(new JsonNumber())->onlyIntegers()];
     }
 
     /**
@@ -72,10 +72,10 @@ class Number extends Attribute implements IsValidated
      */
     protected function assertValue($value): void
     {
-        if (!$this->isNumeric($value)) {
+        if (!$this->isInt($value)) {
             $expected = $this->acceptStrings ?
-                'an integer, float or numeric string.' :
-                'an integer or float.';
+                'an integer or a numeric string that is an integer.' :
+                'an integer.';
 
             throw new UnexpectedValueException(sprintf(
                 'Expecting the value of attribute %s to be ' . $expected,
@@ -90,13 +90,13 @@ class Number extends Attribute implements IsValidated
      * @param mixed $value
      * @return bool
      */
-    private function isNumeric($value): bool
+    private function isInt(mixed $value): bool
     {
-        if (is_null($value) || is_int($value) || is_float($value)) {
-            return true;
+        if ($this->acceptStrings && is_string($value) && is_numeric($value)) {
+            $value = filter_var($value, FILTER_VALIDATE_INT);
         }
 
-        if ($this->acceptStrings && is_string($value) && is_numeric($value)) {
+        if ($value === null || is_int($value)) {
             return true;
         }
 

@@ -25,6 +25,9 @@ use Carbon\CarbonInterface;
 use Illuminate\Http\Request;
 use LaravelJsonApi\Eloquent\Fields\SoftDelete;
 use LaravelJsonApi\Eloquent\Tests\Integration\TestCase;
+use LaravelJsonApi\Validation\Fields\IsValidated;
+use LaravelJsonApi\Validation\Rules\DateTimeIso8601;
+use LaravelJsonApi\Validation\Rules\JsonBoolean;
 
 class SoftDeleteTest extends TestCase
 {
@@ -76,6 +79,24 @@ class SoftDeleteTest extends TestCase
         $this->assertSame('published', $attr->name());
         $this->assertSame('deleted_at', $attr->column());
         $this->assertSame(['deleted_at'], $attr->columnsForField());
+    }
+
+    public function testItIsValidated(): void
+    {
+        $attr = SoftDelete::make('deletedAt');
+
+        $this->assertInstanceOf(IsValidated::class, $attr);
+        $this->assertEquals(['nullable', new DateTimeIso8601()], $attr->rulesForCreation(null));
+        $this->assertEquals(['nullable', new DateTimeIso8601()], $attr->rulesForUpdate(null, new \stdClass()));
+    }
+
+    public function testItIsValidatedAsBoolean(): void
+    {
+        $attr = SoftDelete::make('deletedAt')->asBoolean();
+
+        $this->assertInstanceOf(IsValidated::class, $attr);
+        $this->assertEquals(['nullable', new JsonBoolean()], $attr->rulesForCreation(null));
+        $this->assertEquals(['nullable', new JsonBoolean()], $attr->rulesForUpdate(null, new \stdClass()));
     }
 
     public function testNotSparseField(): void

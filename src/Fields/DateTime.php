@@ -20,11 +20,16 @@ declare(strict_types=1);
 namespace LaravelJsonApi\Eloquent\Fields;
 
 use Carbon\CarbonInterface;
+use Closure;
 use Illuminate\Support\Facades\Date;
+use LaravelJsonApi\Validation\Fields\IsValidated;
+use LaravelJsonApi\Validation\Fields\ValidatedWithListOfRules;
+use LaravelJsonApi\Validation\Rules\DateTimeIso8601;
 use function config;
 
-class DateTime extends Attribute
+class DateTime extends Attribute implements IsValidated
 {
+    use ValidatedWithListOfRules;
 
     /**
      * Should dates be converted to the defined time zone?
@@ -119,6 +124,14 @@ class DateTime extends Attribute
         }
 
         return $value;
+    }
+
+    /**
+     * @return DateTimeIso8601[]
+     */
+    protected function defaultRules(): array
+    {
+        return [new DateTimeIso8601()];
     }
 
     /**

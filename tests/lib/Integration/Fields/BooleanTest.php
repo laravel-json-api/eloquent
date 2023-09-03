@@ -24,6 +24,8 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use LaravelJsonApi\Eloquent\Fields\Boolean;
 use LaravelJsonApi\Eloquent\Tests\Integration\TestCase;
+use LaravelJsonApi\Validation\Fields\IsValidated;
+use LaravelJsonApi\Validation\Rules\JsonBoolean;
 
 class BooleanTest extends TestCase
 {
@@ -52,6 +54,15 @@ class BooleanTest extends TestCase
         $this->assertSame('active', $attr->name());
         $this->assertSame('is_active', $attr->column());
         $this->assertSame(['is_active'], $attr->columnsForField());
+    }
+
+    public function testIsValidated(): void
+    {
+        $attr = Boolean::make('active');
+
+        $this->assertInstanceOf(IsValidated::class, $attr);
+        $this->assertEquals([new JsonBoolean()], $attr->rulesForCreation(null));
+        $this->assertEquals([new JsonBoolean()], $attr->rulesForUpdate(null, new \stdClass()));
     }
 
     public function testNotSparseField(): void

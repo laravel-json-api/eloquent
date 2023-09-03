@@ -20,15 +20,16 @@ declare(strict_types=1);
 namespace LaravelJsonApi\Eloquent\Fields;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Http\Request;
 use LaravelJsonApi\Contracts\Schema\ID as IDContract;
 use LaravelJsonApi\Core\Schema\Concerns\ClientIds;
 use LaravelJsonApi\Core\Schema\Concerns\MatchesIds;
 use LaravelJsonApi\Core\Schema\Concerns\Sortable;
 use LaravelJsonApi\Eloquent\Contracts\Fillable;
+use LaravelJsonApi\Validation\Fields\IsValidated;
 
-class ID implements IDContract, Fillable
+class ID implements IDContract, Fillable, IsValidated
 {
-
     use ClientIds;
     use MatchesIds;
     use Sortable;
@@ -37,6 +38,11 @@ class ID implements IDContract, Fillable
      * @var string|null
      */
     private ?string $column;
+
+    /**
+     * @var string
+     */
+    private string $validationModifier = 'required';
 
     /**
      * Create an id field.
@@ -110,6 +116,36 @@ class ID implements IDContract, Fillable
     public function isNotReadOnly($request): bool
     {
         return !$this->isReadOnly($request);
+    }
+
+    /**
+     * @return $this
+     */
+    public function nullable(): self
+    {
+        $this->validationModifier = 'nullable';
+
+        return $this;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function rulesForCreation(?Request $request): array|null
+    {
+        if ($this->acceptsClientIds()) {
+            return [$this->validationModifier, "regex:/^{$this->pattern}$/{$this->flags}"];
+        }
+
+        return null;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function rulesForUpdate(?Request $request, object $model): ?array
+    {
+        return null;
     }
 
     /**
