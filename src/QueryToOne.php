@@ -105,9 +105,9 @@ class QueryToOne implements QueryOneBuilder
         $name = $this->relation->relationName();
         $relation = $this->model->{$name}();
 
-        if (!$relation instanceof EloquentHasMany ||
-            !$relation instanceof EloquentBelongsToMany ||
-            !$relation instanceof EloquentHasManyThrough ||
+        if (!$relation instanceof EloquentHasMany &&
+            !$relation instanceof EloquentBelongsToMany &&
+            !$relation instanceof EloquentHasManyThrough &&
             !$relation instanceof EloquentMorphMany
 
         ) {
