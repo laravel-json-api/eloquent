@@ -167,13 +167,12 @@ class QueryToMany implements QueryManyBuilder, HasPagination
         $name = $this->relation->relationName();
         $relation = $this->model->{$name}();
 
-        if ($relation instanceof EloquentHasMany ||
-            $relation instanceof EloquentBelongsToMany ||
-            $relation instanceof EloquentHasManyThrough ||
-            $relation instanceof EloquentMorphMany ||
-            $relation instanceof EloquentRelation
+        if (!$relation instanceof EloquentHasOne &&
+            !$relation instanceof EloquentBelongsTo &&
+            !$relation instanceof EloquentHasOneThrough &&
+            !$relation instanceof EloquentMorphOne
         ) {
-            return $relation;
+            if ($relation instanceof EloquentRelation) return $relation;
         }
 
         throw new LogicException(sprintf(

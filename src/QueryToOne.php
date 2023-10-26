@@ -105,21 +105,13 @@ class QueryToOne implements QueryOneBuilder
         $name = $this->relation->relationName();
         $relation = $this->model->{$name}();
 
-        if ($relation instanceof EloquentHasOne ||
-            $relation instanceof EloquentBelongsTo ||
-            $relation instanceof EloquentHasOneThrough ||
-            $relation instanceof EloquentMorphOne
-        ) {
-            return $relation;
-        }
+        if (!$relation instanceof EloquentHasMany ||
+            !$relation instanceof EloquentBelongsToMany ||
+            !$relation instanceof EloquentHasManyThrough ||
+            !$relation instanceof EloquentMorphMany
 
-        if ($relation instanceof EloquentRelation) {
-            throw new LogicException(sprintf(
-                'Eloquent relation %s on model %s returned a %s relation, which is not a to-one relation.',
-                $name,
-                get_class($this->model),
-                get_class($relation)
-            ));
+        ) {
+            if ($relation instanceof EloquentRelation) return $relation;
         }
 
         throw new LogicException(sprintf(
