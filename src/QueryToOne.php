@@ -20,17 +20,12 @@ declare(strict_types=1);
 namespace LaravelJsonApi\Eloquent;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo as EloquentBelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasOne as EloquentHasOne;
-use Illuminate\Database\Eloquent\Relations\HasOneThrough as EloquentHasOneThrough;
-use Illuminate\Database\Eloquent\Relations\MorphOne as EloquentMorphOne;
 use Illuminate\Database\Eloquent\Relations\Relation as EloquentRelation;
 use LaravelJsonApi\Contracts\Store\QueryOneBuilder;
 use LaravelJsonApi\Contracts\Store\QueryOneBuilder as QueryOneBuilderContract;
 use LaravelJsonApi\Core\Query\Custom\ExtendedQueryParameters;
 use LaravelJsonApi\Eloquent\Fields\Relations\ToOne;
 use LaravelJsonApi\Eloquent\QueryBuilder\JsonApiBuilder;
-use LogicException;
 use function sprintf;
 
 class QueryToOne implements QueryOneBuilder
@@ -103,22 +98,22 @@ class QueryToOne implements QueryOneBuilder
     private function getRelation(): EloquentRelation
     {
         $name = $this->relation->relationName();
+
+        assert(method_exists($this->model, $name), sprintf(
+            'Expecting method %s to exist on model %s',
+            $name,
+            $this->model::class,
+        ));
+
         $relation = $this->model->{$name}();
 
-        if (!$relation instanceof EloquentHasMany &&
-            !$relation instanceof EloquentBelongsToMany &&
-            !$relation instanceof EloquentHasManyThrough &&
-            !$relation instanceof EloquentMorphMany
-
-        ) {
-            if ($relation instanceof EloquentRelation) return $relation;
-        }
-
-        throw new LogicException(sprintf(
+        assert($relation instanceof EloquentRelation, sprintf(
             'Expecting method %s on model %s to return an Eloquent relation.',
             $name,
-            get_class($this->model)
+            $this->model::class,
         ));
+
+        return $relation;
     }
 
     /**

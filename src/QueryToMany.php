@@ -20,10 +20,6 @@ declare(strict_types=1);
 namespace LaravelJsonApi\Eloquent;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsToMany as EloquentBelongsToMany;
-use Illuminate\Database\Eloquent\Relations\HasMany as EloquentHasMany;
-use Illuminate\Database\Eloquent\Relations\HasManyThrough as EloquentHasManyThrough;
-use Illuminate\Database\Eloquent\Relations\MorphMany as EloquentMorphMany;
 use Illuminate\Database\Eloquent\Relations\Relation as EloquentRelation;
 use Illuminate\Support\LazyCollection;
 use LaravelJsonApi\Contracts\Pagination\Page;
@@ -32,8 +28,6 @@ use LaravelJsonApi\Contracts\Store\QueryManyBuilder;
 use LaravelJsonApi\Core\Query\Custom\ExtendedQueryParameters;
 use LaravelJsonApi\Eloquent\Fields\Relations\ToMany;
 use LaravelJsonApi\Eloquent\QueryBuilder\JsonApiBuilder;
-use LogicException;
-use function get_class;
 use function sprintf;
 
 class QueryToMany implements QueryManyBuilder, HasPagination
@@ -165,21 +159,22 @@ class QueryToMany implements QueryManyBuilder, HasPagination
     private function getRelation(): EloquentRelation
     {
         $name = $this->relation->relationName();
+
+        assert(method_exists($this->model, $name), sprintf(
+            'Expecting method %s to exist on model %s',
+            $name,
+            $this->model::class,
+        ));
+
         $relation = $this->model->{$name}();
 
-        if (!$relation instanceof EloquentHasOne &&
-            !$relation instanceof EloquentBelongsTo &&
-            !$relation instanceof EloquentHasOneThrough &&
-            !$relation instanceof EloquentMorphOne
-        ) {
-            if ($relation instanceof EloquentRelation) return $relation;
-        }
-
-        throw new LogicException(sprintf(
+        assert($relation instanceof EloquentRelation, sprintf(
             'Expecting method %s on model %s to return an Eloquent relation.',
             $name,
-            get_class($this->model)
+            $this->model::class,
         ));
+
+        return $relation;
     }
 
     /**
