@@ -5,6 +5,8 @@ All notable changes to this project will be documented in this file. This projec
 
 ## Unreleased
 
+## [3.1.0] - 2023-10-29
+
 ### Added
 
 - [#30](https://github.com/laravel-json-api/eloquent/pull/30) Allow a wider range of Eloquent relations in
