@@ -3,6 +3,14 @@
 All notable changes to this project will be documented in this file. This project adheres to
 [Semantic Versioning](http://semver.org/) and [this changelog format](http://keepachangelog.com/).
 
+## Unreleased
+
+### Added
+
+- [#30](https://github.com/laravel-json-api/eloquent/pull/30) Allow a wider range of Eloquent relations in
+  the `QueryToMany` and `QueryToOne` classes. This means packages
+  like [culturegr/custom-relation](https://github.com/culturegr/custom-relation) will work with this package.
+
 ## [3.0.1] - 2023-04-03
 
 ### Fixed
