@@ -24,13 +24,16 @@ use Illuminate\Database\Eloquent\Relations\HasOne as EloquentHasOne;
 use Illuminate\Database\Eloquent\Relations\MorphOne as EloquentMorphOne;
 use LaravelJsonApi\Eloquent\Contracts\FillableToOne;
 use LaravelJsonApi\Eloquent\Fields\Concerns\IsReadOnly;
-use LogicException;
 
 class HasOne extends ToOne implements FillableToOne
 {
-
+    /** @var int */
     private const KEEP_DETACHED_MODEL = 0;
+
+    /** @var int */
     private const DELETE_DETACHED_MODEL = 1;
+
+    /** @var int */
     private const FORCE_DELETE_DETACHED_MODEL = 2;
 
     use IsReadOnly;
@@ -103,14 +106,24 @@ class HasOne extends ToOne implements FillableToOne
      */
     public function fill(Model $model, ?array $identifier): void
     {
-        $relation = $model->{$this->relationName()}();
+        $name = $this->relationName();
 
-        if (!$relation instanceof EloquentHasOne && !$relation instanceof EloquentMorphOne) {
-            throw new LogicException('Expecting an Eloquent has-one or morph-one relation.');
-        }
+        assert(method_exists($model, $name), sprintf(
+            'Expecting method %s to exist on model %s.',
+            $name,
+            $model::class,
+        ));
+
+        $relation = $model->{$name}();
+
+        assert($relation instanceof EloquentHasOne || $relation instanceof EloquentMorphOne, sprintf(
+            'Expecting method %s on model %s to return a belongs-to-many relation.',
+            $name,
+            $model::class,
+        ));
 
         /** @var Model|null $current */
-        $current = $model->{$this->relationName()};
+        $current = $model->{$name};
         $related = $this->find($identifier);
 
         if ($this->willChange($current, $related)) {
@@ -150,7 +163,7 @@ class HasOne extends ToOne implements FillableToOne
      * @param EloquentMorphOne|EloquentHasOne $relation
      * @param Model $current
      */
-    private function disassociate($relation, Model $current): void
+    private function disassociate(EloquentMorphOne|EloquentHasOne $relation, Model $current): void
     {
         if (self::KEEP_DETACHED_MODEL === $this->detachMode) {
             $this->setInverseToNull($relation, $current);
@@ -163,11 +176,11 @@ class HasOne extends ToOne implements FillableToOne
     /**
      * Disassociate the related model by setting the relationship column(s) to `null`.
      *
-     * @param $relation
+     * @param EloquentMorphOne|EloquentHasOne $relation
      * @param Model $current
      * @return void
      */
-    private function setInverseToNull($relation, Model $current): void
+    private function setInverseToNull(EloquentMorphOne|EloquentHasOne $relation, Model $current): void
     {
         if ($relation instanceof EloquentMorphOne) {
             $current->setAttribute($relation->getMorphType(), null);

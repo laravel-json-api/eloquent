@@ -25,8 +25,6 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany as EloquentBelongsToMan
 use InvalidArgumentException;
 use LaravelJsonApi\Eloquent\Contracts\FillableToMany;
 use LaravelJsonApi\Eloquent\Fields\Concerns\IsReadOnly;
-use LogicException;
-use function get_class;
 use function sprintf;
 
 class BelongsToMany extends ToMany implements FillableToMany
@@ -158,17 +156,23 @@ class BelongsToMany extends ToMany implements FillableToMany
      */
     private function getRelation(Model $model): EloquentBelongsToMany
     {
-        $relation = $model->{$this->relationName()}();
+        $name = $this->relationName();
 
-        if ($relation instanceof EloquentBelongsToMany) {
-            return $relation;
-        }
-
-        throw new LogicException(sprintf(
-            'Expecting relation %s on model %s to be a has-many or morph-many relation.',
-            $this->relationName(),
-            get_class($model)
+        assert(method_exists($model, $name), sprintf(
+            'Expecting method %s to exist on model %s.',
+            $name,
+            $model::class,
         ));
+
+        $relation = $model->{$name}();
+
+        assert($relation instanceof EloquentBelongsToMany, sprintf(
+            'Expecting method %s on model %s to return a belongs-to-many relation.',
+            $name,
+            $model::class,
+        ));
+
+        return $relation;
     }
 
     /**
@@ -206,5 +210,4 @@ class BelongsToMany extends ToMany implements FillableToMany
 
         return [];
     }
-
 }

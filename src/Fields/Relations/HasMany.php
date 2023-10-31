@@ -25,14 +25,17 @@ use Illuminate\Database\Eloquent\Relations\HasMany as EloquentHasMany;
 use Illuminate\Database\Eloquent\Relations\MorphMany as EloquentMorphMany;
 use LaravelJsonApi\Eloquent\Contracts\FillableToMany;
 use LaravelJsonApi\Eloquent\Fields\Concerns\IsReadOnly;
-use LogicException;
 use function sprintf;
 
 class HasMany extends ToMany implements FillableToMany
 {
-
+    /** @var int */
     private const KEEP_DETACHED_MODELS = 0;
+
+    /** @var int */
     private const DELETE_DETACHED_MODELS = 1;
+
+    /** @var int */
     private const FORCE_DELETE_DETACHED_MODELS = 2;
 
     use IsReadOnly;
@@ -160,19 +163,25 @@ class HasMany extends ToMany implements FillableToMany
      * @param Model $model
      * @return EloquentHasMany|EloquentMorphMany
      */
-    private function getRelation(Model $model)
+    private function getRelation(Model $model): EloquentHasMany|EloquentMorphMany
     {
-        $relation = $model->{$this->relationName()}();
+        $name = $this->relationName();
 
-        if ($relation instanceof EloquentHasMany || $relation instanceof EloquentMorphMany) {
-            return $relation;
-        }
-
-        throw new LogicException(sprintf(
-            'Expecting relation %s on model %s to be a has-many or morph-many relation.',
-            $this->relationName(),
-            get_class($model)
+        assert(method_exists($model, $name), sprintf(
+            'Expecting method %s to exist on model %s.',
+            $name,
+            $model::class,
         ));
+
+        $relation = $model->{$name}();
+
+        assert($relation instanceof EloquentHasMany || $relation instanceof EloquentMorphMany, sprintf(
+            'Expecting method %s on model %s to return a belongs-to-many relation.',
+            $name,
+            $model::class,
+        ));
+
+        return $relation;
     }
 
     /**
@@ -228,5 +237,4 @@ class HasMany extends ToMany implements FillableToMany
             $model->delete();
         }
     }
-
 }

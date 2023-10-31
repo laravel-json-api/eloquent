@@ -21,6 +21,7 @@ namespace LaravelJsonApi\Eloquent\Fields\Relations;
 
 use Generator;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Collection;
 use InvalidArgumentException;
 use IteratorAggregate;
 use LaravelJsonApi\Contracts\Schema\Container;
@@ -36,7 +37,6 @@ use UnexpectedValueException;
 
 class MorphToMany extends ToMany implements PolymorphicRelation, IteratorAggregate, FillableToMany
 {
-
     use Polymorphic;
     use IsReadOnly;
 
@@ -76,7 +76,7 @@ class MorphToMany extends ToMany implements PolymorphicRelation, IteratorAggrega
      */
     public function inverseTypes(): array
     {
-        return collect($this->relations)
+        return Collection::make($this->relations)
             ->map(fn(ToMany $relation) => $relation->inverse())
             ->all();
     }

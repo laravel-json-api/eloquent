@@ -5,6 +5,10 @@ All notable changes to this project will be documented in this file. This projec
 
 ## Unreleased
 
+### Changed
+
+- Use `assert()` within fillable relation field classes rather as an optimisation.
+
 ## [3.1.0] - 2023-10-29
 
 ### Added
