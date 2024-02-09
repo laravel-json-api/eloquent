@@ -49,7 +49,7 @@ class SoftDeleteTest extends TestCase
     /**
      * @return array
      */
-    public function trashedProvider(): array
+    public static function trashedProvider(): array
     {
         return [
             'trashed' => [new Carbon()],

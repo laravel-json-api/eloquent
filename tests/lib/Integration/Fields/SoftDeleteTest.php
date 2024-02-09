@@ -161,7 +161,7 @@ class SoftDeleteTest extends TestCase
     /**
      * @return array
      */
-    public function invalidProvider(): array
+    public static function invalidProvider(): array
     {
         return [
             [true],
@@ -229,7 +229,7 @@ class SoftDeleteTest extends TestCase
     /**
      * @return array
      */
-    public function invalidBooleanProvider(): array
+    public static function invalidBooleanProvider(): array
     {
         return [
             ['2020-11-23T11:48:17.000000-05:00'],

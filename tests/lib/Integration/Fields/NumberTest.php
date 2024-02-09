@@ -79,7 +79,7 @@ class NumberTest extends TestCase
     /**
      * @return array
      */
-    public function validProvider(): array
+    public static function validProvider(): array
     {
         return [
             'int' => [1],
@@ -107,9 +107,9 @@ class NumberTest extends TestCase
     /**
      * @return array
      */
-    public function validWithStringProvider(): array
+    public static function validWithStringProvider(): array
     {
-        return array_merge($this->validProvider(), [
+        return array_merge(self::validProvider(), [
             'int as string' => ['1'],
             'float as string' => ['0.1'],
             'zero as string' => ['0'],
@@ -133,7 +133,7 @@ class NumberTest extends TestCase
     /**
      * @return array
      */
-    public function invalidProvider(): array
+    public static function invalidProvider(): array
     {
         return [
             [true],
@@ -163,7 +163,7 @@ class NumberTest extends TestCase
     /**
      * @return array
      */
-    public function invalidWhenAcceptingStringsProvider(): array
+    public static function invalidWhenAcceptingStringsProvider(): array
     {
         return [
             [true],

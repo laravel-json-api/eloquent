@@ -31,7 +31,7 @@ class EagerLoaderTest extends TestCase
     /**
      * @return array[]
      */
-    public function includePathsProvider(): array
+    public static function includePathsProvider(): array
     {
         return [
 //            'images' => [

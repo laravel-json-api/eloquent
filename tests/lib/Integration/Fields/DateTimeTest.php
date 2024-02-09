@@ -154,7 +154,7 @@ class DateTimeTest extends TestCase
     /**
      * @return array
      */
-    public function invalidProvider(): array
+    public static function invalidProvider(): array
     {
         return [
             [true],

@@ -33,7 +33,7 @@ class QueryTest extends TestCase
     /**
      * @return array
      */
-    public function modelProvider(): array
+    public static function modelProvider(): array
     {
         return [
             'post' => [Post::class],
@@ -72,7 +72,7 @@ class QueryTest extends TestCase
     /**
      * @return array
      */
-    public function includePathProvider(): array
+    public static function includePathProvider(): array
     {
         return [
             'post' => [Post::class, 'author,country', 'user'],
@@ -105,7 +105,7 @@ class QueryTest extends TestCase
     /**
      * @return array
      */
-    public function defaultEagerLoadProvider(): array
+    public static function defaultEagerLoadProvider(): array
     {
         return [
             'post' => [PostSchema::class, Post::class, 'user'],

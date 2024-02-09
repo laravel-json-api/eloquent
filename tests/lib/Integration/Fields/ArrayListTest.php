@@ -78,7 +78,7 @@ class ArrayListTest extends TestCase
     /**
      * @return array
      */
-    public function validProvider(): array
+    public static function validProvider(): array
     {
         return [
             [[]],
@@ -105,7 +105,7 @@ class ArrayListTest extends TestCase
     /**
      * @return array
      */
-    public function invalidProvider(): array
+    public static function invalidProvider(): array
     {
         return [
             [true],
@@ -254,7 +254,7 @@ class ArrayListTest extends TestCase
     /**
      * @return array
      */
-    public function serializeProvider(): array
+    public static function serializeProvider(): array
     {
         return [
             [null, null],

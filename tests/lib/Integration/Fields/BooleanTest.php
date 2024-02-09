@@ -79,7 +79,7 @@ class BooleanTest extends TestCase
     /**
      * @return array
      */
-    public function validProvider(): array
+    public static function validProvider(): array
     {
         return [
             [true],
@@ -106,7 +106,7 @@ class BooleanTest extends TestCase
     /**
      * @return array
      */
-    public function invalidProvider(): array
+    public static function invalidProvider(): array
     {
         return [
             ['foo'],
@@ -243,7 +243,7 @@ class BooleanTest extends TestCase
     /**
      * @return array
      */
-    public function serializeProvider(): array
+    public static function serializeProvider(): array
     {
         return [
             'null' => [null],
