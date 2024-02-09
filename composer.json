@@ -27,7 +27,7 @@
         "ext-json": "*",
         "illuminate/database": "^10.0",
         "illuminate/support": "^10.0",
-        "laravel-json-api/core": "^4.0"
+        "laravel-json-api/core": "^5.0"
     },
     "require-dev": {
         "orchestra/testbench": "^8.0",
@@ -48,7 +48,7 @@
     "extra": {
         "branch-alias": {
             "dev-develop": "3.x-dev",
-            "dev-4.x": "4.x-dev"
+            "dev-next": "5.x-dev"
         }
     },
     "minimum-stability": "dev",
