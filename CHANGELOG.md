@@ -6,8 +6,12 @@ All notable changes to this project will be documented in this file. This projec
 ## Unreleased
 
 ### Changed
-
 - Use `assert()` within fillable relation field classes rather as an optimisation.
+
+### Fixed
+
+- [#31](https://github.com/laravel-json-api/eloquent/pull/31) **BREAKING** Use `self` as return type on Eloquent query
+  classes. This is potentially breaking any of these classes have been extended.
 
 ## [3.1.0] - 2023-10-29
 

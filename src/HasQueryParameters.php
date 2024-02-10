@@ -21,7 +21,6 @@ namespace LaravelJsonApi\Eloquent;
 
 use Illuminate\Http\Request;
 use LaravelJsonApi\Contracts\Query\QueryParameters as QueryParametersContract;
-use LaravelJsonApi\Contracts\Store\Builder as BuilderContract;
 use LaravelJsonApi\Core\Query\Custom\ExtendedQueryParameters;
 
 trait HasQueryParameters
@@ -70,7 +69,7 @@ trait HasQueryParameters
 
     /**
      * @param mixed $countable
-     * @return BuilderContract
+     * @return $this
      */
     public function withCount($countable): self
     {
@@ -78,5 +77,4 @@ trait HasQueryParameters
 
         return $this;
     }
-
 }

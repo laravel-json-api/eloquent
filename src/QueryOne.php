@@ -106,7 +106,7 @@ class QueryOne implements QueryOneBuilderContract
     /**
      * @inheritDoc
      */
-    public function filter(?array $filters): QueryOneBuilderContract
+    public function filter(?array $filters): self
     {
         $this->queryParameters->setFilters($filters);
 
