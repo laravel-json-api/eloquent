@@ -71,7 +71,7 @@ class QueryMorphToMany implements QueryManyBuilder, IteratorAggregate
     /**
      * @inheritDoc
      */
-    public function filter(?array $filters): QueryManyBuilder
+    public function filter(?array $filters): self
     {
         $this->queryParameters->setFilters($filters);
 
@@ -81,7 +81,7 @@ class QueryMorphToMany implements QueryManyBuilder, IteratorAggregate
     /**
      * @inheritDoc
      */
-    public function sort($fields): QueryManyBuilder
+    public function sort($fields): self
     {
         $this->queryParameters->setSortFields($fields);
 
