@@ -9,10 +9,6 @@ All notable changes to this project will be documented in this file. This projec
 
 - **BREAKING** Package now requires Laravel 11.
 - Minimum PHP version is now `8.2`.
-
-## Unreleased
-
-### Changed
 - Use `assert()` within fillable relation field classes rather as an optimisation.
 
 ### Fixed
