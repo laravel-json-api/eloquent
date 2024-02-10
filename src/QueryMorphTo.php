@@ -57,7 +57,7 @@ class QueryMorphTo implements QueryOneBuilder
     /**
      * @inheritDoc
      */
-    public function filter(?array $filters): QueryOneBuilder
+    public function filter(?array $filters): self
     {
         $this->queryParameters->setFilters($filters);
 
