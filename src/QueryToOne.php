@@ -22,7 +22,6 @@ namespace LaravelJsonApi\Eloquent;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\Relation as EloquentRelation;
 use LaravelJsonApi\Contracts\Store\QueryOneBuilder;
-use LaravelJsonApi\Contracts\Store\QueryOneBuilder as QueryOneBuilderContract;
 use LaravelJsonApi\Core\Query\Custom\ExtendedQueryParameters;
 use LaravelJsonApi\Eloquent\Fields\Relations\ToOne;
 use LaravelJsonApi\Eloquent\QueryBuilder\JsonApiBuilder;
@@ -59,7 +58,7 @@ class QueryToOne implements QueryOneBuilder
     /**
      * @inheritDoc
      */
-    public function filter(?array $filters): QueryOneBuilderContract
+    public function filter(?array $filters): self
     {
         $this->queryParameters->setFilters($filters);
 

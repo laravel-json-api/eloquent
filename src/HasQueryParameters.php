@@ -21,7 +21,6 @@ namespace LaravelJsonApi\Eloquent;
 
 use Illuminate\Http\Request;
 use LaravelJsonApi\Contracts\Query\QueryParameters as QueryParametersContract;
-use LaravelJsonApi\Contracts\Store\Builder as BuilderContract;
 use LaravelJsonApi\Core\Query\Custom\ExtendedQueryParameters;
 
 trait HasQueryParameters
@@ -40,7 +39,7 @@ trait HasQueryParameters
     /**
      * @inheritDoc
      */
-    public function withRequest(Request $request): BuilderContract
+    public function withRequest(Request $request): self
     {
         $this->request = $request;
         $this->queryParameters = ExtendedQueryParameters::cast($request);
@@ -51,7 +50,7 @@ trait HasQueryParameters
     /**
      * @inheritDoc
      */
-    public function withQuery(QueryParametersContract $query): BuilderContract
+    public function withQuery(QueryParametersContract $query): self
     {
         $this->queryParameters = ExtendedQueryParameters::cast($query);
 
@@ -61,7 +60,7 @@ trait HasQueryParameters
     /**
      * @inheritDoc
      */
-    public function with($includePaths): BuilderContract
+    public function with($includePaths): self
     {
         $this->queryParameters->setIncludePaths($includePaths);
 
@@ -70,13 +69,12 @@ trait HasQueryParameters
 
     /**
      * @param mixed $countable
-     * @return BuilderContract
+     * @return $this
      */
-    public function withCount($countable): BuilderContract
+    public function withCount($countable): self
     {
         $this->queryParameters->setCountable($countable);
 
         return $this;
     }
-
 }
