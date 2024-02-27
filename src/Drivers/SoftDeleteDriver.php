@@ -80,14 +80,17 @@ class SoftDeleteDriver extends StandardDriver
          *
          * @see https://github.com/cloudcreativity/laravel-json-api/issues/371
          */
-        if ($this->willSoftDelete($model)) {
-            $column = $model->getDeletedAtColumn();
-            // save the original date so we can put it back later on.
-            $deletedAt = $model->{$column};
-            // delete the record so that deleting and deleted events get fired.
-            $model->delete();
-            // apply the original date back before saving, so that we keep date provided by the client.
-            $model->{$column} = $deletedAt;
+         if ($this->willSoftDelete($model)) {
+             $column = $model->getDeletedAtColumn();
+             // save the original date so we can put it back later on.
+             $deletedAt = $model->{$column};
+             // delete the record so that deleting and deleted events get fired.
+             $response = $model->delete();  // capture the response 
+             // if everything worked out then update the $deletedAt
+             if ($response !== false){   
+                    // apply the original date back before saving, so that we keep date provided by the client.
+                    $model->{$column} = $deletedAt;
+              }
         }
 
         return (bool) $model->save();
