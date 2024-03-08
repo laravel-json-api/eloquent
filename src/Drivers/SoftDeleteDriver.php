@@ -87,7 +87,7 @@ class SoftDeleteDriver extends StandardDriver
              // delete the record so that deleting and deleted events get fired.
              $response = $model->delete();  // capture the response 
              // if everything worked out then update the $deletedAt
-             if ($response !== false){   
+             if ($response === false){   
                     // apply the original date back before saving, so that we keep date provided by the client.
                     $model->{$column} = $deletedAt;
               }
