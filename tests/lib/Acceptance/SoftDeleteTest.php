@@ -332,6 +332,23 @@ class SoftDeleteTest extends TestCase
         ]));
     }
 
+    public function testItDoesNotSoftDeleteOnUpdateIfListenerReturnsFalse(): void
+    {
+        $post = Post::factory()->create(['deleted_at' => null]);
+
+        $data = ['deletedAt' => now()->toJSON(), 'title' => 'Hello World!'];
+
+        Post::deleting(fn() => false);
+
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage('Failed to soft delete model - App\Models\Post:' . $post->getKey());
+
+        $this->schema
+            ->repository()
+            ->update($post)
+            ->store($data);
+    }
+
     public function testItRestores(): void
     {
         $restored = false;
