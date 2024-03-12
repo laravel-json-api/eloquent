@@ -1,18 +1,10 @@
 <?php
 /*
- * Copyright 2023 Cloud Creativity Limited
+ * Copyright 2024 Cloud Creativity Limited
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Use of this source code is governed by an MIT-style
+ * license that can be found in the LICENSE file or at
+ * https://opensource.org/licenses/MIT.
  */
 
 declare(strict_types=1);
@@ -23,6 +15,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use InvalidArgumentException;
+use RuntimeException;
 
 class SoftDeleteDriver extends StandardDriver
 {
@@ -81,11 +74,23 @@ class SoftDeleteDriver extends StandardDriver
          * @see https://github.com/cloudcreativity/laravel-json-api/issues/371
          */
         if ($this->willSoftDelete($model)) {
+            assert(method_exists($model, 'getDeletedAtColumn'));
             $column = $model->getDeletedAtColumn();
             // save the original date so we can put it back later on.
             $deletedAt = $model->{$column};
             // delete the record so that deleting and deleted events get fired.
-            $model->delete();
+            $response = $model->delete();  // capture the response
+
+            // if a listener prevented the delete from happening, we need to throw as we are in an invalid state.
+            // developers should prevent this scenario from happening either through authorization or validation.
+            if ($response === false) {
+                throw new RuntimeException(sprintf(
+                    'Failed to soft delete model - %s:%s',
+                    $model::class,
+                    $model->getKey(),
+                ));
+            }
+
             // apply the original date back before saving, so that we keep date provided by the client.
             $model->{$column} = $deletedAt;
         }
