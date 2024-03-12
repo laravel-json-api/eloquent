@@ -3,10 +3,11 @@
 All notable changes to this project will be documented in this file. This project adheres to
 [Semantic Versioning](http://semver.org/) and [this changelog format](http://keepachangelog.com/).
 
-## Unreleased (Laravel 11)
+## Unreleased
 
 ### Changed
 
+- Package is now licensed under the [MIT license.](./LICENSE)
 - **BREAKING** Package now requires Laravel 11.
 - Minimum PHP version is now `8.2`.
 - Use `assert()` within fillable relation field classes rather as an optimisation.
