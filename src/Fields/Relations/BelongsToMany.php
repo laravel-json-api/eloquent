@@ -1,18 +1,10 @@
 <?php
 /*
- * Copyright 2023 Cloud Creativity Limited
+ * Copyright 2024 Cloud Creativity Limited
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Use of this source code is governed by an MIT-style
+ * license that can be found in the LICENSE file or at
+ * https://opensource.org/licenses/MIT.
  */
 
 declare(strict_types=1);
@@ -25,8 +17,6 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany as EloquentBelongsToMan
 use InvalidArgumentException;
 use LaravelJsonApi\Eloquent\Contracts\FillableToMany;
 use LaravelJsonApi\Eloquent\Fields\Concerns\IsReadOnly;
-use LogicException;
-use function get_class;
 use function sprintf;
 
 class BelongsToMany extends ToMany implements FillableToMany
@@ -158,17 +148,23 @@ class BelongsToMany extends ToMany implements FillableToMany
      */
     private function getRelation(Model $model): EloquentBelongsToMany
     {
-        $relation = $model->{$this->relationName()}();
+        $name = $this->relationName();
 
-        if ($relation instanceof EloquentBelongsToMany) {
-            return $relation;
-        }
-
-        throw new LogicException(sprintf(
-            'Expecting relation %s on model %s to be a has-many or morph-many relation.',
-            $this->relationName(),
-            get_class($model)
+        assert(method_exists($model, $name), sprintf(
+            'Expecting method %s to exist on model %s.',
+            $name,
+            $model::class,
         ));
+
+        $relation = $model->{$name}();
+
+        assert($relation instanceof EloquentBelongsToMany, sprintf(
+            'Expecting method %s on model %s to return a belongs-to-many relation.',
+            $name,
+            $model::class,
+        ));
+
+        return $relation;
     }
 
     /**
@@ -206,5 +202,4 @@ class BelongsToMany extends ToMany implements FillableToMany
 
         return [];
     }
-
 }
