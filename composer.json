@@ -11,7 +11,7 @@
     "support": {
         "issues": "https://github.com/laravel-json-api/eloquent/issues"
     },
-    "license": "Apache-2.0",
+    "license": "MIT",
     "authors": [
         {
             "name": "Cloud Creativity Ltd",
@@ -23,15 +23,15 @@
         }
     ],
     "require": {
-        "php": "^8.1",
+        "php": "^8.2",
         "ext-json": "*",
-        "illuminate/database": "^10.0",
-        "illuminate/support": "^10.0",
+        "illuminate/database": "^11.0",
+        "illuminate/support": "^11.0",
         "laravel-json-api/core": "^5.0"
     },
     "require-dev": {
-        "orchestra/testbench": "^8.0",
-        "phpunit/phpunit": "^9.5.28"
+        "orchestra/testbench": "^9.0",
+        "phpunit/phpunit": "^10.5"
     },
     "autoload": {
         "psr-4": {
@@ -47,7 +47,7 @@
     },
     "extra": {
         "branch-alias": {
-            "dev-develop": "3.x-dev",
+            "dev-develop": "4.x-dev",
             "dev-next": "5.x-dev"
         }
     },

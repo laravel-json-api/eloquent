@@ -1,18 +1,10 @@
 <?php
 /*
- * Copyright 2023 Cloud Creativity Limited
+ * Copyright 2024 Cloud Creativity Limited
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Use of this source code is governed by an MIT-style
+ * license that can be found in the LICENSE file or at
+ * https://opensource.org/licenses/MIT.
  */
 
 declare(strict_types=1);
@@ -24,13 +16,16 @@ use Illuminate\Database\Eloquent\Relations\HasOne as EloquentHasOne;
 use Illuminate\Database\Eloquent\Relations\MorphOne as EloquentMorphOne;
 use LaravelJsonApi\Eloquent\Contracts\FillableToOne;
 use LaravelJsonApi\Eloquent\Fields\Concerns\IsReadOnly;
-use LogicException;
 
 class HasOne extends ToOne implements FillableToOne
 {
-
+    /** @var int */
     private const KEEP_DETACHED_MODEL = 0;
+
+    /** @var int */
     private const DELETE_DETACHED_MODEL = 1;
+
+    /** @var int */
     private const FORCE_DELETE_DETACHED_MODEL = 2;
 
     use IsReadOnly;
@@ -103,14 +98,24 @@ class HasOne extends ToOne implements FillableToOne
      */
     public function fill(Model $model, ?array $identifier): void
     {
-        $relation = $model->{$this->relationName()}();
+        $name = $this->relationName();
 
-        if (!$relation instanceof EloquentHasOne && !$relation instanceof EloquentMorphOne) {
-            throw new LogicException('Expecting an Eloquent has-one or morph-one relation.');
-        }
+        assert(method_exists($model, $name), sprintf(
+            'Expecting method %s to exist on model %s.',
+            $name,
+            $model::class,
+        ));
+
+        $relation = $model->{$name}();
+
+        assert($relation instanceof EloquentHasOne || $relation instanceof EloquentMorphOne, sprintf(
+            'Expecting method %s on model %s to return a belongs-to-many relation.',
+            $name,
+            $model::class,
+        ));
 
         /** @var Model|null $current */
-        $current = $model->{$this->relationName()};
+        $current = $model->{$name};
         $related = $this->find($identifier);
 
         if ($this->willChange($current, $related)) {
@@ -150,7 +155,7 @@ class HasOne extends ToOne implements FillableToOne
      * @param EloquentMorphOne|EloquentHasOne $relation
      * @param Model $current
      */
-    private function disassociate($relation, Model $current): void
+    private function disassociate(EloquentMorphOne|EloquentHasOne $relation, Model $current): void
     {
         if (self::KEEP_DETACHED_MODEL === $this->detachMode) {
             $this->setInverseToNull($relation, $current);
@@ -163,11 +168,11 @@ class HasOne extends ToOne implements FillableToOne
     /**
      * Disassociate the related model by setting the relationship column(s) to `null`.
      *
-     * @param $relation
+     * @param EloquentMorphOne|EloquentHasOne $relation
      * @param Model $current
      * @return void
      */
-    private function setInverseToNull($relation, Model $current): void
+    private function setInverseToNull(EloquentMorphOne|EloquentHasOne $relation, Model $current): void
     {
         if ($relation instanceof EloquentMorphOne) {
             $current->setAttribute($relation->getMorphType(), null);
