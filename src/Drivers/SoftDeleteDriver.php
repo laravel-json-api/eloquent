@@ -23,6 +23,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use InvalidArgumentException;
+use RuntimeException;
 
 class SoftDeleteDriver extends StandardDriver
 {
@@ -81,11 +82,23 @@ class SoftDeleteDriver extends StandardDriver
          * @see https://github.com/cloudcreativity/laravel-json-api/issues/371
          */
         if ($this->willSoftDelete($model)) {
+            assert(method_exists($model, 'getDeletedAtColumn'));
             $column = $model->getDeletedAtColumn();
             // save the original date so we can put it back later on.
             $deletedAt = $model->{$column};
             // delete the record so that deleting and deleted events get fired.
-            $model->delete();
+            $response = $model->delete();  // capture the response
+
+            // if a listener prevented the delete from happening, we need to throw as we are in an invalid state.
+            // developers should prevent this scenario from happening either through authorization or validation.
+            if ($response === false) {
+                throw new RuntimeException(sprintf(
+                    'Failed to soft delete model - %s:%s',
+                    $model::class,
+                    $model->getKey(),
+                ));
+            }
+
             // apply the original date back before saving, so that we keep date provided by the client.
             $model->{$column} = $deletedAt;
         }
