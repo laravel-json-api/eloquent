@@ -3,13 +3,22 @@
 All notable changes to this project will be documented in this file. This project adheres to
 [Semantic Versioning](http://semver.org/) and [this changelog format](http://keepachangelog.com/).
 
-## Unreleased (Laravel 11)
+## Unreleased
+
+## [4.0.0] - 2024-03-12
 
 ### Changed
 
+- Package is now licensed under the [MIT license.](./LICENSE)
 - **BREAKING** Package now requires Laravel 11.
 - Minimum PHP version is now `8.2`.
 - Use `assert()` within fillable relation field classes rather as an optimisation.
+- [#34](https://github.com/laravel-json-api/eloquent/pull/34) **BREAKING** The soft delete driver now throws an
+  exception if the model is not successfully soft-deleted. This can happen if a listener or observer on the model
+  aborts the delete operation. Previously the driver just carried on, which was incorrect. The exception has to be
+  thrown in this scenario because we are now in an invalid state - what the client requested and what actually
+  happened does not match up. If developers want to avoid this scenario, they should use authorization or validation
+  logic so that clients get an error response that explains why the soft delete cannot be fulfilled.
 
 ### Fixed
 
