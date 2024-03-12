@@ -28,7 +28,7 @@
         "illuminate/database": "^11.0",
         "illuminate/support": "^11.0",
         "laravel-json-api/core": "^5.0",
-      "laravel-json-api/validation": "^5.0"
+        "laravel-json-api/validation": "^5.0"
     },
     "require-dev": {
         "orchestra/testbench": "^9.0",
