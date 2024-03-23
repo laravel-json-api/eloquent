@@ -19,6 +19,9 @@ use LaravelJsonApi\Eloquent\Fields\Map;
 use LaravelJsonApi\Eloquent\Fields\Number;
 use LaravelJsonApi\Eloquent\Fields\Str;
 use LaravelJsonApi\Eloquent\Tests\Integration\TestCase;
+use LaravelJsonApi\Validation\Fields\IsValidated;
+use LaravelJsonApi\Validation\Rules\JsonNumber;
+use LaravelJsonApi\Validation\Rules\JsonObject;
 
 class MapTest extends TestCase
 {
@@ -283,4 +286,44 @@ class MapTest extends TestCase
         $this->assertTrue($map->isHidden($mock));
     }
 
+    public function testItIsValidatedOnCreate(): void
+    {
+        $request = $this->createMock(Request::class);
+        $model = new \stdClass();
+
+        $map = Map::make('options', [
+            Str::make('foo', 'option_foo')
+                ->creationRules(function ($r) use ($request) {
+                    $this->assertSame($request, $r);
+                    return ['foo1'];
+                })
+                ->updateRules(function ($r, $m) use ($request, $model) {
+                    $this->assertSame($request, $r);
+                    $this->assertSame($model, $m);
+                    return ['foo2'];
+                }),
+            Number::make('bar', 'option_bar')
+                ->creationRules(function ($r) use ($request) {
+                    $this->assertSame($request, $r);
+                    return ['bar1'];
+                })
+                ->updateRules(function ($r, $m) use ($request, $model) {
+                    $this->assertSame($request, $r);
+                    $this->assertSame($model, $m);
+                    return ['bar2'];
+                }),
+        ]);
+
+        $this->assertInstanceOf(IsValidated::class, $map);
+        $this->assertEquals([
+            '.' => 'array:bar,foo',
+            'foo' => ['string', 'foo1'],
+            'bar' => [new JsonNumber(), 'bar1'],
+        ], $map->rulesForCreation($request));
+        $this->assertEquals([
+            '.' => 'array:bar,foo',
+            'foo' => ['string', 'foo2'],
+            'bar' => [new JsonNumber(), 'bar2'],
+        ], $map->rulesForUpdate($request, $model));
+    }
 }
