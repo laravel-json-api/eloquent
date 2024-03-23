@@ -16,6 +16,8 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use LaravelJsonApi\Eloquent\Fields\ArrayHash;
 use LaravelJsonApi\Eloquent\Tests\Integration\TestCase;
+use LaravelJsonApi\Validation\Fields\IsValidated;
+use LaravelJsonApi\Validation\Rules\JsonObject;
 
 class ArrayHashTest extends TestCase
 {
@@ -572,4 +574,23 @@ class ArrayHashTest extends TestCase
         $this->assertTrue($attr->isHidden($mock));
     }
 
+    public function testIsValidated(): void
+    {
+        $attr = ArrayHash::make('permissions');
+
+        $this->assertInstanceOf(IsValidated::class, $attr);
+        $this->assertEquals($expected = ['.' => new JsonObject()], $attr->rulesForCreation(null));
+        $this->assertEquals($expected, $attr->rulesForUpdate(null, new \stdClass()));
+    }
+
+    public function testIsValidatedAndAllowsEmpty(): void
+    {
+        $attr = ArrayHash::make('permissions')->allowEmpty();
+
+        $this->assertEquals(
+            $expected = ['.' => (new JsonObject())->allowEmpty()],
+            $attr->rulesForCreation(null)
+        );
+        $this->assertEquals($expected, $attr->rulesForUpdate(null, new \stdClass()));
+    }
 }

@@ -12,11 +12,16 @@ declare(strict_types=1);
 namespace LaravelJsonApi\Eloquent\Fields;
 
 use Illuminate\Support\Arr;
+use LaravelJsonApi\Validation\Fields\IsValidated;
+use LaravelJsonApi\Validation\Fields\ValidatedWithKeyedSetOfRules;
+use LaravelJsonApi\Validation\Rules\JsonArray;
+
 use function is_null;
 use function sort;
 
-class ArrayList extends Attribute
+class ArrayList extends Attribute implements IsValidated
 {
+    use ValidatedWithKeyedSetOfRules;
 
     /**
      * @var bool
@@ -88,4 +93,11 @@ class ArrayList extends Attribute
         }
     }
 
+    /**
+     * @return array<string, mixed>
+     */
+    protected function defaultRules(): array
+    {
+        return ['.' => new JsonArray()];
+    }
 }
