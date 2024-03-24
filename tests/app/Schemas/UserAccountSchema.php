@@ -12,6 +12,7 @@ declare(strict_types=1);
 namespace App\Schemas;
 
 use App\Models\UserAccount;
+use LaravelJsonApi\Core\Schema\Attributes\Model;
 use LaravelJsonApi\Eloquent\Contracts\Paginator;
 use LaravelJsonApi\Eloquent\Fields\DateTime;
 use LaravelJsonApi\Eloquent\Fields\ID;
@@ -23,16 +24,9 @@ use LaravelJsonApi\Eloquent\Filters\WhereIdIn;
 use LaravelJsonApi\Eloquent\Pagination\PagePagination;
 use LaravelJsonApi\Eloquent\ProxySchema;
 
+#[Model(UserAccount::class)]
 class UserAccountSchema extends ProxySchema
 {
-
-    /**
-     * The model the schema corresponds to.
-     *
-     * @var string
-     */
-    public static string $model = UserAccount::class;
-
     /**
      * @inheritDoc
      */

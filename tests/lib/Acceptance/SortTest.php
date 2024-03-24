@@ -31,10 +31,12 @@ class SortTest extends TestCase
     {
         parent::setUp();
 
+        $static = self::$staticSchemas->schemaFor(PostSchema::class);
+
         $this->posts = $this
             ->getMockBuilder(PostSchema::class)
             ->onlyMethods(['defaultSort'])
-            ->setConstructorArgs(['server' => $this->server()])
+            ->setConstructorArgs(['server' => $this->server(), 'static' => $static])
             ->getMock();
     }
 

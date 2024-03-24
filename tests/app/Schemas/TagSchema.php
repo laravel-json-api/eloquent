@@ -13,6 +13,7 @@ namespace App\Schemas;
 
 use App\Models\Tag;
 use LaravelJsonApi\Contracts\Pagination\Paginator;
+use LaravelJsonApi\Core\Schema\Attributes\Model;
 use LaravelJsonApi\Eloquent\Fields\DateTime;
 use LaravelJsonApi\Eloquent\Fields\ID;
 use LaravelJsonApi\Eloquent\Fields\Relations\BelongsToMany;
@@ -21,16 +22,9 @@ use LaravelJsonApi\Eloquent\Filters\Where;
 use LaravelJsonApi\Eloquent\Filters\WhereIdIn;
 use LaravelJsonApi\Eloquent\Schema;
 
+#[Model(Tag::class)]
 class TagSchema extends Schema
 {
-
-    /**
-     * The model the schema corresponds to.
-     *
-     * @var string
-     */
-    public static string $model = Tag::class;
-
     /**
      * @inheritDoc
      */
