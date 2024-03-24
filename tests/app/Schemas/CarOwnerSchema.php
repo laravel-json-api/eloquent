@@ -12,6 +12,7 @@ declare(strict_types=1);
 namespace App\Schemas;
 
 use App\Models\CarOwner;
+use LaravelJsonApi\Core\Schema\Attributes\Model;
 use LaravelJsonApi\Eloquent\Contracts\Paginator;
 use LaravelJsonApi\Eloquent\Fields\DateTime;
 use LaravelJsonApi\Eloquent\Fields\ID;
@@ -21,16 +22,9 @@ use LaravelJsonApi\Eloquent\Filters\Scope;
 use LaravelJsonApi\Eloquent\Filters\WhereIdIn;
 use LaravelJsonApi\Eloquent\Schema;
 
+#[Model(CarOwner::class)]
 class CarOwnerSchema extends Schema
 {
-
-    /**
-     * The model the schema corresponds to.
-     *
-     * @var string
-     */
-    public static string $model = CarOwner::class;
-
     /**
      * @inheritDoc
      */

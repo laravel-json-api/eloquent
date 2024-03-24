@@ -17,13 +17,12 @@ use InvalidArgumentException;
 
 trait IsReadOnly
 {
-
     /**
      * Whether the field is read-only.
      *
      * @var Closure|bool
      */
-    private $readOnly = false;
+    private Closure|bool $readOnly = false;
 
     /**
      * Mark the field as read-only.
@@ -31,12 +30,8 @@ trait IsReadOnly
      * @param Closure|bool $callback
      * @return $this
      */
-    public function readOnly($callback = true): self
+    public function readOnly(Closure|bool $callback = true): static
     {
-        if (!is_bool($callback) && !$callback instanceof Closure) {
-            throw new InvalidArgumentException('Expecting a boolean or closure.');
-        }
-
         $this->readOnly = $callback;
 
         return $this;
@@ -47,7 +42,7 @@ trait IsReadOnly
      *
      * @return $this
      */
-    public function readOnlyOnCreate(): self
+    public function readOnlyOnCreate(): static
     {
         $this->readOnly(static fn($request) => $request && $request->isMethod('POST'));
 
@@ -59,7 +54,7 @@ trait IsReadOnly
      *
      * @return $this
      */
-    public function readOnlyOnUpdate(): self
+    public function readOnlyOnUpdate(): static
     {
         $this->readOnly(static fn($request) => $request && $request->isMethod('PATCH'));
 

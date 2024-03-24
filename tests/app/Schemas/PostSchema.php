@@ -13,6 +13,7 @@ namespace App\Schemas;
 
 use App\Models\Post;
 use LaravelJsonApi\Contracts\Pagination\Paginator;
+use LaravelJsonApi\Core\Schema\Attributes\Model;
 use LaravelJsonApi\Eloquent\Fields\DateTime;
 use LaravelJsonApi\Eloquent\Fields\ID;
 use LaravelJsonApi\Eloquent\Fields\Relations\BelongsTo;
@@ -36,16 +37,10 @@ use LaravelJsonApi\Eloquent\Schema;
 use LaravelJsonApi\Eloquent\SoftDeletes;
 use LaravelJsonApi\Eloquent\Sorting\SortCountable;
 
+#[Model(Post::class)]
 class PostSchema extends Schema
 {
     use SoftDeletes;
-
-    /**
-     * The model the schema corresponds to.
-     *
-     * @var string
-     */
-    public static string $model = Post::class;
 
     /**
      * @var array|null

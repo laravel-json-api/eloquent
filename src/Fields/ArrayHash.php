@@ -14,10 +14,17 @@ namespace LaravelJsonApi\Eloquent\Fields;
 use Closure;
 use LaravelJsonApi\Core\Json\Hash;
 use LaravelJsonApi\Core\Support\Arr;
+use LaravelJsonApi\Validation\Fields\IsValidated;
+
+use LaravelJsonApi\Validation\Fields\ValidatedWithKeyedSetOfRules;
+
+use LaravelJsonApi\Validation\Rules\JsonObject;
+
 use function is_null;
 
-class ArrayHash extends Attribute
+class ArrayHash extends Attribute implements IsValidated
 {
+    use ValidatedWithKeyedSetOfRules;
 
     /**
      * @var Closure|null
@@ -47,6 +54,13 @@ class ArrayHash extends Attribute
      * @var string|null
      */
     private ?string $keyCase = null;
+
+    /**
+     * Whether an empty array is allowed as the value.
+     *
+     * @var bool
+     */
+    private bool $allowEmpty = false;
 
     /**
      * Create an array attribute.
@@ -185,6 +199,19 @@ class ArrayHash extends Attribute
     }
 
     /**
+     * Whether an empty array is allowed as the value.
+     *
+     * @param bool $allowEmpty
+     * @return self
+     */
+    public function allowEmpty(bool $allowEmpty = true): self
+    {
+        $this->allowEmpty = $allowEmpty;
+
+        return $this;
+    }
+
+    /**
      * @inheritDoc
      */
     public function serialize(object $model)
@@ -232,4 +259,11 @@ class ArrayHash extends Attribute
         }
     }
 
+    /**
+     * @return array<string, mixed>
+     */
+    protected function defaultRules(): array
+    {
+        return ['.' => (new JsonObject())->allowEmpty($this->allowEmpty)];
+    }
 }

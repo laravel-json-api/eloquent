@@ -12,6 +12,8 @@ declare(strict_types=1);
 namespace LaravelJsonApi\Eloquent\Fields;
 
 use Illuminate\Support\Facades\Date;
+use LaravelJsonApi\Validation\Rules\DateTimeIso8601;
+use LaravelJsonApi\Validation\Rules\JsonBoolean;
 use UnexpectedValueException;
 use function boolval;
 use function is_bool;
@@ -20,7 +22,6 @@ use function sprintf;
 
 class SoftDelete extends DateTime
 {
-
     /**
      * @var bool
      */
@@ -61,11 +62,22 @@ class SoftDelete extends DateTime
     }
 
     /**
+     * @return array
+     */
+    protected function defaultRules(): array
+    {
+        return [
+            'nullable',
+            $this->boolean ? new JsonBoolean() : new DateTimeIso8601(),
+        ];
+    }
+
+    /**
      * @inheritDoc
      */
     protected function deserialize($value)
     {
-        if (true === $this->boolean && (is_bool($value) || is_null($value))) {
+        if (true === $this->boolean && (is_bool($value) || $value === null)) {
             return $this->parse($value ? Date::now() : null);
         }
 

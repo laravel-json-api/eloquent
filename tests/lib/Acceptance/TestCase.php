@@ -15,8 +15,11 @@ use App\Schemas;
 use Illuminate\Foundation\Testing\Concerns\InteractsWithDeprecationHandling;
 use Illuminate\Support\Arr;
 use LaravelJsonApi\Contracts\Schema\Container as SchemaContainerContract;
+use LaravelJsonApi\Contracts\Schema\StaticSchema\StaticSchema;
 use LaravelJsonApi\Contracts\Server\Server;
 use LaravelJsonApi\Core\Schema\Container as SchemaContainer;
+use LaravelJsonApi\Core\Schema\StaticSchema\StaticContainer;
+use LaravelJsonApi\Core\Schema\StaticSchema\StaticSchemaFactory;
 use LaravelJsonApi\Core\Schema\TypeResolver;
 use LaravelJsonApi\Core\Support\ContainerResolver;
 use Orchestra\Testbench\TestCase as BaseTestCase;
@@ -24,6 +27,46 @@ use Orchestra\Testbench\TestCase as BaseTestCase;
 class TestCase extends BaseTestCase
 {
     use InteractsWithDeprecationHandling;
+
+    /**
+     * @var StaticContainer|null
+     */
+    protected static ?StaticContainer $staticSchemas = null;
+
+    /**
+     * @return void
+     */
+    public static function setUpBeforeClass(): void
+    {
+        parent::setUpBeforeClass();
+
+        $factory = new StaticSchemaFactory();
+
+        self::$staticSchemas = new StaticContainer($factory->make([
+            Schemas\CarOwnerSchema::class,
+            Schemas\CarSchema::class,
+            Schemas\CommentSchema::class,
+            Schemas\CountrySchema::class,
+            Schemas\ImageSchema::class,
+            Schemas\MechanicSchema::class,
+            Schemas\PhoneSchema::class,
+            Schemas\PostSchema::class,
+            Schemas\RoleSchema::class,
+            Schemas\TagSchema::class,
+            Schemas\UserAccountSchema::class,
+            Schemas\UserSchema::class,
+            Schemas\VideoSchema::class,
+        ]));
+    }
+
+    /**
+     * @return void
+     */
+    public static function tearDownAfterClass(): void
+    {
+        parent::tearDownAfterClass();
+        self::$staticSchemas = null;
+    }
 
     /**
      * @inheritDoc
@@ -38,22 +81,20 @@ class TestCase extends BaseTestCase
 
         $this->app->singleton(SchemaContainerContract::class, function ($container) {
             $resolver = new ContainerResolver(static fn() => $container);
-            return new SchemaContainer($resolver, $container->make(Server::class), [
-                Schemas\CarOwnerSchema::class,
-                Schemas\CarSchema::class,
-                Schemas\CommentSchema::class,
-                Schemas\CountrySchema::class,
-                Schemas\ImageSchema::class,
-                Schemas\MechanicSchema::class,
-                Schemas\PhoneSchema::class,
-                Schemas\PostSchema::class,
-                Schemas\RoleSchema::class,
-                Schemas\TagSchema::class,
-                Schemas\UserAccountSchema::class,
-                Schemas\UserSchema::class,
-                Schemas\VideoSchema::class,
-            ]);
+            return new SchemaContainer(
+                $resolver,
+                $container->make(Server::class),
+                self::$staticSchemas,
+            );
         });
+
+        foreach (self::$staticSchemas as $schema) {
+            $class = $schema->getSchemaClass();
+            $this->app
+                ->when($class)
+                ->needs(StaticSchema::class)
+                ->give(fn () => self::$staticSchemas->schemaFor($class));
+        }
 
         $this->app->singleton(Server::class, function () {
             $server = $this->createMock(Server::class);
@@ -85,9 +126,11 @@ class TestCase extends BaseTestCase
      */
     protected function createSchemaWithDefaultEagerLoading(string $class, $paths): void
     {
+        $static = self::$staticSchemas->schemaFor($class);
+
         $mock = $this
             ->getMockBuilder($class)
-            ->setConstructorArgs(['server' => $this->server()])
+            ->setConstructorArgs(['server' => $this->server(), 'static' => $static])
             ->onlyMethods(['with'])
             ->getMock();
 

@@ -13,6 +13,7 @@ namespace App\Schemas;
 
 use App\Models\Phone;
 use LaravelJsonApi\Contracts\Pagination\Paginator;
+use LaravelJsonApi\Core\Schema\Attributes\Model;
 use LaravelJsonApi\Eloquent\Fields\DateTime;
 use LaravelJsonApi\Eloquent\Fields\ID;
 use LaravelJsonApi\Eloquent\Fields\Relations\BelongsTo;
@@ -21,16 +22,9 @@ use LaravelJsonApi\Eloquent\Filters\Scope;
 use LaravelJsonApi\Eloquent\Filters\WhereIdIn;
 use LaravelJsonApi\Eloquent\Schema;
 
+#[Model(Phone::class)]
 class PhoneSchema extends Schema
 {
-
-    /**
-     * The model the schema corresponds to.
-     *
-     * @var string
-     */
-    public static string $model = Phone::class;
-
     /**
      * @inheritDoc
      */

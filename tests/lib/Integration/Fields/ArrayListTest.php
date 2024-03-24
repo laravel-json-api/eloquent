@@ -16,6 +16,8 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use LaravelJsonApi\Eloquent\Fields\ArrayList;
 use LaravelJsonApi\Eloquent\Tests\Integration\TestCase;
+use LaravelJsonApi\Validation\Fields\IsValidated;
+use LaravelJsonApi\Validation\Rules\JsonArray;
 
 class ArrayListTest extends TestCase
 {
@@ -327,4 +329,12 @@ class ArrayListTest extends TestCase
         $this->assertTrue($attr->isHidden($mock));
     }
 
+    public function testItIsValidated(): void
+    {
+        $attr = ArrayList::make('permissions');
+
+        $this->assertInstanceOf(IsValidated::class, $attr);
+        $this->assertEquals($expected = ['.' => new JsonArray()], $attr->rulesForCreation(null));
+        $this->assertEquals($expected, $attr->rulesForUpdate(null, new \stdClass()));
+    }
 }

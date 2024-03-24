@@ -16,6 +16,7 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use LaravelJsonApi\Eloquent\Fields\Str;
 use LaravelJsonApi\Eloquent\Tests\Integration\TestCase;
+use LaravelJsonApi\Validation\Fields\IsValidated;
 
 class StrTest extends TestCase
 {
@@ -44,6 +45,15 @@ class StrTest extends TestCase
         $this->assertSame('name', $attr->name());
         $this->assertSame('display_name', $attr->column());
         $this->assertSame(['display_name'], $attr->columnsForField());
+    }
+
+    public function testItIsValidated(): void
+    {
+        $attr = Str::make('name');
+
+        $this->assertInstanceOf(IsValidated::class, $attr);
+        $this->assertSame(['string'], $attr->rulesForCreation(null));
+        $this->assertSame(['string'], $attr->rulesForUpdate(null, new \stdClass()));
     }
 
     public function testNotSparseField(): void
