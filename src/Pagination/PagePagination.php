@@ -20,12 +20,14 @@ use LaravelJsonApi\Core\Pagination\Concerns\HasPageMeta;
 use LaravelJsonApi\Core\Pagination\Concerns\HasPageNumbers;
 use LaravelJsonApi\Core\Pagination\Page;
 use LaravelJsonApi\Eloquent\Contracts\Paginator;
+use LaravelJsonApi\Validation\Pagination\IsValidated;
+use LaravelJsonApi\Validation\Pagination\Validated;
 
-class PagePagination implements Paginator
+class PagePagination implements Paginator, IsValidated
 {
-
     use HasPageMeta;
     use HasPageNumbers;
+    use Validated;
 
     /**
      * @var array|null
@@ -169,6 +171,24 @@ class PagePagination implements Paginator
     protected function isSimplePagination(): bool
     {
         return (bool) $this->simplePagination;
+    }
+
+    /**
+     * @return array
+     */
+    protected function defaultRules(): array
+    {
+        return [
+            $this->pageKey => array_filter([
+                $this->required ? 'required' : null,
+                'integer',
+                'min:1',
+            ]),
+            $this->perPageKey => [
+                'integer',
+                $this->maxPerPage > 0 ? 'between:1,' . $this->maxPerPage : 'min:1',
+            ],
+        ];
     }
 
     /**

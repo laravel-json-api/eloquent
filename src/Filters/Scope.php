@@ -13,12 +13,15 @@ namespace LaravelJsonApi\Eloquent\Filters;
 
 use LaravelJsonApi\Core\Support\Str;
 use LaravelJsonApi\Eloquent\Contracts\Filter;
+use LaravelJsonApi\Eloquent\Filters\Concerns\DeserializesValue;
+use LaravelJsonApi\Eloquent\Filters\Concerns\IsSingular;
+use LaravelJsonApi\Validation\Filters\ValidatedWithRules;
 
 class Scope implements Filter
 {
-
-    use Concerns\DeserializesValue;
-    use Concerns\IsSingular;
+    use DeserializesValue;
+    use IsSingular;
+    use ValidatedWithRules;
 
     /**
      * @var string

@@ -13,14 +13,20 @@ namespace LaravelJsonApi\Eloquent\Filters;
 
 use LaravelJsonApi\Core\Support\Str;
 use LaravelJsonApi\Eloquent\Contracts\Filter;
+use LaravelJsonApi\Eloquent\Filters\Concerns\DeserializesValue;
+use LaravelJsonApi\Eloquent\Filters\Concerns\HasColumn;
+use LaravelJsonApi\Eloquent\Filters\Concerns\HasOperator;
+use LaravelJsonApi\Eloquent\Filters\Concerns\IsSingular;
+use LaravelJsonApi\Validation\Filters\ValidatedWithRules;
+use LaravelJsonApi\Validation\Rules\JsonBoolean;
 
 class Where implements Filter
 {
-
-    use Concerns\DeserializesValue;
-    use Concerns\HasColumn;
-    use Concerns\HasOperator;
-    use Concerns\IsSingular;
+    use DeserializesValue;
+    use HasColumn;
+    use HasOperator;
+    use IsSingular;
+    use ValidatedWithRules;
 
     /**
      * @var string
@@ -70,6 +76,18 @@ class Where implements Filter
             $this->operator(),
             $this->deserialize($value)
         );
+    }
+
+    /**
+     * @return array<int, mixed>
+     */
+    protected function defaultRules(): array
+    {
+        if ($this->asBool) {
+            return [(new JsonBoolean())->asString()];
+        }
+
+        return [];
     }
 
     /**

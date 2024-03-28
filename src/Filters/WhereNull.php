@@ -11,13 +11,20 @@ declare(strict_types=1);
 
 namespace LaravelJsonApi\Eloquent\Filters;
 
+use Illuminate\Http\Request;
+use LaravelJsonApi\Core\Query\Input\Query;
 use LaravelJsonApi\Core\Support\Str;
 use LaravelJsonApi\Eloquent\Contracts\Filter;
+use LaravelJsonApi\Eloquent\Filters\Concerns\HasColumn;
+use LaravelJsonApi\Eloquent\Filters\Concerns\IsSingular;
+use LaravelJsonApi\Validation\Filters\Validated;
+use LaravelJsonApi\Validation\Rules\JsonBoolean;
 
 class WhereNull implements Filter
 {
-    use Concerns\HasColumn;
-    use Concerns\IsSingular;
+    use HasColumn;
+    use IsSingular;
+    use Validated;
 
     /**
      * @var string
@@ -72,6 +79,14 @@ class WhereNull implements Filter
     }
 
     /**
+     * @inheritDoc
+     */
+    public function validationRules(?Request $request, Query $query): array
+    {
+        return [(new JsonBoolean())->asString()];
+    }
+
+    /**
      * Should a "where null" query be used?
      *
      * @param bool $value
@@ -88,7 +103,7 @@ class WhereNull implements Filter
      * @param mixed $value
      * @return bool
      */
-    private function deserialize($value): bool
+    private function deserialize(mixed $value): bool
     {
         return filter_var($value, FILTER_VALIDATE_BOOL);
     }

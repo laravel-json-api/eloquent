@@ -13,10 +13,10 @@ namespace LaravelJsonApi\Eloquent\Contracts;
 
 use Illuminate\Database\Eloquent\Builder;
 use LaravelJsonApi\Contracts\Schema\Filter as BaseFilter;
+use LaravelJsonApi\Validation\Filters\IsValidated;
 
-interface Filter extends BaseFilter
+interface Filter extends BaseFilter, IsValidated
 {
-
     /**
      * Does the filter return a singular resource?
      *

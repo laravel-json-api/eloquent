@@ -13,13 +13,17 @@ namespace LaravelJsonApi\Eloquent\Filters;
 
 use LaravelJsonApi\Core\Support\Str;
 use LaravelJsonApi\Eloquent\Contracts\Filter;
+use LaravelJsonApi\Eloquent\Filters\Concerns\DeserializesValue;
+use LaravelJsonApi\Eloquent\Filters\Concerns\HasColumn;
+use LaravelJsonApi\Eloquent\Filters\Concerns\HasDelimiter;
+use LaravelJsonApi\Validation\Filters\ValidatedWithRules;
 
 class WhereIn implements Filter
 {
-
-    use Concerns\DeserializesValue;
-    use Concerns\HasColumn;
-    use Concerns\HasDelimiter;
+    use DeserializesValue;
+    use HasColumn;
+    use HasDelimiter;
+    use ValidatedWithRules;
 
     /**
      * @var string
@@ -78,7 +82,7 @@ class WhereIn implements Filter
     }
 
     /**
-     * Deserialize the fitler value.
+     * Deserialize the filter value.
      *
      * @param string|array $value
      * @return array
@@ -101,5 +105,4 @@ class WhereIn implements Filter
             Str::singular($this->name)
         );
     }
-
 }

@@ -15,7 +15,6 @@ use LogicException;
 
 class OnlyTrashed extends WithTrashed
 {
-
     /**
      * @inheritDoc
      */
@@ -31,5 +30,4 @@ class OnlyTrashed extends WithTrashed
 
         throw new LogicException("Filter {$this->key()} expects query builder to have a `withTrashed` method.");
     }
-
 }
