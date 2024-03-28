@@ -14,10 +14,13 @@ namespace LaravelJsonApi\Eloquent\Fields\Relations;
 use Illuminate\Database\Eloquent\Model;
 use LaravelJsonApi\Eloquent\Contracts\FillableToOne;
 use LaravelJsonApi\Eloquent\Fields\Concerns\IsReadOnly;
+use LaravelJsonApi\Validation\Fields\ValidatedWithArrayKeys;
+use LaravelJsonApi\Validation\Rules\HasOne as HasOneRule;
 
 class BelongsTo extends ToOne implements FillableToOne
 {
     use IsReadOnly;
+    use ValidatedWithArrayKeys;
 
     /**
      * Create a belongs-to relation.
@@ -92,5 +95,13 @@ class BelongsTo extends ToOne implements FillableToOne
         $model->save();
 
         return $model->getRelation($this->relationName());
+    }
+
+    /**
+     * @return array
+     */
+    protected function defaultRules(): array
+    {
+        return ['.' => ['array:type,id', new HasOneRule($this)]];
     }
 }

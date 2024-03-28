@@ -13,15 +13,13 @@ namespace LaravelJsonApi\Eloquent\Fields;
 
 use Illuminate\Support\Arr;
 use LaravelJsonApi\Validation\Fields\IsValidated;
-use LaravelJsonApi\Validation\Fields\ValidatedWithKeyedSetOfRules;
+use LaravelJsonApi\Validation\Fields\ValidatedWithArrayKeys;
 use LaravelJsonApi\Validation\Rules\JsonArray;
-
-use function is_null;
 use function sort;
 
 class ArrayList extends Attribute implements IsValidated
 {
-    use ValidatedWithKeyedSetOfRules;
+    use ValidatedWithArrayKeys;
 
     /**
      * @var bool
@@ -85,7 +83,7 @@ class ArrayList extends Attribute implements IsValidated
      */
     protected function assertValue($value): void
     {
-        if ((!is_null($value) && !is_array($value)) || (!empty($value) && Arr::isAssoc($value))) {
+        if (($value !== null && !is_array($value)) || (!empty($value) && Arr::isAssoc($value))) {
             throw new \UnexpectedValueException(sprintf(
                 'Expecting the value of attribute %s to be an array list.',
                 $this->name()

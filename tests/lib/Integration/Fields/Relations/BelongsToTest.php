@@ -15,6 +15,8 @@ use Illuminate\Http\Request;
 use LaravelJsonApi\Contracts\Schema\Filter;
 use LaravelJsonApi\Eloquent\Fields\Relations\BelongsTo;
 use LaravelJsonApi\Eloquent\Tests\Integration\TestCase;
+use LaravelJsonApi\Validation\Fields\IsValidated;
+use LaravelJsonApi\Validation\Rules\HasOne;
 
 class BelongsToTest extends TestCase
 {
@@ -66,6 +68,21 @@ class BelongsToTest extends TestCase
         $this->assertFalse($relation->isValidated());
         $this->assertSame($relation, $relation->mustValidate());
         $this->assertTrue($relation->isValidated());
+    }
+
+    public function testValidationRules(): void
+    {
+        $relation = BelongsTo::make('author')
+            ->creationRules(['.' => 'foo'])
+            ->updateRules(['.' => 'bar']);
+
+        $this->assertInstanceOf(IsValidated::class, $relation);
+        $this->assertEquals([
+            '.' => ['array:type,id', new HasOne($relation), 'foo'],
+        ], $relation->rulesForCreation(null));
+        $this->assertEquals([
+            '.' => ['array:type,id', new HasOne($relation), 'bar'],
+        ], $relation->rulesForUpdate(null, new \stdClass()));
     }
 
     public function testItDoesNotNeedToExist(): void

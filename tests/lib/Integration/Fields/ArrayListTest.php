@@ -334,7 +334,7 @@ class ArrayListTest extends TestCase
         $attr = ArrayList::make('permissions');
 
         $this->assertInstanceOf(IsValidated::class, $attr);
-        $this->assertEquals($expected = ['.' => new JsonArray()], $attr->rulesForCreation(null));
+        $this->assertEquals($expected = ['.' => [new JsonArray()]], $attr->rulesForCreation(null));
         $this->assertEquals($expected, $attr->rulesForUpdate(null, new \stdClass()));
     }
 }

@@ -576,19 +576,28 @@ class ArrayHashTest extends TestCase
 
     public function testIsValidated(): void
     {
-        $attr = ArrayHash::make('permissions');
+        $attr = ArrayHash::make('permissions')
+            ->creationRules(['.' => 'array:foo,bar'])
+            ->updateRules(['.' => 'array:foo,bar']);
+
+        $expected = [
+            '.' => [new JsonObject(), 'array:foo,bar'],
+        ];
 
         $this->assertInstanceOf(IsValidated::class, $attr);
-        $this->assertEquals($expected = ['.' => new JsonObject()], $attr->rulesForCreation(null));
+        $this->assertEquals($expected, $attr->rulesForCreation(null));
         $this->assertEquals($expected, $attr->rulesForUpdate(null, new \stdClass()));
     }
 
     public function testIsValidatedAndAllowsEmpty(): void
     {
-        $attr = ArrayHash::make('permissions')->allowEmpty();
+        $attr = ArrayHash::make('permissions')
+            ->allowEmpty()
+            ->creationRules(['.' => 'array:foo,bar'])
+            ->updateRules(['.' => 'array:foo,bar']);
 
         $this->assertEquals(
-            $expected = ['.' => (new JsonObject())->allowEmpty()],
+            $expected = ['.' => [(new JsonObject())->allowEmpty(), 'array:foo,bar']],
             $attr->rulesForCreation(null)
         );
         $this->assertEquals($expected, $attr->rulesForUpdate(null, new \stdClass()));

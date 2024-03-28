@@ -12,16 +12,15 @@ declare(strict_types=1);
 namespace LaravelJsonApi\Eloquent\Fields;
 
 use Carbon\CarbonInterface;
-use Closure;
 use Illuminate\Support\Facades\Date;
 use LaravelJsonApi\Validation\Fields\IsValidated;
-use LaravelJsonApi\Validation\Fields\ValidatedWithListOfRules;
+use LaravelJsonApi\Validation\Fields\ValidatedWithRules;
 use LaravelJsonApi\Validation\Rules\DateTimeIso8601;
 use function config;
 
 class DateTime extends Attribute implements IsValidated
 {
-    use ValidatedWithListOfRules;
+    use ValidatedWithRules;
 
     /**
      * Should dates be converted to the defined time zone?

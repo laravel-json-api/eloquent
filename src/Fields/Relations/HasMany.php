@@ -17,6 +17,9 @@ use Illuminate\Database\Eloquent\Relations\HasMany as EloquentHasMany;
 use Illuminate\Database\Eloquent\Relations\MorphMany as EloquentMorphMany;
 use LaravelJsonApi\Eloquent\Contracts\FillableToMany;
 use LaravelJsonApi\Eloquent\Fields\Concerns\IsReadOnly;
+use LaravelJsonApi\Validation\Fields\ValidatedWithArrayKeys;
+use LaravelJsonApi\Validation\Rules\HasMany as HasManyRule;
+use LaravelJsonApi\Validation\Rules\JsonArray;
 use function sprintf;
 
 class HasMany extends ToMany implements FillableToMany
@@ -31,6 +34,7 @@ class HasMany extends ToMany implements FillableToMany
     private const FORCE_DELETE_DETACHED_MODELS = 2;
 
     use IsReadOnly;
+    use ValidatedWithArrayKeys;
 
     /**
      * Flag for how to detach models from the relationship.
@@ -132,6 +136,17 @@ class HasMany extends ToMany implements FillableToMany
         $model->unsetRelation($this->relationName());
 
         return $models;
+    }
+
+    /**
+     * @return array
+     */
+    protected function defaultRules(): array
+    {
+        return [
+            '.' => [new JsonArray(), new HasManyRule($this)],
+            '*' => ['array:type,id'],
+        ];
     }
 
     /**

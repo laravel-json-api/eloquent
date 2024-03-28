@@ -23,6 +23,9 @@ use LaravelJsonApi\Eloquent\Contracts\FillableToMany;
 use LaravelJsonApi\Eloquent\Fields\Concerns\IsReadOnly;
 use LaravelJsonApi\Eloquent\Polymorphism\MorphMany;
 use LaravelJsonApi\Eloquent\Polymorphism\MorphValue;
+use LaravelJsonApi\Validation\Fields\ValidatedWithArrayKeys;
+use LaravelJsonApi\Validation\Rules\HasMany as HasManyRule;
+use LaravelJsonApi\Validation\Rules\JsonArray;
 use LogicException;
 use Traversable;
 use UnexpectedValueException;
@@ -31,6 +34,7 @@ class MorphToMany extends ToMany implements PolymorphicRelation, IteratorAggrega
 {
     use Polymorphic;
     use IsReadOnly;
+    use ValidatedWithArrayKeys;
 
     /**
      * @var array
@@ -238,6 +242,17 @@ class MorphToMany extends ToMany implements PolymorphicRelation, IteratorAggrega
         }
 
         throw new LogicException('Expecting model value to already be a morph many value.');
+    }
+
+    /**
+     * @return array
+     */
+    protected function defaultRules(): array
+    {
+        return [
+            '.' => [new JsonArray(), new HasManyRule($this)],
+            '*' => ['array:type,id'],
+        ];
     }
 
     /**

@@ -11,18 +11,22 @@ declare(strict_types=1);
 
 namespace LaravelJsonApi\Eloquent\Fields\Relations;
 
+use Closure;
 use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany as EloquentBelongsToMany;
 use InvalidArgumentException;
 use LaravelJsonApi\Eloquent\Contracts\FillableToMany;
 use LaravelJsonApi\Eloquent\Fields\Concerns\IsReadOnly;
+use LaravelJsonApi\Validation\Fields\ValidatedWithArrayKeys;
+use LaravelJsonApi\Validation\Rules\HasMany as HasManyRule;
+use LaravelJsonApi\Validation\Rules\JsonArray;
 use function sprintf;
 
 class BelongsToMany extends ToMany implements FillableToMany
 {
-
     use IsReadOnly;
+    use ValidatedWithArrayKeys;
 
     /**
      * Create a belongs-to-many relation.
@@ -140,6 +144,17 @@ class BelongsToMany extends ToMany implements FillableToMany
         $model->unsetRelation($this->relationName());
 
         return $related;
+    }
+
+    /**
+     * @return array
+     */
+    protected function defaultRules(): array
+    {
+        return [
+            '.' => [new JsonArray(), new HasManyRule($this)],
+            '*' => ['array:type,id'],
+        ];
     }
 
     /**

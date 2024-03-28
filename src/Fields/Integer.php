@@ -12,13 +12,13 @@ declare(strict_types=1);
 namespace LaravelJsonApi\Eloquent\Fields;
 
 use LaravelJsonApi\Validation\Fields\IsValidated;
-use LaravelJsonApi\Validation\Fields\ValidatedWithListOfRules;
+use LaravelJsonApi\Validation\Fields\ValidatedWithRules;
 use LaravelJsonApi\Validation\Rules\JsonNumber;
 use UnexpectedValueException;
 
 class Integer extends Attribute implements IsValidated
 {
-    use ValidatedWithListOfRules;
+    use ValidatedWithRules;
 
     /**
      * @var bool

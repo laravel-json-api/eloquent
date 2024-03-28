@@ -15,16 +15,12 @@ use Closure;
 use LaravelJsonApi\Core\Json\Hash;
 use LaravelJsonApi\Core\Support\Arr;
 use LaravelJsonApi\Validation\Fields\IsValidated;
-
-use LaravelJsonApi\Validation\Fields\ValidatedWithKeyedSetOfRules;
-
+use LaravelJsonApi\Validation\Fields\ValidatedWithArrayKeys;
 use LaravelJsonApi\Validation\Rules\JsonObject;
-
-use function is_null;
 
 class ArrayHash extends Attribute implements IsValidated
 {
-    use ValidatedWithKeyedSetOfRules;
+    use ValidatedWithArrayKeys;
 
     /**
      * @var Closure|null
@@ -235,7 +231,7 @@ class ArrayHash extends Attribute implements IsValidated
             $value = ($this->keys)($value);
         }
 
-        if (is_null($value)) {
+        if ($value === null) {
             return null;
         }
 
@@ -251,7 +247,7 @@ class ArrayHash extends Attribute implements IsValidated
      */
     protected function assertValue($value): void
     {
-        if ((!is_null($value) && !is_array($value)) || (!empty($value) && !Arr::isAssoc($value))) {
+        if (($value !== null && !is_array($value)) || (!empty($value) && !Arr::isAssoc($value))) {
             throw new \UnexpectedValueException(sprintf(
                 'Expecting the value of attribute %s to be an associative array.',
                 $this->name()
