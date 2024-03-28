@@ -316,12 +316,12 @@ class MapTest extends TestCase
 
         $this->assertInstanceOf(IsValidated::class, $map);
         $this->assertEquals([
-            '.' => 'array:bar,foo',
+            '.' => ['array:bar,foo'],
             'foo' => ['string', 'foo1'],
             'bar' => [new JsonNumber(), 'bar1'],
         ], $map->rulesForCreation($request));
         $this->assertEquals([
-            '.' => 'array:bar,foo',
+            '.' => ['array:bar,foo'],
             'foo' => ['string', 'foo2'],
             'bar' => [new JsonNumber(), 'bar2'],
         ], $map->rulesForUpdate($request, $model));

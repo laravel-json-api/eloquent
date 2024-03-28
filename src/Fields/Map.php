@@ -24,6 +24,7 @@ use LaravelJsonApi\Eloquent\Contracts\Selectable;
 use LaravelJsonApi\Eloquent\Fields\Concerns\Hideable;
 use LaravelJsonApi\Eloquent\Fields\Concerns\IsReadOnly;
 use LaravelJsonApi\Eloquent\Fields\Concerns\OnRelated;
+use LaravelJsonApi\Validation\Fields\FieldRuleMap;
 use LaravelJsonApi\Validation\Fields\IsValidated;
 use LogicException;
 
@@ -222,21 +223,8 @@ class Map implements
      */
     public function rulesForCreation(?Request $request): ?array
     {
-        $fields = [];
-        $rules = [];
-
-        /** @var AttributeContract $attr */
-        foreach ($this->map as $attr) {
-            if ($attr instanceof IsValidated) {
-                $fields[] = $name = $attr->name();
-                $rules[$name] = $attr->rulesForCreation($request);
-            }
-        }
-
-        return !empty($fields) ? [
-            '.' => 'array:' . implode(',', $fields),
-            ...$rules,
-        ] : null;
+        return FieldRuleMap::make($this->map)
+            ->creation($request);
     }
 
     /**
@@ -244,21 +232,8 @@ class Map implements
      */
     public function rulesForUpdate(?Request $request, object $model): ?array
     {
-        $fields = [];
-        $rules = [];
-
-        /** @var AttributeContract $attr */
-        foreach ($this->map as $attr) {
-            if ($attr instanceof IsValidated) {
-                $fields[] = $name = $attr->name();
-                $rules[$name] = $attr->rulesForUpdate($request, $model);
-            }
-        }
-
-        return !empty($fields) ? [
-            '.' => 'array:' . implode(',', $fields),
-            ...$rules,
-        ] : null;
+        return FieldRuleMap::make($this->map)
+            ->update($request, $model);
     }
 
     /**
