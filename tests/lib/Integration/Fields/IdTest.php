@@ -17,6 +17,7 @@ use Illuminate\Http\Request;
 use LaravelJsonApi\Eloquent\Fields\ID;
 use LaravelJsonApi\Eloquent\Tests\Integration\TestCase;
 use LaravelJsonApi\Validation\Fields\IsValidated;
+use LaravelJsonApi\Validation\Rules\ClientId;
 
 class IdTest extends TestCase
 {
@@ -61,7 +62,7 @@ class IdTest extends TestCase
         $id = ID::make()->clientIds();
 
         $this->assertInstanceOf(IsValidated::class, $id);
-        $this->assertSame(['required', 'regex:/^[0-9]+$/iD'], $id->rulesForCreation(null));
+        $this->assertEquals(['required', new ClientId($id)], $id->rulesForCreation(null));
         $this->assertNull($id->rulesForUpdate(null, new \stdClass()));
     }
 
@@ -70,7 +71,7 @@ class IdTest extends TestCase
         $id = ID::make()->clientIds()->nullable();
 
         $this->assertInstanceOf(IsValidated::class, $id);
-        $this->assertSame(['nullable', 'regex:/^[0-9]+$/iD'], $id->rulesForCreation(null));
+        $this->assertEquals(['nullable', new ClientId($id)], $id->rulesForCreation(null));
         $this->assertNull($id->rulesForUpdate(null, new \stdClass()));
     }
 

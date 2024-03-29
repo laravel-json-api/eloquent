@@ -19,6 +19,7 @@ use LaravelJsonApi\Core\Schema\Concerns\MatchesIds;
 use LaravelJsonApi\Core\Schema\Concerns\Sortable;
 use LaravelJsonApi\Eloquent\Contracts\Fillable;
 use LaravelJsonApi\Validation\Fields\IsValidated;
+use LaravelJsonApi\Validation\Rules\ClientId;
 
 class ID implements IDContract, Fillable, IsValidated
 {
@@ -126,7 +127,7 @@ class ID implements IDContract, Fillable, IsValidated
     public function rulesForCreation(?Request $request): array|null
     {
         if ($this->acceptsClientIds()) {
-            return [$this->validationModifier, "regex:/^{$this->pattern}$/{$this->flags}"];
+            return [$this->validationModifier, new ClientId($this)];
         }
 
         return null;
