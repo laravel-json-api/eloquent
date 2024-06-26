@@ -90,7 +90,7 @@ class QueryToOne implements QueryOneBuilder
     {
         $name = $this->relation->relationName();
 
-        assert(method_exists($this->model, $name), sprintf(
+        assert(method_exists($this->model, $name)  || $this->model->relationResolver($this->model::class, $name), sprintf(
             'Expecting method %s to exist on model %s',
             $name,
             $this->model::class,

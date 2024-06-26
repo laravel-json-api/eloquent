@@ -150,7 +150,7 @@ class BelongsToMany extends ToMany implements FillableToMany
     {
         $name = $this->relationName();
 
-        assert(method_exists($model, $name), sprintf(
+        assert(method_exists($model, $name) || $model->relationResolver($model::class, $name), sprintf(
             'Expecting method %s to exist on model %s.',
             $name,
             $model::class,
