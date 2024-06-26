@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file. This projec
 
 ## Unreleased
 
+## [4.1.0] - 2024-06-26
+
+### Added
+
+- [#36](https://github.com/laravel-json-api/eloquent/pull/36) Support Eloquent dynamic relationships.
+
 ## [4.0.0] - 2024-03-12
 
 ### Changed
