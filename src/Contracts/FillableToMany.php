@@ -14,10 +14,10 @@ namespace LaravelJsonApi\Eloquent\Contracts;
 use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Database\Eloquent\Model;
 use LaravelJsonApi\Eloquent\Polymorphism\MorphMany;
+use LaravelJsonApi\Validation\Fields\IsValidated;
 
-interface FillableToMany extends IsReadOnly
+interface FillableToMany extends IsReadOnly, IsValidated
 {
-
     /**
      * Fill the model with the value of the JSON:API to-many relation.
      *

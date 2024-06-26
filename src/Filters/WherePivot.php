@@ -15,7 +15,6 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class WherePivot extends Where
 {
-
     /**
      * @inheritDoc
      */
@@ -40,5 +39,4 @@ class WherePivot extends Where
             $this->deserialize($value)
         );
     }
-
 }

@@ -35,7 +35,6 @@ use function sprintf;
 
 abstract class Relation implements RelationContract, SchemaAwareContract, SerializableContract
 {
-
     use EagerLoadable;
     use Filterable;
     use Hideable;

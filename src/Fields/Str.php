@@ -11,8 +11,12 @@ declare(strict_types=1);
 
 namespace LaravelJsonApi\Eloquent\Fields;
 
-class Str extends Attribute
+use LaravelJsonApi\Validation\Fields\IsValidated;
+use LaravelJsonApi\Validation\Fields\ValidatedWithRules;
+
+class Str extends Attribute implements IsValidated
 {
+    use ValidatedWithRules;
 
     /**
      * Create a string attribute.
@@ -24,6 +28,14 @@ class Str extends Attribute
     public static function make(string $fieldName, string $column = null): self
     {
         return new self($fieldName, $column);
+    }
+
+    /**
+     * @return array
+     */
+    protected function defaultRules(): array
+    {
+        return ['string'];
     }
 
     /**

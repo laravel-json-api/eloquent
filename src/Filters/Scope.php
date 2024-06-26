@@ -13,12 +13,16 @@ namespace LaravelJsonApi\Eloquent\Filters;
 
 use LaravelJsonApi\Core\Support\Str;
 use LaravelJsonApi\Eloquent\Contracts\Filter;
+use LaravelJsonApi\Eloquent\Filters\Concerns\DeserializesValue;
+use LaravelJsonApi\Eloquent\Filters\Concerns\IsSingular;
+use LaravelJsonApi\Validation\Filters\ValidatedWithRules;
+use LaravelJsonApi\Validation\Rules\JsonBoolean;
 
 class Scope implements Filter
 {
-
-    use Concerns\DeserializesValue;
-    use Concerns\IsSingular;
+    use DeserializesValue;
+    use IsSingular;
+    use ValidatedWithRules;
 
     /**
      * @var string
@@ -70,6 +74,18 @@ class Scope implements Filter
         return $query->{$this->scope}(
             $this->deserialize($value)
         );
+    }
+
+    /**
+     * @return array
+     */
+    protected function defaultRules(): array
+    {
+        if ($this->asBool) {
+            return [(new JsonBoolean())->asString()];
+        }
+
+        return [];
     }
 
     /**

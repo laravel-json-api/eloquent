@@ -11,17 +11,21 @@ declare(strict_types=1);
 
 namespace LaravelJsonApi\Eloquent\Filters;
 
+use Closure;
 use Illuminate\Database\Eloquent\Model;
 use LaravelJsonApi\Contracts\Schema\ID;
 use LaravelJsonApi\Contracts\Schema\Schema;
 use LaravelJsonApi\Core\Schema\IdParser;
 use LaravelJsonApi\Eloquent\Contracts\Filter;
+use LaravelJsonApi\Eloquent\Filters\Concerns\HasDelimiter;
 use LaravelJsonApi\Eloquent\Schema as EloquentSchema;
+use LaravelJsonApi\Validation\Filters\ValidatedWithRules;
+use LaravelJsonApi\Validation\Rules\ListOfIds;
 
 class WhereIdIn implements Filter
 {
-
-    use Concerns\HasDelimiter;
+    use HasDelimiter;
+    use ValidatedWithRules;
 
     /**
      * @var ID
@@ -143,4 +147,11 @@ class WhereIdIn implements Filter
         );
     }
 
+    /**
+     * @return array<int, mixed>
+     */
+    protected function defaultRules(): array
+    {
+        return [new ListOfIds($this->field, $this->delimiter)];
+    }
 }

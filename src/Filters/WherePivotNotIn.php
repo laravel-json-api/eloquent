@@ -15,7 +15,6 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class WherePivotNotIn extends WhereIn
 {
-
     /**
      * @inheritDoc
      */

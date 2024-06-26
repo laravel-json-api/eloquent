@@ -11,12 +11,17 @@ declare(strict_types=1);
 
 namespace LaravelJsonApi\Eloquent\Filters;
 
+use Illuminate\Http\Request;
+use LaravelJsonApi\Core\Query\Input\Query;
 use LaravelJsonApi\Eloquent\Contracts\Filter;
+use LaravelJsonApi\Validation\Filters\Validated;
+use LaravelJsonApi\Validation\Rules\JsonBoolean;
 use LogicException;
 use function filter_var;
 
 class WithTrashed implements Filter
 {
+    use Validated;
 
     /**
      * @var string
@@ -75,13 +80,19 @@ class WithTrashed implements Filter
     }
 
     /**
-     * @param $value
+     * @inheritDoc
+     */
+    public function validationRules(?Request $request, Query $query): array
+    {
+        return [(new JsonBoolean())->asString()];
+    }
+
+    /**
+     * @param mixed $value
      * @return bool
      */
-    protected function deserialize($value): bool
+    protected function deserialize(mixed $value): bool
     {
         return filter_var($value, FILTER_VALIDATE_BOOL);
     }
-
-
 }

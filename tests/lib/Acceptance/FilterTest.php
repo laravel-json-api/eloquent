@@ -33,10 +33,12 @@ class FilterTest extends TestCase
     {
         parent::setUp();
 
+        $static = self::$staticSchemas->schemaFor(PostSchema::class);
+
         $this->posts = $this
             ->getMockBuilder(PostSchema::class)
             ->onlyMethods(['isSingular'])
-            ->setConstructorArgs(['server' => $this->server()])
+            ->setConstructorArgs(['server' => $this->server(), 'static' => $static])
             ->getMock();
     }
 

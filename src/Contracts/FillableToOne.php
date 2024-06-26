@@ -12,10 +12,10 @@ declare(strict_types=1);
 namespace LaravelJsonApi\Eloquent\Contracts;
 
 use Illuminate\Database\Eloquent\Model;
+use LaravelJsonApi\Validation\Fields\IsValidated;
 
-interface FillableToOne extends IsReadOnly
+interface FillableToOne extends IsReadOnly, IsValidated
 {
-
     /**
      * Does the model need to exist in the database before the relation is filled?
      *

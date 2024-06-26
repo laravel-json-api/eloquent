@@ -15,6 +15,9 @@ use Illuminate\Http\Request;
 use LaravelJsonApi\Contracts\Schema\Filter;
 use LaravelJsonApi\Eloquent\Fields\Relations\HasMany;
 use LaravelJsonApi\Eloquent\Tests\Integration\TestCase;
+use LaravelJsonApi\Validation\Fields\IsValidated;
+use LaravelJsonApi\Validation\Rules\HasMany as HasManyRule;
+use LaravelJsonApi\Validation\Rules\JsonArray;
 
 class HasManyTest extends TestCase
 {
@@ -66,6 +69,26 @@ class HasManyTest extends TestCase
         $this->assertTrue($relation->isValidated());
         $this->assertSame($relation, $relation->notValidated());
         $this->assertFalse($relation->isValidated());
+    }
+
+
+    public function testValidationRules(): void
+    {
+        $relation = HasMany::make('tags')
+            ->creationRules(['*.type' => 'foo'])
+            ->updateRules(['*.type' => 'bar']);
+
+        $this->assertInstanceOf(IsValidated::class, $relation);
+        $this->assertEquals([
+            '.' => [new JsonArray(), new HasManyRule($relation)],
+            '*' => ['array:type,id'],
+            '*.type' => ['foo'],
+        ], $relation->rulesForCreation(null));
+        $this->assertEquals([
+            '.' => [new JsonArray(), new HasManyRule($relation)],
+            '*' => ['array:type,id'],
+            '*.type' => ['bar'],
+        ], $relation->rulesForUpdate(null, new \stdClass()));
     }
 
     public function testUriName(): void

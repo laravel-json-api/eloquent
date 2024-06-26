@@ -33,7 +33,6 @@ use function sprintf;
 
 abstract class Schema extends BaseSchema implements CountableSchema
 {
-
     /**
      * The relationships that should always be eager loaded.
      *
@@ -84,6 +83,14 @@ abstract class Schema extends BaseSchema implements CountableSchema
             $this->driver(),
             $this->parser(),
         );
+    }
+
+    /**
+     * @return class-string<Model>
+     */
+    public function model(): string
+    {
+        return $this->static->getModel();
     }
 
     /**
@@ -354,5 +361,4 @@ abstract class Schema extends BaseSchema implements CountableSchema
     {
         return new StandardDriver($this->newInstance());
     }
-
 }

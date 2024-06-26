@@ -12,6 +12,7 @@ declare(strict_types=1);
 namespace App\Schemas;
 
 use App\Models\Mechanic;
+use LaravelJsonApi\Core\Schema\Attributes\Model;
 use LaravelJsonApi\Eloquent\Contracts\Paginator;
 use LaravelJsonApi\Eloquent\Fields\DateTime;
 use LaravelJsonApi\Eloquent\Fields\ID;
@@ -20,16 +21,9 @@ use LaravelJsonApi\Eloquent\Fields\Str;
 use LaravelJsonApi\Eloquent\Filters\WhereIdIn;
 use LaravelJsonApi\Eloquent\Schema;
 
+#[Model(Mechanic::class)]
 class MechanicSchema extends Schema
 {
-
-    /**
-     * The model the schema corresponds to.
-     *
-     * @var string
-     */
-    public static string $model = Mechanic::class;
-
     /**
      * @inheritDoc
      */

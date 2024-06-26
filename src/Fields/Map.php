@@ -12,6 +12,7 @@ declare(strict_types=1);
 namespace LaravelJsonApi\Eloquent\Fields;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
 use InvalidArgumentException;
 use LaravelJsonApi\Contracts\Resources\Serializer\Attribute as SerializableContract;
@@ -23,6 +24,8 @@ use LaravelJsonApi\Eloquent\Contracts\Selectable;
 use LaravelJsonApi\Eloquent\Fields\Concerns\Hideable;
 use LaravelJsonApi\Eloquent\Fields\Concerns\IsReadOnly;
 use LaravelJsonApi\Eloquent\Fields\Concerns\OnRelated;
+use LaravelJsonApi\Validation\Fields\FieldRuleMap;
+use LaravelJsonApi\Validation\Fields\IsValidated;
 use LogicException;
 
 class Map implements
@@ -30,9 +33,9 @@ class Map implements
     EagerLoadableField,
     Fillable,
     Selectable,
-    SerializableContract
+    SerializableContract,
+    IsValidated
 {
-
     use Hideable;
     use OnRelated;
     use IsReadOnly;
@@ -213,6 +216,24 @@ class Map implements
         ksort($values);
 
         return $values ?: null;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function rulesForCreation(?Request $request): ?array
+    {
+        return FieldRuleMap::make($this->map)
+            ->creation($request);
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function rulesForUpdate(?Request $request, object $model): ?array
+    {
+        return FieldRuleMap::make($this->map)
+            ->update($request, $model);
     }
 
     /**

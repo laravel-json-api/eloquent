@@ -13,7 +13,6 @@ namespace LaravelJsonApi\Eloquent\Filters;
 
 class WhereIdNotIn extends WhereIdIn
 {
-
     /**
      * @inheritDoc
      */

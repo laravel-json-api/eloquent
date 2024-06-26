@@ -15,7 +15,6 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class WherePivotIn extends WhereIn
 {
-
     /**
      * @inheritDoc
      */

@@ -17,6 +17,8 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use LaravelJsonApi\Eloquent\Fields\DateTime;
 use LaravelJsonApi\Eloquent\Tests\Integration\TestCase;
+use LaravelJsonApi\Validation\Fields\IsValidated;
+use LaravelJsonApi\Validation\Rules\DateTimeIso8601;
 
 class DateTimeTest extends TestCase
 {
@@ -56,6 +58,15 @@ class DateTimeTest extends TestCase
         $this->assertSame('published', $attr->name());
         $this->assertSame('published_at', $attr->column());
         $this->assertSame(['published_at'], $attr->columnsForField());
+    }
+
+    public function testIsValidated(): void
+    {
+        $attr = DateTime::make('publishedAt');
+
+        $this->assertInstanceOf(IsValidated::class, $attr);
+        $this->assertEquals([new DateTimeIso8601()], $attr->rulesForCreation(null));
+        $this->assertEquals([new DateTimeIso8601()], $attr->rulesForUpdate(null, new \stdClass()));
     }
 
     public function testNotSparseField(): void

@@ -16,9 +16,13 @@ use Illuminate\Database\Eloquent\Relations\HasOne as EloquentHasOne;
 use Illuminate\Database\Eloquent\Relations\MorphOne as EloquentMorphOne;
 use LaravelJsonApi\Eloquent\Contracts\FillableToOne;
 use LaravelJsonApi\Eloquent\Fields\Concerns\IsReadOnly;
+use LaravelJsonApi\Validation\Fields\ValidatedWithArrayKeys;
+use LaravelJsonApi\Validation\Rules\HasOne as HasOneRule;
 
 class HasOne extends ToOne implements FillableToOne
 {
+    use ValidatedWithArrayKeys;
+
     /** @var int */
     private const KEEP_DETACHED_MODEL = 0;
 
@@ -133,6 +137,14 @@ class HasOne extends ToOne implements FillableToOne
         $this->fill($model, $identifier);
 
         return $model->getRelation($this->relationName());
+    }
+
+    /**
+     * @return array
+     */
+    protected function defaultRules(): array
+    {
+        return ['.' => ['array:type,id', new HasOneRule($this)]];
     }
 
     /**

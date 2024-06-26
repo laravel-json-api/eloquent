@@ -16,11 +16,15 @@ use function filter_var;
 
 trait DeserializesValue
 {
-
     /**
      * @var Closure|null
      */
     private ?Closure $deserializer = null;
+
+    /**
+     * @var bool
+     */
+    private bool $asBool = false;
 
     /**
      * Use the supplied callback to deserialize the value.
@@ -28,9 +32,10 @@ trait DeserializesValue
      * @param Closure $deserializer
      * @return $this
      */
-    public function deserializeUsing(Closure $deserializer): self
+    public function deserializeUsing(Closure $deserializer): static
     {
         $this->deserializer = $deserializer;
+        $this->asBool = false;
 
         return $this;
     }
@@ -40,11 +45,9 @@ trait DeserializesValue
      *
      * @return $this
      */
-    public function asBoolean(): self
+    public function asBoolean(): static
     {
-        $this->deserializeUsing(
-            static fn($value) => filter_var($value, FILTER_VALIDATE_BOOL)
-        );
+        $this->asBool = true;
 
         return $this;
     }
@@ -55,8 +58,12 @@ trait DeserializesValue
      * @param mixed $value
      * @return mixed
      */
-    protected function deserialize($value)
+    protected function deserialize(mixed $value): mixed
     {
+        if (true === $this->asBool) {
+            return filter_var($value, FILTER_VALIDATE_BOOL);
+        }
+
         if ($this->deserializer) {
             return ($this->deserializer)($value);
         }

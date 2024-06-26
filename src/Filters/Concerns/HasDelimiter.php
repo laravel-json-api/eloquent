@@ -19,7 +19,6 @@ use function is_string;
 
 trait HasDelimiter
 {
-
     /**
      * @var string|null
      */
@@ -28,14 +27,12 @@ trait HasDelimiter
     /**
      * If the filter accepts a string value, the delimiter to use to extract values.
      *
-     * @param string $delimiter
+     * @param non-empty-string $delimiter
      * @return $this
      */
-    public function delimiter(string $delimiter): self
+    public function delimiter(string $delimiter): static
     {
-        if (empty($delimiter)) {
-            throw new InvalidArgumentException('Expecting a non-empty string delimiter.');
-        }
+        assert(!empty($delimiter), 'Expecting a non-empty string delimiter.');
 
         $this->delimiter = $delimiter;
 
@@ -45,10 +42,10 @@ trait HasDelimiter
     /**
      * Convert the provided value to an array.
      *
-     * @param string|array|null $value
+     * @param mixed $value
      * @return array
      */
-    protected function toArray($value): array
+    protected function toArray(mixed $value): array
     {
         if ($this->delimiter && is_string($value)) {
             return ('' !== $value) ? explode($this->delimiter, $value) : [];
