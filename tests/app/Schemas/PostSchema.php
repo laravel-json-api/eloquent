@@ -24,6 +24,8 @@ use LaravelJsonApi\Eloquent\Fields\SoftDelete;
 use LaravelJsonApi\Eloquent\Fields\Str;
 use LaravelJsonApi\Eloquent\Filters\OnlyTrashed;
 use LaravelJsonApi\Eloquent\Filters\Where;
+use LaravelJsonApi\Eloquent\Filters\WhereAll;
+use LaravelJsonApi\Eloquent\Filters\WhereAny;
 use LaravelJsonApi\Eloquent\Filters\WhereDoesntHave;
 use LaravelJsonApi\Eloquent\Filters\WhereHas;
 use LaravelJsonApi\Eloquent\Filters\WhereIdIn;
@@ -94,6 +96,8 @@ class PostSchema extends Schema
             Where::make('slug')->singular(),
             WhereIn::make('slugs')->delimiter(','),
             WithTrashed::make('withTrashed'),
+            WhereAll::make('all', ['title','content'])->withColumn('slug')->using('like'),
+            WhereAny::make('any', ['title','content'])->withColumn('slug')->using('like'),
         ];
     }
 
