@@ -52,7 +52,7 @@ class Video extends Model
     protected static function booting()
     {
         self::creating(static function (Video $video) {
-            $video->uuid = $video->uuid ?: Str::uuid()->toString();
+            $video->uuid = $video->uuid ?: Str::orderedUuid()->toString();
         });
     }
 

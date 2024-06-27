@@ -411,17 +411,14 @@ class CursorPaginationTest extends TestCase
         ]);
 
         $second = Video::factory()->create([
-            'uuid' => 'f3b3bea3-dca0-4ef9-b06c-43583a7e6118',
             'created_at' => Carbon::now()->subHour(),
         ]);
 
         $third = Video::factory()->create([
-            'uuid' => 'd215f35c-feb7-4cc5-9631-61742f00d0b2',
             'created_at' => $second->created_at,
         ]);
 
         $fourth = Video::factory()->create([
-            'uuid' => 'cbe17134-d7e2-4509-ba2c-3b3b5e3b2cbe',
             'created_at' => $second->created_at,
         ]);
 
@@ -429,13 +426,13 @@ class CursorPaginationTest extends TestCase
             ->sort('createdAt')
             ->paginate(['limit' => '3']);
 
-        $this->assertPage([$first, $second, $third], $page);
+        $this->assertPage([$first, $fourth, $third], $page);
 
         $page = $this->videos->repository()->queryAll()
             ->sort('-createdAt')
             ->paginate(['limit' => '3']);
 
-        $this->assertPage([$second, $third, $fourth], $page);
+        $this->assertPage([$fourth, $third, $second], $page);
     }
 
     public function testMultipleSorts(): void
@@ -447,19 +444,16 @@ class CursorPaginationTest extends TestCase
 
         $second = Video::factory()->create([
             'title' => 'a',
-            'uuid' => 'f3b3bea3-dca0-4ef9-b06c-43583a7e6118',
             'created_at' => Carbon::now()->subHour(),
         ]);
 
         $third = Video::factory()->create([
             'title' => 'b',
-            'uuid' => 'd215f35c-feb7-4cc5-9631-61742f00d0b2',
             'created_at' => $second->created_at,
         ]);
 
         $fourth = Video::factory()->create([
             'title' => 'a',
-            'uuid' => 'cbe17134-d7e2-4509-ba2c-3b3b5e3b2cbe',
             'created_at' => $second->created_at,
         ]);
 
@@ -467,13 +461,13 @@ class CursorPaginationTest extends TestCase
             ->sort('title,createdAt')
             ->paginate(['limit' => '3']);
 
-        $this->assertPage([$second, $fourth, $first], $page);
+        $this->assertPage([$fourth, $second, $first], $page);
 
         $page = $this->videos->repository()->queryAll()
             ->sort('title,-createdAt')
             ->paginate(['limit' => '3']);
 
-        $this->assertPage([$second, $fourth, $third], $page);
+        $this->assertPage([$fourth, $second, $third], $page);
     }
 
     public function testWithoutKeySort(): void
@@ -486,17 +480,14 @@ class CursorPaginationTest extends TestCase
 
         $second = Video::factory()->create([
             'title' => 'a',
-            'uuid' => 'f3b3bea3-dca0-4ef9-b06c-43583a7e6118',
         ]);
 
         $third = Video::factory()->create([
             'title' => 'c',
-            'uuid' => 'd215f35c-feb7-4cc5-9631-61742f00d0b2',
         ]);
 
         $fourth = Video::factory()->create([
             'title' => 'b',
-            'uuid' => 'cbe17134-d7e2-4509-ba2c-3b3b5e3b2cbe',
         ]);
 
         $page = $this->videos->repository()->queryAll()
