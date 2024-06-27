@@ -45,7 +45,7 @@ class VideoSchema extends Schema
             BelongsToMany::make('tags')
                 ->fields(new ApprovedPivot())
                 ->canCount(),
-            Str::make('title'),
+            Str::make('title')->sortable(),
             DateTime::make('updatedAt')->sortable()->readOnly(),
             Str::make('url'),
         ];
