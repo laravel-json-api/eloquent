@@ -17,7 +17,7 @@ class CursorPaginator implements \IteratorAggregate, \Countable
     /**
      * CursorPaginator constructor.
      */
-    public function __construct(private readonly LaravelCursorPaginator $laravelPaginator, private readonly Cursor $cursor, private readonly int|null $total = null)
+    public function __construct(private readonly CursorParser $parser, private readonly LaravelCursorPaginator $laravelPaginator, private readonly Cursor $cursor, private readonly int|null $total = null)
     {
         $this->items = Collection::make($this->laravelPaginator->items());
     }
@@ -34,7 +34,7 @@ class CursorPaginator implements \IteratorAggregate, \Countable
             return null;
         }
 
-        return $this->laravelPaginator->getCursorForItem($this->items->first(), false)->encode();
+        return $this->parser->encode($this->laravelPaginator->getCursorForItem($this->items->first(), false));
     }
 
     public function lastItem(): ?string
@@ -43,7 +43,7 @@ class CursorPaginator implements \IteratorAggregate, \Countable
             return null;
         }
 
-        return $this->laravelPaginator->getCursorForItem($this->items->last())->encode();
+        return $this->parser->encode($this->laravelPaginator->getCursorForItem($this->items->last()));
     }
 
     public function hasMorePages(): bool

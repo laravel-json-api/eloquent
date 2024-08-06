@@ -206,7 +206,6 @@ class CursorPagination implements Paginator
 
         $paginator = $this
             ->query($query)
-            ->withIdField($this->id)
             ->withDirection($this->direction)
             ->withKeySort($this->keySort)
             ->withDefaultPerPage($this->defaultPerPage)
@@ -227,7 +226,7 @@ class CursorPagination implements Paginator
      */
     private function query(Builder|Relation $query): CursorBuilder
     {
-        return new CursorBuilder($query, $this->primaryKey);
+        return new CursorBuilder($query, $this->id, $this->primaryKey);
     }
 
     /**

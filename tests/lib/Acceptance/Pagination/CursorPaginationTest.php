@@ -25,6 +25,7 @@ use LaravelJsonApi\Core\Support\Arr;
 use LaravelJsonApi\Eloquent\Fields\ID;
 use LaravelJsonApi\Eloquent\Pagination\CursorPagination;
 use LaravelJsonApi\Eloquent\Tests\Acceptance\TestCase;
+use LaravelJsonApi\Eloquent\Tests\EncodedId;
 use PHPUnit\Framework\MockObject\MockObject;
 
 class CursorPaginationTest extends TestCase
@@ -34,6 +35,11 @@ class CursorPaginationTest extends TestCase
      * @var CursorPagination
      */
     private CursorPagination $paginator;
+
+    /**
+     * @var EncodedId|null
+     */
+    private ?EncodedId $encodedId = null;
 
     /**
      * @var PostSchema|MockObject
@@ -66,8 +72,8 @@ class CursorPaginationTest extends TestCase
             ->setConstructorArgs(['server' => $this->server()])
             ->getMock();
 
-        $this->posts->method('pagination')->willReturn($this->paginator);
-        $this->videos->method('pagination')->willReturn($this->paginator);
+        $this->posts->method('pagination')->willReturnCallback(fn () => $this->paginator);
+        $this->videos->method('pagination')->willReturnCallback(fn () => $this->paginator);
 
         $this->app->instance(PostSchema::class, $this->posts);
         $this->app->instance(VideoSchema::class, $this->videos);
@@ -85,10 +91,16 @@ class CursorPaginationTest extends TestCase
         $this->posts->method('defaultPagination')->willReturn(['limit' => 10]);
 
         $meta = [
-            'from' => 'eyJpZCI6NCwiX3BvaW50c1RvTmV4dEl0ZW1zIjpmYWxzZX0',
+            'from' => $this->encodeCursor([
+                "id" => "4",
+                "_pointsToNextItems" => false
+            ]),
             'hasMore' => false,
             'perPage' => 10,
-            'to' => 'eyJpZCI6MSwiX3BvaW50c1RvTmV4dEl0ZW1zIjp0cnVlfQ',
+            'to' =>  $this->encodeCursor([
+                "id" => "1",
+                "_pointsToNextItems" => true
+            ]),
         ];
 
         $links = [
@@ -106,7 +118,6 @@ class CursorPaginationTest extends TestCase
             ->repository()
             ->queryAll()
             ->firstOrPaginate(null);
-
         $this->assertInstanceOf(Page::class, $page);
         $this->assertSame(['page' => $meta], $page->meta());
         $this->assertSame($links, $page->links()->toArray());
@@ -220,10 +231,16 @@ class CursorPaginationTest extends TestCase
         $posts = Post::factory()->count(4)->create();
 
         $meta = [
-            'from' => 'eyJpZCI6NCwiX3BvaW50c1RvTmV4dEl0ZW1zIjpmYWxzZX0',
+            'from' => $this->encodeCursor([
+                "id" => "4",
+                "_pointsToNextItems" => false
+            ]),
             'hasMore' => true,
             'perPage' => 3,
-            'to' => 'eyJpZCI6MiwiX3BvaW50c1RvTmV4dEl0ZW1zIjp0cnVlfQ',
+            'to' => $this->encodeCursor([
+                "id" => "2",
+                "_pointsToNextItems" => true
+            ])
         ];
 
         $links = [
@@ -234,7 +251,10 @@ class CursorPaginationTest extends TestCase
             ],
             'next' => [
                 'href' => 'http://localhost/api/v1/posts?' . Arr::query([
-                        'page' => ['after' => 'eyJpZCI6MiwiX3BvaW50c1RvTmV4dEl0ZW1zIjp0cnVlfQ', 'limit' => '3']
+                        'page' => ['after' => $this->encodeCursor([
+                            "id" => "2",
+                            "_pointsToNextItems" => true
+                        ]), 'limit' => '3']
                     ]),
             ]
         ];
@@ -253,10 +273,16 @@ class CursorPaginationTest extends TestCase
         $this->paginator->withCamelCaseMeta();
 
         $meta = [
-            'from' => 'eyJpZCI6MSwiX3BvaW50c1RvTmV4dEl0ZW1zIjpmYWxzZX0',
+            'from' => $this->encodeCursor([
+                "id" => "1",
+                "_pointsToNextItems" => false
+            ]),
             'hasMore' => false,
             'perPage' => 3,
-            'to' => 'eyJpZCI6MSwiX3BvaW50c1RvTmV4dEl0ZW1zIjp0cnVlfQ',
+            'to' => $this->encodeCursor([
+                "id" => "1",
+                "_pointsToNextItems" => true
+            ])
         ];
 
         $links = [
@@ -267,16 +293,77 @@ class CursorPaginationTest extends TestCase
             ],
             'prev' => [
                 'href' => 'http://localhost/api/v1/posts?' . Arr::query([
-                        'page' => ['before' => 'eyJpZCI6MSwiX3BvaW50c1RvTmV4dEl0ZW1zIjpmYWxzZX0', 'limit' => '3']
+                        'page' => ['before' => $this->encodeCursor([
+                            "id" => "1",
+                            "_pointsToNextItems" => false
+                        ]), 'limit' => '3']
                     ]),
             ],
         ];
 
-        $page = $this->posts->repository()->queryAll()->paginate(['after' => 'eyJpZCI6MiwiX3BvaW50c1RvTmV4dEl0ZW1zIjp0cnVlfQ', 'limit' => '3']);
+        $page = $this->posts->repository()->queryAll()->paginate(['after' => $this->encodeCursor([
+            "id" => "2",
+            "_pointsToNextItems" => true
+        ]), 'limit' => '3']);
 
         $this->assertSame(['page' => $meta], $page->meta());
         $this->assertSame($links, $page->links()->toArray());
         $this->assertPage([$posts->first()], $page);
+    }
+
+    public function testAfterWithIdEncoding(): void
+    {
+        $this->withIdEncoding();
+
+        $posts = Post::factory()->count(10)->create()->values();
+
+        $expected = [$posts[6], $posts[5], $posts[4]];
+
+        $meta = [
+            'from' => $this->encodeCursor([
+                "id" => 'TEST-7',
+                "_pointsToNextItems" => false
+            ]),
+            'hasMore' => true,
+            'perPage' => 3,
+            'to' => $this->encodeCursor([
+                "id" => 'TEST-5',
+                "_pointsToNextItems" => true
+            ]),
+        ];
+
+        $links = [
+            'first' => [
+                'href' => 'http://localhost/api/v1/posts?' . Arr::query([
+                        'page' => ['limit' => '3']
+                    ]),
+            ],
+            'next' =>  [
+                'href' => 'http://localhost/api/v1/posts?' . Arr::query([
+                        'page' => ['after' => $this->encodeCursor([
+                            "id" => "TEST-5",
+                            "_pointsToNextItems" => true
+                        ]),'limit' => '3']
+                    ]),],
+            'prev' =>  [
+                'href' => 'http://localhost/api/v1/posts?' . Arr::query([
+                        'page' => ['before' => $this->encodeCursor([
+                            "id" => "TEST-7",
+                            "_pointsToNextItems" => false
+                        ]),'limit' => '3']
+                    ]),],
+        ];
+
+        $page = $this->posts->repository()->queryAll()->paginate([
+            'after' => $this->encodeCursor([
+                "id" => 'TEST-8',
+                "_pointsToNextItems" => true
+            ]),
+            'limit' => 3,
+        ]);
+        $this->assertSame(['page' => $meta], $page->meta());
+        $this->assertSame($links, $page->links()->toArray());
+        $this->assertPage($expected, $page);
     }
 
     public function testBefore(): void
@@ -286,10 +373,16 @@ class CursorPaginationTest extends TestCase
         $this->paginator->withCamelCaseMeta();
 
         $meta = [
-            'from' => 'eyJpZCI6NCwiX3BvaW50c1RvTmV4dEl0ZW1zIjpmYWxzZX0',
+            'from' => $this->encodeCursor([
+                "id" => "4",
+                "_pointsToNextItems" => false
+            ]),
             'hasMore' => true,
             'perPage' => 3,
-            'to' => 'eyJpZCI6MiwiX3BvaW50c1RvTmV4dEl0ZW1zIjp0cnVlfQ',
+            'to' => $this->encodeCursor([
+                "id" => "2",
+                "_pointsToNextItems" => true
+            ]),
         ];
 
         $links = [
@@ -300,16 +393,70 @@ class CursorPaginationTest extends TestCase
             ],
             'prev' => [
                 'href' => 'http://localhost/api/v1/posts?' . Arr::query([
-                        'page' => ['before' => 'eyJpZCI6NCwiX3BvaW50c1RvTmV4dEl0ZW1zIjpmYWxzZX0', 'limit' => '3']
+                        'page' => ['before' => $this->encodeCursor([
+                            "id" => "4",
+                            "_pointsToNextItems" => false
+                        ]), 'limit' => '3']
                     ]),
             ],
         ];
 
-        $page = $this->posts->repository()->queryAll()->paginate(['before' => 'eyJpZCI6MSwiX3BvaW50c1RvTmV4dEl0ZW1zIjpmYWxzZX0', 'limit' => '3']);
+        $page = $this->posts->repository()->queryAll()->paginate(['before' => $this->encodeCursor([
+            "id" => "1",
+            "_pointsToNextItems" => false
+        ]), 'limit' => '3']);
 
         $this->assertSame(['page' => $meta], $page->meta());
         $this->assertSame($links, $page->links()->toArray());
         $this->assertPage($posts->reverse()->take(3), $page);
+    }
+
+    public function testBeforeWithIdEncoding(): void
+    {
+        $this->withIdEncoding();
+
+        $posts = Post::factory()->count(10)->create()->values();
+
+        $expected = [$posts[6], $posts[5], $posts[4]];
+
+        $meta = [
+            'from' => $this->encodeCursor([
+                "id" => 'TEST-7',
+                "_pointsToNextItems" => false
+            ]),
+            'hasMore' => true,
+            'perPage' => 3,
+            'to' => $this->encodeCursor([
+                "id" => 'TEST-5',
+                "_pointsToNextItems" => true
+            ]),
+        ];
+
+        $links = [
+            'first' => [
+                'href' => 'http://localhost/api/v1/posts?' . Arr::query([
+                        'page' => ['limit' => '3']
+                    ]),
+            ],
+            'prev' =>  [
+                'href' => 'http://localhost/api/v1/posts?' . Arr::query([
+                        'page' => ['before' => $this->encodeCursor([
+                            "id" => "TEST-7",
+                            "_pointsToNextItems" => false
+                        ]),'limit' => '3']
+                    ]),],
+        ];
+
+        $page = $this->posts->repository()->queryAll()->paginate([
+            'before' => $this->encodeCursor([
+              "id" => 'TEST-4',
+              "_pointsToNextItems" => false
+            ]),
+            'limit' => 3,
+        ]);
+        $this->assertSame(['page' => $meta], $page->meta());
+        $this->assertSame($links, $page->links()->toArray());
+        $this->assertPage($expected, $page);
     }
 
     /**
@@ -321,10 +468,16 @@ class CursorPaginationTest extends TestCase
         $posts = Post::factory()->count($expected + 1)->create();
 
         $meta = [
-            'from' => 'eyJpZCI6MTYsIl9wb2ludHNUb05leHRJdGVtcyI6ZmFsc2V9',
+            'from' => $this->encodeCursor([
+                "id" => (string) ($expected + 1),
+                "_pointsToNextItems" => false
+            ]),
             'hasMore' => true,
             'perPage' => $expected,
-            'to' => 'eyJpZCI6MiwiX3BvaW50c1RvTmV4dEl0ZW1zIjp0cnVlfQ',
+            'to' => $this->encodeCursor([
+                "id" => '2',
+                "_pointsToNextItems" => true
+            ]),
 
         ];
 
@@ -336,7 +489,10 @@ class CursorPaginationTest extends TestCase
             ],
             'next' => [
                 'href' => 'http://localhost/api/v1/posts?' . Arr::query([
-                    'page' => ['after' => 'eyJpZCI6MiwiX3BvaW50c1RvTmV4dEl0ZW1zIjp0cnVlfQ', 'limit' => $expected]
+                    'page' => ['after' => $this->encodeCursor([
+                        "id" => '2',
+                        "_pointsToNextItems" => true
+                    ]), 'limit' => $expected]
                 ]),
             ],
         ];
@@ -360,10 +516,16 @@ class CursorPaginationTest extends TestCase
         $posts = Post::factory()->count($expected + 1)->create();
 
         $meta = [
-            'from' => 'eyJpZCI6MTEsIl9wb2ludHNUb05leHRJdGVtcyI6ZmFsc2V9',
+            'from' => $this->encodeCursor([
+                "id" => (string) ($expected + 1),
+                "_pointsToNextItems" => false
+            ]),
             'hasMore' => true,
-            'perPage' => 10,
-            'to' => 'eyJpZCI6MiwiX3BvaW50c1RvTmV4dEl0ZW1zIjp0cnVlfQ',
+            'perPage' => $expected,
+            'to' => $this->encodeCursor([
+                "id" => '2',
+                "_pointsToNextItems" => true
+            ]),
         ];
 
         $links = [
@@ -374,7 +536,10 @@ class CursorPaginationTest extends TestCase
             ],
             'next' => [
                 'href' => 'http://localhost/api/v1/posts?' . Arr::query([
-                        'page' => ['after' => 'eyJpZCI6MiwiX3BvaW50c1RvTmV4dEl0ZW1zIjp0cnVlfQ', 'limit' => $expected]
+                        'page' => ['after' => $this->encodeCursor([
+                            "id" => '2',
+                            "_pointsToNextItems" => true
+                        ]), 'limit' => $expected]
                     ]),
             ],
         ];
@@ -391,10 +556,10 @@ class CursorPaginationTest extends TestCase
         $posts = Post::factory()->count(4)->create();
 
         $page = $this->posts->repository()->queryAll()
-            ->sort('-id')
+            ->sort('id')
             ->paginate(['limit' => '3']);
 
-        $this->assertPage($posts->reverse()->take(3), $page);
+        $this->assertPage($posts->take(3), $page);
     }
 
     /**
@@ -521,7 +686,9 @@ class CursorPaginationTest extends TestCase
             ],
             'next' => [
                 'href' => 'http://localhost/api/v1/posts?' . Arr::query([
-                        'page' => ['next' => 'eyJpZCI6MiwiX3BvaW50c1RvTmV4dEl0ZW1zIjp0cnVlfQ', 'perPage' => '3']
+                        'page' => ['next' => $this->encodeCursor(
+                            ["id" => "2", "_pointsToNextItems" => true]
+                        ), 'perPage' => '3']
                     ]),
             ],
         ];
@@ -539,12 +706,16 @@ class CursorPaginationTest extends TestCase
             ],
             'prev' => [
                 'href' => 'http://localhost/api/v1/posts?' . Arr::query([
-                        'page' => ['perPage' => '3', 'prev' => 'eyJpZCI6MSwiX3BvaW50c1RvTmV4dEl0ZW1zIjpmYWxzZX0']
+                        'page' => ['perPage' => '3', 'prev' => $this->encodeCursor(
+                            ["id" => "1", "_pointsToNextItems" => false]
+                        )]
                     ]),
             ],
         ];
 
-        $page = $this->posts->repository()->queryAll()->paginate(['next' => 'eyJpZCI6MiwiX3BvaW50c1RvTmV4dEl0ZW1zIjp0cnVlfQ', 'perPage' => '3']);
+        $page = $this->posts->repository()->queryAll()->paginate(['next' => $this->encodeCursor(
+            ["id" => "2", "_pointsToNextItems" => true]
+        ), 'perPage' => '3']);
 
         $this->assertSame($links, $page->links()->toArray());
     }
@@ -556,10 +727,16 @@ class CursorPaginationTest extends TestCase
         $this->paginator->withMetaKey('paginator')->withSnakeCaseMeta();
 
         $meta = [
-            'from' => 'eyJpZCI6NCwiX3BvaW50c1RvTmV4dEl0ZW1zIjpmYWxzZX0',
+            'from' => $this->encodeCursor([
+                "id" => "4",
+                "_pointsToNextItems" => false
+            ]),
             'has_more' => true,
             'per_page' => 3,
-            'to' => 'eyJpZCI6MiwiX3BvaW50c1RvTmV4dEl0ZW1zIjp0cnVlfQ',
+            'to' => $this->encodeCursor([
+                "id" => "2",
+                "_pointsToNextItems" => true
+            ])
         ];
 
         $page = $this->posts->repository()->queryAll()->paginate(['limit' => '3']);
@@ -575,10 +752,16 @@ class CursorPaginationTest extends TestCase
         $this->paginator->withDashCaseMeta();
 
         $meta = [
-            'from' => 'eyJpZCI6NCwiX3BvaW50c1RvTmV4dEl0ZW1zIjpmYWxzZX0',
+            'from' => $this->encodeCursor([
+                "id" => "4",
+                "_pointsToNextItems" => false
+            ]),
             'has-more' => true,
             'per-page' => 3,
-            'to' => 'eyJpZCI6MiwiX3BvaW50c1RvTmV4dEl0ZW1zIjp0cnVlfQ',
+            'to' => $this->encodeCursor([
+                "id" => "2",
+                "_pointsToNextItems" => true
+            ])
         ];
 
         $page = $this->posts->repository()->queryAll()->paginate(['limit' => '3']);
@@ -594,10 +777,16 @@ class CursorPaginationTest extends TestCase
         $this->paginator->withoutNestedMeta();
 
         $meta = [
-            'from' => 'eyJpZCI6NCwiX3BvaW50c1RvTmV4dEl0ZW1zIjpmYWxzZX0',
+            'from' => $this->encodeCursor([
+                "id" => "4",
+                "_pointsToNextItems" => false
+            ]),
             'hasMore' => true,
             'perPage' => 3,
-            'to' => 'eyJpZCI6MiwiX3BvaW50c1RvTmV4dEl0ZW1zIjp0cnVlfQ',
+            'to' => $this->encodeCursor([
+                "id" => "2",
+                "_pointsToNextItems" => true
+            ])
         ];
 
         $page = $this->posts->repository()->queryAll()->paginate(['limit' => '3']);
@@ -620,7 +809,10 @@ class CursorPaginationTest extends TestCase
             ],
             'next' => [
                 'href' => 'http://localhost/api/v1/posts?' . Arr::query([
-                    'page' => ['after' => 'eyJpZCI6MiwiX3BvaW50c1RvTmV4dEl0ZW1zIjp0cnVlfQ', 'limit' => '3']
+                    'page' => ['after' => $this->encodeCursor([
+                        "id" => "2",
+                        "_pointsToNextItems" => true
+                    ]), 'limit' => '3']
                 ]),
             ],
         ];
@@ -654,7 +846,10 @@ class CursorPaginationTest extends TestCase
                         'fields' => $fields,
                         'filter' => ['slugs' => $slugs],
                         'include' => 'author',
-                        'page' => ['after' => 'eyJpZCI6MiwiX3BvaW50c1RvTmV4dEl0ZW1zIjp0cnVlfQ', 'limit' => '3'],
+                        'page' => ['after' => $this->encodeCursor([
+                            "id" => "2",
+                            "_pointsToNextItems" => true
+                        ]), 'limit' => '3'],
                     ]),
             ],
         ];
@@ -678,10 +873,16 @@ class CursorPaginationTest extends TestCase
         $this->paginator->withTotal();
 
         $meta = [
-            'from' => 'eyJpZCI6NCwiX3BvaW50c1RvTmV4dEl0ZW1zIjpmYWxzZX0',
+            'from' => $this->encodeCursor([
+                "id" => "4",
+                "_pointsToNextItems" => false
+            ]),
             'hasMore' => true,
             'perPage' => 3,
-            'to' => 'eyJpZCI6MiwiX3BvaW50c1RvTmV4dEl0ZW1zIjp0cnVlfQ',
+            'to' => $this->encodeCursor([
+                "id" => "2",
+                "_pointsToNextItems" => true
+            ]),
             'total' => 4,
         ];
 
@@ -698,7 +899,10 @@ class CursorPaginationTest extends TestCase
         $page = $this->posts
             ->repository()
             ->queryAll()
-            ->paginate(['after' => 'eyJpZCI6MiwiX3BvaW50c1RvTmV4dEl0ZW1zIjp0cnVlfQ', 'limit' => 3]);
+            ->paginate(['after' => $this->encodeCursor([
+                "id" => "2",
+                "_pointsToNextItems" => true
+            ]), 'limit' => 3]);
 
         $this->assertInstanceOf(Page::class, $page);
         $this->assertArrayHasKey('page', $page->meta());
@@ -712,10 +916,16 @@ class CursorPaginationTest extends TestCase
         $this->paginator->withTotalOnFirstPage();
 
         $meta = [
-            'from' => 'eyJpZCI6NCwiX3BvaW50c1RvTmV4dEl0ZW1zIjpmYWxzZX0',
+            'from' => $this->encodeCursor([
+                "id" => "4",
+                "_pointsToNextItems" => false
+            ]),
             'hasMore' => true,
             'perPage' => 3,
-            'to' => 'eyJpZCI6MiwiX3BvaW50c1RvTmV4dEl0ZW1zIjp0cnVlfQ',
+            'to' => $this->encodeCursor([
+                "id" => "2",
+                "_pointsToNextItems" => true
+            ]),
             'total' => 4,
         ];
 
@@ -732,7 +942,10 @@ class CursorPaginationTest extends TestCase
         $page = $this->posts
             ->repository()
             ->queryAll()
-            ->paginate(['after' => 'eyJpZCI6MiwiX3BvaW50c1RvTmV4dEl0ZW1zIjp0cnVlfQ', 'limit' => 3]);
+            ->paginate(['after' => $this->encodeCursor([
+                "id" => "2",
+                "_pointsToNextItems" => true
+            ]), 'limit' => 3]);
 
         $this->assertInstanceOf(Page::class, $page);
         $this->assertArrayHasKey('page', $page->meta());
@@ -751,6 +964,21 @@ class CursorPaginationTest extends TestCase
         $actual = (new Collection($actual))->modelKeys();
 
         $this->assertSame(array_values($expected), array_values($actual));
+    }
+
+    /**
+     * @return void
+     */
+    private function withIdEncoding(): void
+    {
+        $this->paginator = CursorPagination::make(
+            $this->encodedId = new EncodedId()
+        );
+    }
+
+    private function encodeCursor(array $params) : string
+    {
+        return str_replace(['+', '/', '='], ['-', '_', ''], base64_encode(json_encode($params)));
     }
 
 }

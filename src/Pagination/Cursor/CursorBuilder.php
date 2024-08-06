@@ -14,7 +14,7 @@ class CursorBuilder
 {
     private Builder|Relation $query;
 
-    private ?ID $id = null;
+    private ID $id;
 
     private string $keyName;
 
@@ -26,6 +26,8 @@ class CursorBuilder
 
     private bool $keySort = true;
 
+    private CursorParser $parser;
+
     /**
      * CursorBuilder constructor.
      *
@@ -34,14 +36,16 @@ class CursorBuilder
      * @param string|null $key
      *      the key column that the before/after cursors related to
      */
-    public function __construct($query, string $key = null)
+    public function __construct($query, ID $id, string $key = null)
     {
         if (!$query instanceof Builder && !$query instanceof Relation) {
             throw new \InvalidArgumentException('Expecting an Eloquent query builder or relation.');
         }
 
         $this->query = $query;
+        $this->id = $id;
         $this->keyName = $key ?: $this->guessKey();
+        $this->parser = new CursorParser(IdParser::make($this->id), $this->keyName);
     }
 
     /**
@@ -58,15 +62,6 @@ class CursorBuilder
         return $this;
     }
 
-    /**
-     * @return $this
-     */
-    public function withIdField(?ID $id): self
-    {
-        $this->id = $id;
-
-        return $this;
-    }
 
     public function withKeySort(bool $keySort): self
     {
@@ -108,8 +103,8 @@ class CursorBuilder
         $this->applyKeySort();
 
         $total = $this->getTotal();
-        $laravelPaginator = $this->query->cursorPaginate($cursor->getLimit(), $columns, 'cursor', $this->convertCursor($cursor));
-        $paginator = new CursorPaginator($laravelPaginator, $cursor, $total);
+        $laravelPaginator = $this->query->cursorPaginate($cursor->getLimit(), $columns, 'cursor', $this->parser->decode($cursor));
+        $paginator = new CursorPaginator($this->parser, $laravelPaginator, $cursor, $total);
 
         return $paginator->withCurrentPath();
     }
