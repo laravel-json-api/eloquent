@@ -1,46 +1,84 @@
 <?php
+/*
+ * Copyright 2024 Cloud Creativity Limited
+ *
+ * Use of this source code is governed by an MIT-style
+ * license that can be found in the LICENSE file or at
+ * https://opensource.org/licenses/MIT.
+ */
 
 declare(strict_types=1);
 
 namespace LaravelJsonApi\Eloquent\Pagination;
 
-use LaravelJsonApi\Eloquent\Pagination\Cursor\CursorBuilder;
-use LaravelJsonApi\Eloquent\Pagination\Cursor\CursorPage;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use LaravelJsonApi\Contracts\Pagination\Page;
 use LaravelJsonApi\Contracts\Schema\ID;
 use LaravelJsonApi\Core\Pagination\Concerns\HasPageMeta;
-use LaravelJsonApi\Eloquent\Pagination\Cursor\Cursor;
 use LaravelJsonApi\Eloquent\Contracts\Paginator;
+use LaravelJsonApi\Eloquent\Pagination\Cursor\Cursor;
+use LaravelJsonApi\Eloquent\Pagination\Cursor\CursorBuilder;
+use LaravelJsonApi\Eloquent\Pagination\Cursor\CursorPage;
 
-class CursorPagination implements Paginator
+final class CursorPagination implements Paginator
 {
     use HasPageMeta;
 
+    /**
+     * @var string
+     */
     private string $before;
 
+    /**
+     * @var string
+     */
     private string $after;
 
+    /**
+     * @var string
+     */
     private string $limit;
 
+    /**
+     * @var string
+     */
     private string $direction;
 
+    /**
+     * @var string|null
+     */
     private ?string $primaryKey = null;
 
-    /** @var string|array<string>|null */
+    /**
+     * @var string|array<string>|null
+     */
     private string|array|null $columns = null;
 
+    /**
+     * @var int|null
+     */
     private ?int $defaultPerPage = null;
 
+    /**
+     * @var bool
+     */
     private bool $withTotal;
 
+    /**
+     * @var bool
+     */
     private bool $withTotalOnFirstPage;
 
+    /**
+     * @var bool
+     */
     private bool $keySort = true;
 
     /**
      * CursorPagination constructor.
+     *
+     * @param ID $id
      */
     public function __construct(private readonly ID $id)
     {
@@ -55,6 +93,9 @@ class CursorPagination implements Paginator
 
     /**
      * Fluent constructor.
+     *
+     * @param ID $id
+     * @return self
      */
     public static function make(ID $id): self
     {
@@ -135,6 +176,10 @@ class CursorPagination implements Paginator
         return $this;
     }
 
+    /**
+     * @param bool $withTotal
+     * @return $this
+     */
     public function withTotal(bool $withTotal = true): self
     {
         $this->withTotal = $withTotal;
@@ -142,6 +187,10 @@ class CursorPagination implements Paginator
         return $this;
     }
 
+    /**
+     * @param bool $withTotal
+     * @return $this
+     */
     public function withTotalOnFirstPage(bool $withTotal = true): self
     {
         $this->withTotalOnFirstPage = $withTotal;
@@ -149,6 +198,10 @@ class CursorPagination implements Paginator
         return $this;
     }
 
+    /**
+     * @param string $column
+     * @return $this
+     */
     public function withKeyName(string $column): self
     {
         $this->primaryKey = $column;
@@ -167,6 +220,10 @@ class CursorPagination implements Paginator
         return $this;
     }
 
+    /**
+     * @param bool $keySort
+     * @return $this
+     */
     public function withKeySort(bool $keySort = true): self
     {
         $this->keySort = $keySort;
@@ -174,6 +231,9 @@ class CursorPagination implements Paginator
         return $this;
     }
 
+    /**
+     * @return $this
+     */
     public function withoutKeySort(): self
     {
         return $this->withKeySort(false);
@@ -231,7 +291,8 @@ class CursorPagination implements Paginator
 
     /**
      * Extract the cursor from the provided paging parameters.
-     * @param array<string,mixed> $page
+     *
+     * @param array<string, mixed> $page
      */
     private function cursor(array $page): Cursor
     {

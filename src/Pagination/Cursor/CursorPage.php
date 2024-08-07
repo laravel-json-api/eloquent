@@ -1,47 +1,51 @@
 <?php
 /*
- * Copyright 2023 Cloud Creativity Limited
+ * Copyright 2024 Cloud Creativity Limited
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Use of this source code is governed by an MIT-style
+ * license that can be found in the LICENSE file or at
+ * https://opensource.org/licenses/MIT.
  */
 
 declare(strict_types=1);
 
 namespace LaravelJsonApi\Eloquent\Pagination\Cursor;
 
+use InvalidArgumentException;
 use LaravelJsonApi\Core\Document\Link;
 use LaravelJsonApi\Core\Pagination\AbstractPage;
 
 class CursorPage extends AbstractPage
 {
-    private CursorPaginator $paginator;
-
+    /**
+     * @var string
+     */
     private string $before;
 
+    /**
+     * @var string
+     */
     private string $after;
 
+    /**
+     * @var string
+     */
     private string $limit;
 
     /**
      * CursorPage constructor.
+     *
+     * @param CursorPaginator $paginator
      */
-    public function __construct(CursorPaginator $paginator)
+    public function __construct(private readonly CursorPaginator $paginator)
     {
-        $this->paginator = $paginator;
     }
 
     /**
      * Fluent constructor.
+     *
+     * @param CursorPaginator $paginator
+     * @return self
      */
     public static function make(CursorPaginator $paginator): self
     {
@@ -56,7 +60,7 @@ class CursorPage extends AbstractPage
     public function withAfterParam(string $key): self
     {
         if (empty($key)) {
-            throw new \InvalidArgumentException('Expecting a non-empty string.');
+            throw new InvalidArgumentException('Expecting a non-empty string.');
         }
 
         $this->after = $key;
@@ -72,7 +76,7 @@ class CursorPage extends AbstractPage
     public function withBeforeParam(string $key): self
     {
         if (empty($key)) {
-            throw new \InvalidArgumentException('Expecting a non-empty string.');
+            throw new InvalidArgumentException('Expecting a non-empty string.');
         }
 
         $this->before = $key;
@@ -88,7 +92,7 @@ class CursorPage extends AbstractPage
     public function withLimitParam(string $key): self
     {
         if (empty($key)) {
-            throw new \InvalidArgumentException('Expecting a non-empty string.');
+            throw new InvalidArgumentException('Expecting a non-empty string.');
         }
 
         $this->limit = $key;
@@ -96,6 +100,9 @@ class CursorPage extends AbstractPage
         return $this;
     }
 
+    /**
+     * @return Link|null
+     */
     public function first(): ?Link
     {
         return new Link('first', $this->url([
@@ -103,6 +110,9 @@ class CursorPage extends AbstractPage
         ]));
     }
 
+    /**
+     * @return Link|null
+     */
     public function prev(): ?Link
     {
         if ($this->paginator->isNotEmpty() && $this->paginator->hasPrev()) {
@@ -115,6 +125,9 @@ class CursorPage extends AbstractPage
         return null;
     }
 
+    /**
+     * @return Link|null
+     */
     public function next(): ?Link
     {
         if ($this->paginator->isNotEmpty() && $this->paginator->hasNext()) {
@@ -127,6 +140,9 @@ class CursorPage extends AbstractPage
         return null;
     }
 
+    /**
+     * @return Link|null
+     */
     public function last(): ?Link
     {
         return null;
@@ -140,18 +156,24 @@ class CursorPage extends AbstractPage
         return $this->paginator->path() . '?' . $this->stringifyQuery($page);
     }
 
+    /**
+     * @return \Traversable
+     */
     public function getIterator(): \Traversable
     {
         yield from $this->paginator;
     }
 
+    /**
+     * @return int
+     */
     public function count(): int
     {
         return $this->paginator->count();
     }
 
     /**
-     * @return array<string,mixed>
+     * @return array<string, mixed>
      */
     protected function metaForPage(): array
     {

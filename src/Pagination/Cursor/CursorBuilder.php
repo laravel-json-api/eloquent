@@ -1,4 +1,11 @@
 <?php
+/*
+ * Copyright 2024 Cloud Creativity Limited
+ *
+ * Use of this source code is governed by an MIT-style
+ * license that can be found in the LICENSE file or at
+ * https://opensource.org/licenses/MIT.
+ */
 
 declare(strict_types=1);
 
@@ -6,45 +13,54 @@ namespace LaravelJsonApi\Eloquent\Pagination\Cursor;
 
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\Relation;
-use Illuminate\Pagination\Cursor as LaravelCursor;
 use LaravelJsonApi\Contracts\Schema\ID;
 use LaravelJsonApi\Core\Schema\IdParser;
 
-class CursorBuilder
+final class CursorBuilder
 {
-    private Builder|Relation $query;
+    /**
+     * @var string
+     */
+    private readonly string $keyName;
 
-    private ID $id;
-
-    private string $keyName;
-
+    /**
+     * @var string
+     */
     private string $direction;
 
+    /**
+     * @var int|null
+     */
     private ?int $defaultPerPage = null;
 
+    /**
+     * @var bool
+     */
     private bool $withTotal;
 
+    /**
+     * @var bool
+     */
     private bool $keySort = true;
 
-    private CursorParser $parser;
+    /**
+     * @var CursorParser
+     */
+    private readonly CursorParser $parser;
 
     /**
      * CursorBuilder constructor.
      *
-     * @param Builder|Relation $query
-     *      the column to use for the cursor
-     * @param string|null $key
-     *      the key column that the before/after cursors related to
+     * @param Builder|Relation $query the column to use for the cursor
+     * @param ID $id
+     * @param string|null $key the key column that the before/after cursors related to
      */
-    public function __construct($query, ID $id, string $key = null)
-    {
-        if (!$query instanceof Builder && !$query instanceof Relation) {
-            throw new \InvalidArgumentException('Expecting an Eloquent query builder or relation.');
-        }
-
-        $this->query = $query;
-        $this->id = $id;
-        $this->keyName = $key ?: $this->guessKey();
+    public function __construct(
+        private readonly Builder|Relation $query,
+        private readonly ID $id,
+        ?string $key = null
+    ) {
+        $this->keyName = $key ?: $this->id->key();
         $this->parser = new CursorParser(IdParser::make($this->id), $this->keyName);
     }
 
@@ -62,8 +78,11 @@ class CursorBuilder
         return $this;
     }
 
-
-    public function withKeySort(bool $keySort): self
+    /**
+     * @param bool $keySort
+     * @return $this
+     */
+    public function withKeySort(bool $keySort = true): self
     {
         $this->keySort = $keySort;
 
@@ -86,6 +105,10 @@ class CursorBuilder
         throw new \InvalidArgumentException('Unexpected query direction.');
     }
 
+    /**
+     * @param bool $withTotal
+     * @return $this
+     */
     public function withTotal(bool $withTotal): self
     {
         $this->withTotal = $withTotal;
@@ -103,12 +126,20 @@ class CursorBuilder
         $this->applyKeySort();
 
         $total = $this->getTotal();
-        $laravelPaginator = $this->query->cursorPaginate($cursor->getLimit(), $columns, 'cursor', $this->parser->decode($cursor));
+        $laravelPaginator = $this->query->cursorPaginate(
+            $cursor->getLimit(),
+            $columns,
+            'cursor',
+            $this->parser->decode($cursor),
+        );
         $paginator = new CursorPaginator($this->parser, $laravelPaginator, $cursor, $total);
 
         return $paginator->withCurrentPath();
     }
 
+    /**
+     * @return void
+     */
     private function applyKeySort(): void
     {
         if (!$this->keySort) {
@@ -125,35 +156,17 @@ class CursorBuilder
         }
     }
 
+    /**
+     * @return int|null
+     */
     private function getTotal(): ?int
     {
         return $this->withTotal ? $this->query->count() : null;
     }
 
-    private function convertCursor(Cursor $cursor): ?LaravelCursor
-    {
-        $encodedCursor = $cursor->isBefore() ? $cursor->getBefore() : $cursor->getAfter();
-        if (!is_string($encodedCursor)) {
-            return null;
-        }
-
-        $parameters = json_decode(base64_decode(str_replace(['-', '_'], ['+', '/'], $encodedCursor)), true);
-
-        if (json_last_error() !== JSON_ERROR_NONE) {
-            return null;
-        }
-
-        $pointsToNextItems = $parameters['_pointsToNextItems'];
-        unset($parameters['_pointsToNextItems']);
-        if (isset($parameters[$this->keyName])) {
-            $parameters[$this->keyName] = IdParser::make($this->id)->decode(
-                (string) $parameters[$this->keyName],
-            );
-        }
-
-        return new LaravelCursor($parameters, $pointsToNextItems);
-    }
-
+    /**
+     * @return int
+     */
     private function getDefaultPerPage(): int
     {
         if (is_int($this->defaultPerPage)) {
@@ -161,13 +174,5 @@ class CursorBuilder
         }
 
         return $this->query->getModel()->getPerPage();
-    }
-
-    /**
-     * Guess the key to use for the cursor.
-     */
-    private function guessKey(): string
-    {
-        return $this->id?->key() ?? $this->query->getModel()->getKeyName();
     }
 }

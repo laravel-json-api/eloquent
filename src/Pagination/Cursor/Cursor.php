@@ -1,18 +1,10 @@
 <?php
 /*
- * Copyright 2023 Cloud Creativity Limited
+ * Copyright 2024 Cloud Creativity Limited
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Use of this source code is governed by an MIT-style
+ * license that can be found in the LICENSE file or at
+ * https://opensource.org/licenses/MIT.
  */
 
 declare(strict_types=1);
@@ -21,40 +13,23 @@ namespace LaravelJsonApi\Eloquent\Pagination\Cursor;
 
 use InvalidArgumentException;
 
-class Cursor
+final readonly class Cursor
 {
-
-    /**
-     * @var string|null
-     */
-    private ?string $before;
-
-    /**
-     * @var string|null
-     */
-    private ?string $after;
-
-    /**
-     * @var int|null
-     */
-    private ?int $limit;
-
-    /**
+   /**
      * Cursor constructor.
      *
      * @param string|null $before
      * @param string|null $after
      * @param int|null $limit
      */
-    public function __construct(string $before = null, string $after = null, int $limit = null)
-    {
-        if (is_int($limit) && 1 > $limit) {
+    public function __construct(
+        private ?string $before = null,
+        private ?string $after = null,
+        private ?int $limit = null
+    ) {
+        if (is_int($this->limit) && 1 > $this->limit) {
             throw new InvalidArgumentException('Expecting a limit that is 1 or greater.');
         }
-
-        $this->before = $before ?: null;
-        $this->after = $after ?: null;
-        $this->limit = $limit;
     }
 
     /**
@@ -97,10 +72,12 @@ class Cursor
      */
     public function withDefaultLimit(int $limit): self
     {
-        if (is_null($this->limit)) {
-            $copy = clone $this;
-            $copy->limit = $limit;
-            return $copy;
+        if ($this->limit === null) {
+            return new self(
+                before: $this->before,
+                after: $this->after,
+                limit: $limit,
+            );
         }
 
         return $this;

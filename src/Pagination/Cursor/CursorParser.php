@@ -1,20 +1,39 @@
 <?php
+/*
+ * Copyright 2024 Cloud Creativity Limited
+ *
+ * Use of this source code is governed by an MIT-style
+ * license that can be found in the LICENSE file or at
+ * https://opensource.org/licenses/MIT.
+ */
+
+declare(strict_types=1);
 
 namespace LaravelJsonApi\Eloquent\Pagination\Cursor;
 
 use Illuminate\Pagination\Cursor as LaravelCursor;
 use LaravelJsonApi\Core\Schema\IdParser;
 
-class CursorParser
+final readonly class CursorParser
 {
+    /**
+     * CursorParser constructor.
+     *
+     * @param IdParser $idParser
+     * @param string $keyName
+     */
     public function __construct(private IdParser $idParser, private string $keyName)
     {
-
     }
 
+    /**
+     * @param LaravelCursor $cursor
+     * @return string
+     */
     public function encode(LaravelCursor $cursor): string
     {
-        $key  = $cursor->parameter($this->keyName);
+        $key = $cursor->parameter($this->keyName);
+
         if (!$key) {
             return $cursor->encode();
         }
@@ -28,6 +47,10 @@ class CursorParser
         return $newCursor->encode();
     }
 
+    /**
+     * @param Cursor $cursor
+     * @return LaravelCursor|null
+     */
     public function decode(Cursor $cursor): ?LaravelCursor
     {
         $encodedCursor = $cursor->isBefore() ? $cursor->getBefore() : $cursor->getAfter();
