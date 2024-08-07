@@ -34,17 +34,13 @@ final readonly class CursorParser
     {
         $key = $cursor->parameter($this->keyName);
 
-        if (!$key) {
-            return $cursor->encode();
+        if ($key) {
+            $parameters = $this->withoutPrivate($cursor->toArray());
+            $parameters[$this->keyName] = $this->idParser->encode($key);
+            $cursor = new LaravelCursor($parameters, $cursor->pointsToNextItems());
         }
 
-        $encodedId = $this->idParser->encode($key);
-        $parameters = $cursor->toArray();
-        unset($parameters['_pointsToNextItems']);
-        $parameters[$this->keyName] = $encodedId;
-
-        $newCursor = new LaravelCursor($parameters, $cursor->pointsToNextItems());
-        return $newCursor->encode();
+        return $cursor->encode();
     }
 
     /**
@@ -53,25 +49,39 @@ final readonly class CursorParser
      */
     public function decode(Cursor $cursor): ?LaravelCursor
     {
-        $encodedCursor = $cursor->isBefore() ? $cursor->getBefore() : $cursor->getAfter();
-        if (!is_string($encodedCursor)) {
+        $decoded = LaravelCursor::fromEncoded(
+            $cursor->isBefore() ? $cursor->getBefore() : $cursor->getAfter(),
+        );
+
+        if ($decoded === null) {
             return null;
         }
 
-        $parameters = json_decode(base64_decode(str_replace(['-', '_'], ['+', '/'], $encodedCursor)), true);
+        $parameters = $this->withoutPrivate($decoded->toArray());
 
-        if (json_last_error() !== JSON_ERROR_NONE) {
-            return null;
-        }
-
-        $pointsToNextItems = $parameters['_pointsToNextItems'];
-        unset($parameters['_pointsToNextItems']);
         if (isset($parameters[$this->keyName])) {
             $parameters[$this->keyName] = $this->idParser->decode(
                 $parameters[$this->keyName],
             );
         }
 
-        return new LaravelCursor($parameters, $pointsToNextItems);
+        return new LaravelCursor($parameters, $decoded->pointsToNextItems());
+    }
+
+    /**
+     * @param array<string, mixed> $values
+     * @return array<string, mixed>
+     */
+    private function withoutPrivate(array $values): array
+    {
+        $result = [];
+
+        foreach ($values as $key => $value) {
+            if (!str_starts_with($key, '_')) {
+                $result[$key] = $value;
+            }
+        }
+
+        return $result;
     }
 }
