@@ -263,6 +263,45 @@ class CursorPaginationTest extends TestCase
     /**
      * @return void
      */
+    public function testWithAscending(): void
+    {
+        $this->paginator->withAscending();
+
+        $posts = Post::factory()->count(4)->create();
+
+        $meta = [
+            'from' => $this->encodeCursor(["id" => "1"], pointsToNextItems: false),
+            'hasMore' => true,
+            'perPage' => 3,
+            'to' => $this->encodeCursor(["id" => "3"], pointsToNextItems: true),
+        ];
+
+        $links = [
+            'first' => [
+                'href' => 'http://localhost/api/v1/posts?' . Arr::query([
+                    'page' => ['limit' => '3']
+                ]),
+            ],
+            'next' => [
+                'href' => 'http://localhost/api/v1/posts?' . Arr::query([
+                    'page' => [
+                        'after' => $this->encodeCursor(["id" => "3"], pointsToNextItems: true),
+                        'limit' => '3',
+                    ],
+                ]),
+            ],
+        ];
+
+        $page = $this->posts->repository()->queryAll()->paginate(['limit' => '3']);
+
+        $this->assertSame(['page' => $meta], $page->meta());
+        $this->assertSame($links, $page->links()->toArray());
+        $this->assertPage($posts->take(3), $page);
+    }
+
+    /**
+     * @return void
+     */
     public function testAfter(): void
     {
         $posts = Post::factory()->count(4)->create();
@@ -567,6 +606,22 @@ class CursorPaginationTest extends TestCase
             ->paginate(['limit' => '3']);
 
         $this->assertPage($posts->take(3), $page);
+    }
+
+    /**
+     * @return void
+     */
+    public function testPageWithReverseKeyWhenAscending(): void
+    {
+        $this->paginator->withAscending();
+
+        $posts = Post::factory()->count(4)->create();
+
+        $page = $this->posts->repository()->queryAll()
+            ->sort('-id')
+            ->paginate(['limit' => '3']);
+
+        $this->assertPage($posts->reverse()->take(3), $page);
     }
 
     /**
