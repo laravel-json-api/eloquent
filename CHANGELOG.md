@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file. This projec
 
 ## Unreleased
 
+## [4.2.0] - 2024-08-26
+
+### Added
+
+- [#37](https://github.com/laravel-json-api/eloquent/pull/37) Add Eloquent cursor pagination implementation.
+
 ## [4.1.0] - 2024-06-26
 
 ### Added
