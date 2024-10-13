@@ -15,6 +15,7 @@ use App\Models\Mechanic;
 use LaravelJsonApi\Eloquent\Contracts\Paginator;
 use LaravelJsonApi\Eloquent\Fields\DateTime;
 use LaravelJsonApi\Eloquent\Fields\ID;
+use LaravelJsonApi\Eloquent\Fields\Relations\HasOne;
 use LaravelJsonApi\Eloquent\Fields\Relations\HasOneThrough;
 use LaravelJsonApi\Eloquent\Fields\Str;
 use LaravelJsonApi\Eloquent\Filters\WhereIdIn;
@@ -39,6 +40,7 @@ class MechanicSchema extends Schema
             ID::make(),
             DateTime::make('createdAt')->readOnly(),
             Str::make('name'),
+            HasOne::make('car'),
             HasOneThrough::make('carOwner'),
             DateTime::make('updatedAt')->readOnly(),
         ];
