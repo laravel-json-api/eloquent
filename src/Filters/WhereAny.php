@@ -16,7 +16,6 @@ use LaravelJsonApi\Eloquent\Contracts\Filter;
 
 class WhereAny implements Filter
 {
-
     use Concerns\DeserializesValue;
     use Concerns\HasColumns;
     use Concerns\HasOperator;
@@ -32,10 +31,10 @@ class WhereAny implements Filter
      * Create a new filter.
      *
      * @param string $name
-     * @param array<string> $columns
+     * @param array<string>|null $columns
      * @return static
      */
-    public static function make(string $name, array $columns = null): self
+    public static function make(string $name, array $columns = null): static
     {
         return new static($name, $columns);
     }
@@ -44,7 +43,7 @@ class WhereAny implements Filter
      * WhereAny constructor.
      *
      * @param string $name
-     * @param array<string> $columns
+     * @param array<string>|null $columns
     */
     public function __construct(string $name, array $columns = null)
     {
@@ -66,12 +65,8 @@ class WhereAny implements Filter
      */
     public function apply($query, $value)
     {
-        if (!$this->isQualified()){
-            $this->qualifyAs($query->getModel()->getTable());
-        }
-
         return $query->whereAny(
-            $this->qualifiedColumns(),
+            $this->qualifiedColumns($query->getModel()),
             $this->operator(),
             $this->deserialize($value)
         );

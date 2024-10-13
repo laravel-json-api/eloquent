@@ -11,14 +11,14 @@ declare(strict_types=1);
 
 namespace LaravelJsonApi\Eloquent\Filters\Concerns;
 
+use Illuminate\Database\Eloquent\Model;
+
 trait HasColumns
 {
-
     /**
      * @var string|null
      */
     private ?string $table = null;
-
 
     /**
      * @var array<string>
@@ -33,9 +33,31 @@ trait HasColumns
         return $this->columns;
     }
 
-    public function withColumn(string $column): self
+    /**
+     * Add a column to the filter.
+     *
+     * @param string $column
+     * @return $this
+     */
+    public function withColumn(string $column): static
     {
         $this->columns[] = $column;
+
+        return $this;
+    }
+
+    /**
+     * Add columns to the filter.
+     *
+     * @param string ...$columns
+     * @return $this
+     */
+    public function withColumns(string ...$columns): static
+    {
+        $this->columns = [
+            ...$this->columns,
+            ...$columns,
+        ];
 
         return $this;
     }
@@ -48,7 +70,7 @@ trait HasColumns
      * @param string $table
      * @return $this
      */
-    public function qualifyAs(string $table): self
+    public function qualifyAs(string $table): static
     {
         $this->table = $table;
 
@@ -56,24 +78,24 @@ trait HasColumns
     }
 
     /**
-     * Determine if developer has forced a table to qualify columns as
-     *
-     * @return bool
-     */
-    public function isQualified(): bool
-    {
-        return $this->table === null;
-    }
-
-    /**
      * Get qualified columns.
      *
      * @return array<string>
      */
-    protected function qualifiedColumns(): array
+    protected function qualifiedColumns(?Model $model = null): array
     {
         if ($this->table) {
-            return array_map(fn($column) => $this->table . '.' . $column, $this->columns);
+            return array_map(
+                fn($column) => $this->table . '.' . $column,
+                $this->columns,
+            );
+        }
+
+        if ($model) {
+            return array_map(
+                static fn($column) => $model->qualifyColumn($column),
+                $this->columns,
+            );
         }
 
         return $this->columns;

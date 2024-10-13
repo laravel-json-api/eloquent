@@ -5,6 +5,10 @@ All notable changes to this project will be documented in this file. This projec
 
 ## Unreleased
 
+### Added
+
+- [#38](https://github.com/laravel-json-api/eloquent/pull/38) Added `WhereAll` and `WhereAny` filters.
+
 ## [4.2.0] - 2024-08-26
 
 ### Added
