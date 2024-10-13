@@ -13,6 +13,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\HasOneThrough;
 
 class Mechanic extends Model
@@ -24,6 +25,14 @@ class Mechanic extends Model
      * @var string[]
      */
     protected $fillable = ['name'];
+
+    /**
+     * @return HasOne
+     */
+    public function car(): HasOne
+    {
+        return $this->hasOne(Car::class);
+    }
 
     /**
      * @return HasOneThrough

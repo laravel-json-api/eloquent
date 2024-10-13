@@ -25,7 +25,6 @@ use Traversable;
  */
 class EagerLoadIterator implements IteratorAggregate
 {
-
     /**
      * @var Schema
      */
@@ -70,11 +69,13 @@ class EagerLoadIterator implements IteratorAggregate
      */
     public function collect(): Collection
     {
-        $values = collect($this);
+        $values = Collection::make($this);
 
-        return $values->reject(
-            fn($path) => $values->contains(fn($check) => $path !== $check && Str::startsWith($check, $path))
-        )->sort()->values();
+        return $values
+            ->reject(static fn(string $path) => $values
+                ->contains(fn(string $check) => $path !== $check && Str::startsWith($check, $path . '.')))
+            ->sort()
+            ->values();
     }
 
     /**

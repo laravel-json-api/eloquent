@@ -62,6 +62,11 @@ class EagerLoaderTest extends TestCase
                     'profile', // auto included for users
                 ],
             ],
+            'mechanic' => [
+                'mechanics',
+                'car,carOwner,carOwner.car,carOwner.car.mechanic,car.mechanic',
+                ['car.mechanic', 'carOwner.car.mechanic'],
+            ],
         ];
     }
 
