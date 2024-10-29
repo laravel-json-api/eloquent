@@ -32,12 +32,13 @@ final readonly class CursorParser
      */
     public function encode(LaravelCursor $cursor): string
     {
-        $key = $cursor->parameter($this->keyName);
-
-        if ($key) {
+        try {
+            $key = $cursor->parameter($this->keyName);
             $parameters = $this->withoutPrivate($cursor->toArray());
             $parameters[$this->keyName] = $this->idParser->encode($key);
             $cursor = new LaravelCursor($parameters, $cursor->pointsToNextItems());
+        } catch (\UnexpectedValueException $ex) {
+           // Do nothing as the cursor does not contain the key.
         }
 
         return $cursor->encode();
