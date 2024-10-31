@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file. This projec
 
 ## Unreleased
 
+## [4.3.1] - 2024-10-31
+
+### Fixed
+
+- [#41](https://github.com/laravel-json-api/eloquent/pull/41) Handle key column not existing in cursor paginator.
+
 ## [4.3.0] - 2024-10-13
 
 ### Added
