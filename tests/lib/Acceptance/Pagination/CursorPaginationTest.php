@@ -278,6 +278,57 @@ class CursorPaginationTest extends TestCase
     /**
      * @return void
      */
+    public function testWithIdEncodingWithoutKeySort(): void
+    {
+        $this->withIdEncoding();
+        $this->paginator->withoutKeySort();
+
+        $posts = Post::factory()->count(4)->sequence(['title' => 'd'], ['title' => 'c'], ['title' => 'b'], ['title' => 'a'])->create();
+
+        $meta = [
+            'from' => $this->encodeCursor(
+                ["posts.title"=> "a"],
+                pointsToNextItems: false,
+            ),
+            'hasMore' => true,
+            'perPage' => 3,
+            'to' => $this->encodeCursor(
+                ["posts.title"=> "c"],
+                pointsToNextItems: true,
+            ),
+        ];
+
+        $links = [
+            'first' => [
+                'href' => 'http://localhost/api/v1/posts?' . Arr::query([
+                        'page' => ['limit' => '3'],
+                        'sort' => 'title',
+                    ]),
+            ],
+            'next' => [
+                'href' => 'http://localhost/api/v1/posts?' . Arr::query([
+                        'page' => [
+                            'after' => $this->encodeCursor(
+                                ["posts.title"=> "c"],
+                                pointsToNextItems: true,
+                            ),
+                            'limit' => '3',
+                        ],
+                        'sort' => 'title',
+                    ]),
+            ],
+        ];
+
+        $page = $this->posts->repository()->queryAll()->sort('title')->paginate(['limit' => '3']);
+
+        $this->assertSame(['page' => $meta], $page->meta());
+        $this->assertSame($links, $page->links()->toArray());
+        $this->assertPage($posts->reverse()->take(3), $page);
+    }
+
+    /**
+     * @return void
+     */
     public function testWithAscending(): void
     {
         $this->paginator->withAscending();
