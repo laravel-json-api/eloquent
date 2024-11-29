@@ -37,7 +37,7 @@ class DateTime extends Attribute
      * @param string|null $column
      * @return static
      */
-    public static function make(string $fieldName, string $column = null): self
+    public static function make(string $fieldName, ?string $column = null): self
     {
         return new static($fieldName, $column);
     }

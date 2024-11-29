@@ -46,7 +46,7 @@ class HasMany extends ToMany implements FillableToMany
      * @param string|null $relation
      * @return HasMany
      */
-    public static function make(string $fieldName, string $relation = null): HasMany
+    public static function make(string $fieldName, ?string $relation = null): HasMany
     {
         return new self($fieldName, $relation);
     }

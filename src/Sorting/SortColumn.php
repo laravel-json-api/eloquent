@@ -34,7 +34,7 @@ class SortColumn implements SortField
      * @param string|null $column
      * @return static
      */
-    public static function make(string $fieldName, string $column = null): self
+    public static function make(string $fieldName, ?string $column = null): self
     {
         return new self($fieldName, $column);
     }
@@ -45,7 +45,7 @@ class SortColumn implements SortField
      * @param string $fieldName
      * @param string|null $column
      */
-    public function __construct(string $fieldName, string $column = null)
+    public function __construct(string $fieldName, ?string $column = null)
     {
         $this->fieldName = $fieldName;
         $this->column = $column ?? $this->guessColumn();

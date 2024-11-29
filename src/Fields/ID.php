@@ -36,7 +36,7 @@ class ID implements IDContract, Fillable
      * @param string|null $column
      * @return static
      */
-    public static function make(string $column = null): self
+    public static function make(?string $column = null): self
     {
         return new static($column);
     }
@@ -46,7 +46,7 @@ class ID implements IDContract, Fillable
      *
      * @param string|null $column
      */
-    public function __construct(string $column = null)
+    public function __construct(?string $column = null)
     {
         $this->column = $column ?: null;
         $this->sortable();

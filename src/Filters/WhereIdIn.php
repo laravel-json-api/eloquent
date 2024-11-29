@@ -45,7 +45,7 @@ class WhereIdIn implements Filter
      * @param string|null $key
      * @return static
      */
-    public static function make(Schema $schema, string $key = null): self
+    public static function make(Schema $schema, ?string $key = null): self
     {
         if ($schema instanceof EloquentSchema) {
             return new static(

@@ -91,7 +91,7 @@ abstract class Attribute implements
      * @param string $fieldName
      * @param string|null $column
      */
-    public function __construct(string $fieldName, string $column = null)
+    public function __construct(string $fieldName, ?string $column = null)
     {
         if (empty($fieldName)) {
             throw new InvalidArgumentException('Expecting a non-empty string field name.');

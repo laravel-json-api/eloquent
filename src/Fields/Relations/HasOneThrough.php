@@ -21,7 +21,7 @@ class HasOneThrough extends ToOne
      * @param string|null $relation
      * @return HasOneThrough
      */
-    public static function make(string $fieldName, string $relation = null): HasOneThrough
+    public static function make(string $fieldName, ?string $relation = null): HasOneThrough
     {
         return new self($fieldName, $relation);
     }

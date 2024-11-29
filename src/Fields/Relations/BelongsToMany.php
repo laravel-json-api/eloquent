@@ -31,7 +31,7 @@ class BelongsToMany extends ToMany implements FillableToMany
      * @param string|null $relation
      * @return BelongsToMany
      */
-    public static function make(string $fieldName, string $relation = null): BelongsToMany
+    public static function make(string $fieldName, ?string $relation = null): BelongsToMany
     {
         return new self($fieldName, $relation);
     }

@@ -21,7 +21,7 @@ class Boolean extends Attribute
      * @param string|null $column
      * @return Boolean
      */
-    public static function make(string $fieldName, string $column = null): self
+    public static function make(string $fieldName, ?string $column = null): self
     {
         return new self($fieldName, $column);
     }

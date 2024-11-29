@@ -55,7 +55,7 @@ abstract class ProxySchema extends Schema
      * @param Model|null $model
      * @return ProxyContract
      */
-    public function newProxy(Model $model = null): ProxyContract
+    public function newProxy(?Model $model = null): ProxyContract
     {
         $proxyClass = $this->model();
 

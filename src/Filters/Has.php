@@ -30,7 +30,7 @@ class Has implements Filter
      * @param string|null $key
      * @return static
      */
-    public static function make(Schema $schema, string $fieldName, string $key = null)
+    public static function make(Schema $schema, string $fieldName, ?string $key = null)
     {
         return new static($schema, $fieldName, $key);
     }
@@ -42,7 +42,7 @@ class Has implements Filter
      * @param string $fieldName
      * @param string|null $key
      */
-    public function __construct(Schema $schema, string $fieldName, string $key = null)
+    public function __construct(Schema $schema, string $fieldName, ?string $key = null)
     {
         $this->schema = $schema;
         $this->fieldName = $fieldName;

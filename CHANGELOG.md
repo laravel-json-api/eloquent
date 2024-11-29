@@ -5,6 +5,10 @@ All notable changes to this project will be documented in this file. This projec
 
 ## Unreleased
 
+### Fixed
+
+- Remove deprecation notices in PHP 8.4.
+
 ## [4.3.1] - 2024-10-31
 
 ### Fixed
