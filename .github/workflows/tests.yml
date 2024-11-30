@@ -15,7 +15,7 @@ jobs:
       fail-fast: true
       matrix:
         php: [8.2, 8.3, 8.4]
-        laravel: [11]
+        core: ['4.3.2', '5.0.1']
 
     steps:
     - name: Checkout Code
@@ -30,8 +30,8 @@ jobs:
         coverage: none
         ini-values: error_reporting=E_ALL
 
-    - name: Set Laravel Version
-      run: composer require "illuminate/database:^${{ matrix.laravel }}" --no-update
+    - name: Set Laravel JSON:API Core Version
+      run: composer require "laravel-json-api/core:^${{ matrix.core }}" --no-update
 
     - name: Install dependencies
       uses: nick-fields/retry@v3
