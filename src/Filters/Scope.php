@@ -37,7 +37,7 @@ class Scope implements Filter
      * @param string|null $scope
      * @return static
      */
-    public static function make(string $name, string $scope = null)
+    public static function make(string $name, ?string $scope = null)
     {
         return new static($name, $scope);
     }
@@ -48,7 +48,7 @@ class Scope implements Filter
      * @param string $name
      * @param string|null $scope
      */
-    public function __construct(string $name, string $scope = null)
+    public function __construct(string $name, ?string $scope = null)
     {
         $this->name = $name;
         $this->scope = $scope ?: $this->guessScope();

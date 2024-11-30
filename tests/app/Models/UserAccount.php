@@ -24,7 +24,7 @@ class UserAccount extends Proxy implements Scope
      *
      * @param User|null $user
      */
-    public function __construct(User $user = null)
+    public function __construct(?User $user = null)
     {
         parent::__construct($user ?: new User());
     }

@@ -30,7 +30,7 @@ class ArrayList extends Attribute
      * @param string|null $column
      * @return ArrayList
      */
-    public static function make(string $fieldName, string $column = null): self
+    public static function make(string $fieldName, ?string $column = null): self
     {
         return new self($fieldName, $column);
     }

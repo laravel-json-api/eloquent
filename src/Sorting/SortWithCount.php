@@ -45,7 +45,7 @@ class SortWithCount implements SortField
      * @param string|null $key
      * @return static
      */
-    public static function make(string $fieldName, string $key = null): self
+    public static function make(string $fieldName, ?string $key = null): self
     {
         return new self($fieldName, $key);
     }
@@ -56,7 +56,7 @@ class SortWithCount implements SortField
      * @param string $relationName
      * @param string|null $key
      */
-    public function __construct(string $relationName, string $key = null)
+    public function __construct(string $relationName, ?string $key = null)
     {
         $this->relationName = $relationName;
         $this->key = $key ?? $relationName;

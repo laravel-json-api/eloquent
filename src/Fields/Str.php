@@ -21,7 +21,7 @@ class Str extends Attribute
      * @param string|null $column
      * @return Str
      */
-    public static function make(string $fieldName, string $column = null): self
+    public static function make(string $fieldName, ?string $column = null): self
     {
         return new self($fieldName, $column);
     }

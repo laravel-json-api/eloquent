@@ -21,7 +21,7 @@ class HasManyThrough extends ToMany
      * @param string|null $relation
      * @return HasManyThrough
      */
-    public static function make(string $fieldName, string $relation = null): HasManyThrough
+    public static function make(string $fieldName, ?string $relation = null): HasManyThrough
     {
         return new self($fieldName, $relation);
     }

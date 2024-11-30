@@ -40,7 +40,7 @@ class SortCountable implements SortField
      * @param string|null $key
      * @return static
      */
-    public static function make(Schema $schema, string $fieldName, string $key = null): self
+    public static function make(Schema $schema, string $fieldName, ?string $key = null): self
     {
         return new self($schema, $fieldName, $key);
     }
@@ -52,7 +52,7 @@ class SortCountable implements SortField
      * @param string $fieldName
      * @param string|null $key
      */
-    public function __construct(Schema $schema, string $fieldName, string $key = null)
+    public function __construct(Schema $schema, string $fieldName, ?string $key = null)
     {
         $this->schema = $schema;
         $this->fieldName = $fieldName;

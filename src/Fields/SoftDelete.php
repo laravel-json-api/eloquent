@@ -32,7 +32,7 @@ class SoftDelete extends DateTime
      * @param string $fieldName
      * @param string|null $column
      */
-    public function __construct(string $fieldName, string $column = null)
+    public function __construct(string $fieldName, ?string $column = null)
     {
         parent::__construct($fieldName, $column);
         $this->unguarded();

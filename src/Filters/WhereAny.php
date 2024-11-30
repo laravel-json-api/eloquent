@@ -34,7 +34,7 @@ class WhereAny implements Filter
      * @param array<string>|null $columns
      * @return static
      */
-    public static function make(string $name, array $columns = null): static
+    public static function make(string $name, ?array $columns = null): static
     {
         return new static($name, $columns);
     }
@@ -45,7 +45,7 @@ class WhereAny implements Filter
      * @param string $name
      * @param array<string>|null $columns
     */
-    public function __construct(string $name, array $columns = null)
+    public function __construct(string $name, ?array $columns = null)
     {
         $this->name = $name;
         $this->columns = $columns ?? [];

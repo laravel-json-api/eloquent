@@ -35,7 +35,7 @@ class Relation extends BaseRelation
      * @param string|null $key
      * @return string
      */
-    public static function withCount(string $key = null): string
+    public static function withCount(?string $key = null): string
     {
         if (empty($key)) {
             return self::$countAs;

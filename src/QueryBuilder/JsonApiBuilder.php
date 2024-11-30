@@ -93,7 +93,7 @@ class JsonApiBuilder
      * @param Builder|Relation $query
      * @param SchemaRelation|null $relation
      */
-    public function __construct(Container $schemas, Schema $schema, $query, SchemaRelation $relation = null)
+    public function __construct(Container $schemas, Schema $schema, $query, ?SchemaRelation $relation = null)
     {
         if ($query instanceof Relation && !$relation) {
             throw new InvalidArgumentException('Expecting a schema relation when querying an Eloquent relation.');

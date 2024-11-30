@@ -32,7 +32,7 @@ class WhereNull implements Filter
      *
      * @return static
      */
-    public static function make(string $name, string $column = null): self
+    public static function make(string $name, ?string $column = null): self
     {
         return new static($name, $column);
     }
@@ -42,7 +42,7 @@ class WhereNull implements Filter
      *
      * @param string|null $column
      */
-    public function __construct(string $name, string $column = null)
+    public function __construct(string $name, ?string $column = null)
     {
         $this->name = $name;
         $this->column = $column ?: $this->guessColumn();

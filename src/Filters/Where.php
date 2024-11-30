@@ -34,7 +34,7 @@ class Where implements Filter
      * @param string|null $column
      * @return static
      */
-    public static function make(string $name, string $column = null): self
+    public static function make(string $name, ?string $column = null): self
     {
         return new static($name, $column);
     }
@@ -45,7 +45,7 @@ class Where implements Filter
      * @param string $name
      * @param string|null $column
      */
-    public function __construct(string $name, string $column = null)
+    public function __construct(string $name, ?string $column = null)
     {
         $this->name = $name;
         $this->column = $column ?: $this->guessColumn();

@@ -50,7 +50,7 @@ class FilterApplicator
      * @param SchemaRelation|null $relation
      * @return static
      */
-    public static function make(Schema $schema, SchemaRelation $relation = null): self
+    public static function make(Schema $schema, ?SchemaRelation $relation = null): self
     {
         return new self($schema, $relation);
     }

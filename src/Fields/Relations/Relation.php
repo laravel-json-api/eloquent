@@ -89,7 +89,7 @@ abstract class Relation implements RelationContract, SchemaAwareContract, Serial
      * @param string $fieldName
      * @param string|null $relation
      */
-    public function __construct(string $fieldName, string $relation = null)
+    public function __construct(string $fieldName, ?string $relation = null)
     {
         $this->name = $fieldName;
         $this->relation = $relation;
