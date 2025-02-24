@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file. This projec
 
 ## Unreleased
 
+## [4.5.0] - 2025-02-24
+
+### Added
+
+- Package now supports Laravel 11 and 12.
+
 ## [4.4.0] - 2024-11-30
 
 ### Added
