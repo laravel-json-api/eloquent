@@ -90,8 +90,9 @@ class Repository implements
         if ($this->schema->id()->match($resourceId)) {
             $model = $this
                 ->query()
-                ->whereResourceId($resourceId)
-                ->first();
+                ->whereResourceId($resourceId);
+
+            $model = $resourceId ? $model->first() : $model->newModelInstance();
         }
 
         return $this->parser->parseNullable($model);
