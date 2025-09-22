@@ -50,6 +50,20 @@ trait DeserializesValue
     }
 
     /**
+     * Deserialize value as a integer.
+     *
+     * @return $this
+     */
+    public function asInteger(): self
+    {
+        $this->deserializeUsing(
+            static fn($value) => filter_var($value, FILTER_VALIDATE_INT)
+        );
+
+        return $this;
+    }
+
+    /**
      * Deserialize the value.
      *
      * @param mixed $value
