@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file. This projec
 
 ## Unreleased
 
+## [4.6.0] - 2025-09-30
+
+### Added
+
+- [#44](https://github.com/laravel-json-api/eloquent/pull/44) New `asInteger()` method added to the `DeserializesValue`
+  trait.
+
 ## [4.5.0] - 2025-02-24
 
 ### Added
