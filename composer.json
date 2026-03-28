@@ -19,18 +19,18 @@
         },
         {
             "name": "Christopher Gammie",
-            "email": "contact@gammie.co.uk"
+            "email": "chris@cloudcreativity.co.uk"
         }
     ],
     "require": {
         "php": "^8.2",
         "ext-json": "*",
-        "illuminate/database": "^11.0|^12.0",
-        "illuminate/support": "^11.0|^12.0",
-        "laravel-json-api/core": "^4.3.2|^5.2"
+        "illuminate/database": "^11.0|^12.0|^13.0",
+        "illuminate/support": "^11.0|^12.0|^13.0",
+        "laravel-json-api/core": "^4.3.2|^5.3"
     },
     "require-dev": {
-        "orchestra/testbench": "^9.0|^10.0",
+        "orchestra/testbench": "^9.0|^10.0|^11.0",
         "phpunit/phpunit": "^10.5|^11.5.3"
     },
     "autoload": {
